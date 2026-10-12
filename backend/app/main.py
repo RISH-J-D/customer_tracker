@@ -54,16 +54,6 @@ app.include_router(accounts.router)
 
 from .database import engine, Base, SessionLocal, get_db_info
 
-@app.get("/")
-def root():
-    return {
-        "status": "online",
-        "service": "Customer Tracker & Detailing Accounts API",
-        "version": "1.0.0",
-        "docs": "/docs",
-        "health": "/api/health"
-    }
-
 @app.get("/api/health")
 def health_check():
     return {"status": "healthy", "service": "client-reminder-backend", "version": "1.0.0"}
@@ -71,3 +61,37 @@ def health_check():
 @app.get("/api/db-status")
 def database_status():
     return get_db_info()
+
+# Static files & React SPA serving for Hugging Face Spaces & single-container deployment
+from fastapi.staticfiles import StaticFiles
+from fastapi.responses import FileResponse
+
+STATIC_DIR = os.getenv("STATIC_DIR", "")
+if not STATIC_DIR or not os.path.isdir(STATIC_DIR):
+    possible_dir = os.path.join(os.path.dirname(os.path.dirname(os.path.abspath(__file__))), "frontend_dist")
+    if os.path.isdir(possible_dir):
+        STATIC_DIR = possible_dir
+
+if STATIC_DIR and os.path.exists(os.path.join(STATIC_DIR, "index.html")):
+    assets_dir = os.path.join(STATIC_DIR, "assets")
+    if os.path.isdir(assets_dir):
+        app.mount("/assets", StaticFiles(directory=assets_dir), name="assets")
+
+    @app.get("/{full_path:path}")
+    async def serve_spa(full_path: str):
+        if full_path.startswith("api/") or full_path in ["docs", "redoc", "openapi.json"]:
+            return {"detail": "Not Found"}
+        target = os.path.join(STATIC_DIR, full_path)
+        if full_path and os.path.exists(target) and os.path.isfile(target):
+            return FileResponse(target)
+        return FileResponse(os.path.join(STATIC_DIR, "index.html"))
+else:
+    @app.get("/")
+    def root():
+        return {
+            "status": "online",
+            "service": "Customer Tracker & Detailing Accounts API",
+            "version": "1.0.0",
+            "docs": "/docs",
+            "health": "/api/health"
+        }

@@ -1,3 +1,13 @@
+---
+title: Customer Tracker & Accounts
+emoji: 🏗️
+colorFrom: blue
+colorTo: indigo
+sdk: docker
+app_port: 7860
+pinned: false
+---
+
 # ClientFlow Tracker: Client Follow-up & Reminder System
 
 A reminder and client pipeline management system built with **React**, **Python FastAPI**, **SQLite**, and **Capacitor Android** for desktop and mobile APK deployment.
