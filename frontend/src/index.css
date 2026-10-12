@@ -181,7 +181,9 @@ body {
 .app-container {
   display: flex;
   min-height: 100vh;
-  width: 100vw;
+  width: 100%;
+  max-width: 100%;
+  overflow-x: hidden;
   background-color: var(--bg-main);
 }
 
@@ -292,6 +294,9 @@ body {
   display: flex;
   flex-direction: column;
   min-width: 0;
+  width: 100%;
+  max-width: 100%;
+  overflow-x: hidden;
   background-color: var(--bg-main);
   padding-bottom: 4rem;
 }
@@ -304,17 +309,18 @@ body {
 
 /* Top Navbar */
 .top-navbar {
-  min-height: 64px;
+  min-height: 60px;
   height: auto;
   background-color: var(--bg-surface);
   border-bottom: 1px solid var(--border-subtle);
   display: flex;
   align-items: center;
   justify-content: space-between;
-  padding: 0.5rem 1.75rem;
+  padding: 0.5rem 1.5rem;
   position: sticky;
   top: 0;
   z-index: 20;
+  gap: 0.75rem;
 }
 
 .today-navbar-card:hover {
@@ -327,28 +333,40 @@ body {
   filter: brightness(1.12);
 }
 
+.header-title-group {
+  min-width: 0;
+  flex: 0 1 auto;
+}
+
 .header-title-group h1 {
   font-size: 1.15rem;
   font-weight: 700;
   letter-spacing: -0.02em;
   color: var(--text-primary);
+  white-space: nowrap;
+  overflow: hidden;
+  text-overflow: ellipsis;
 }
 
 .header-title-group p {
   font-size: 0.78rem;
   color: var(--text-muted);
+  white-space: nowrap;
+  overflow: hidden;
+  text-overflow: ellipsis;
 }
 
 .navbar-actions {
   display: flex;
   align-items: center;
   gap: 0.5rem;
+  flex-shrink: 0;
 }
 
 /* Page Content */
 .page-content {
-  padding: 1.75rem;
-  max-width: 1360px;
+  padding: 1.5rem;
+  max-width: 1400px;
   width: 100%;
   margin: 0 auto;
 }
@@ -581,7 +599,9 @@ body {
 /* Linear/Stripe-Style Tables */
 .table-responsive {
   width: 100%;
+  max-width: 100%;
   overflow-x: auto;
+  -webkit-overflow-scrolling: touch;
   border-radius: var(--radius-lg);
   border: 1px solid var(--border-subtle);
   background-color: var(--bg-surface);
@@ -590,6 +610,7 @@ body {
 
 .custom-table {
   width: 100%;
+  min-width: 760px;
   border-collapse: collapse;
   font-size: 0.825rem;
   text-align: left;
@@ -667,7 +688,7 @@ body {
 }
 
 /* Modals */
-.modal-overlay {
+.modal-overlay, .modal-backdrop {
   position: fixed;
   inset: 0;
   background: rgba(0, 0, 0, 0.65);
@@ -681,7 +702,7 @@ body {
   animation: fadeIn 0.15s ease-out;
 }
 
-.modal-card {
+.modal-card, .modal-container {
   background-color: var(--bg-surface);
   border: 1px solid var(--border-subtle);
   border-radius: var(--radius-lg);
@@ -776,6 +797,25 @@ body {
   padding: 0 0.5rem;
 }
 
+/* ==========================================================================
+   Responsive Adaptations Across Screen Sizes
+   ========================================================================== */
+
+@media (max-width: 1100px) {
+  .today-navbar-desc {
+    display: none !important;
+  }
+  .today-navbar-card {
+    padding: 0.35rem 0.65rem !important;
+  }
+}
+
+@media (max-width: 820px) {
+  .navbar-user-text {
+    display: none !important;
+  }
+}
+
 @media (max-width: 768px) {
   .sidebar {
     display: none;
@@ -785,6 +825,37 @@ body {
   }
   .page-content {
     padding: 1rem;
+  }
+}
+
+@media (max-width: 640px) {
+  .top-navbar {
+    padding: 0.45rem 0.75rem !important;
+  }
+  .header-title-group h1 {
+    font-size: 1rem !important;
+  }
+  .header-title-group p {
+    display: none !important;
+  }
+  .today-navbar-card span:first-child {
+    display: none !important;
+  }
+  .navbar-actions {
+    gap: 0.35rem !important;
+  }
+  .page-content {
+    padding: 0.75rem !important;
+  }
+  .modal-overlay, .modal-backdrop {
+    padding: 0.5rem !important;
+  }
+  .modal-card, .modal-container {
+    max-height: 94vh !important;
+    width: 100% !important;
+  }
+  .stats-grid {
+    grid-template-columns: 1fr !important;
   }
 }
 

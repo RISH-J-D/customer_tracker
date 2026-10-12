@@ -3,12 +3,8 @@ import {
   Bell, 
   Sun, 
   Moon, 
-  User, 
   ChevronDown, 
-  LogOut, 
-  UserCheck, 
-  ShieldCheck,
-  Check
+  LogOut 
 } from 'lucide-react';
 
 export default function Navbar({
@@ -21,8 +17,6 @@ export default function Navbar({
   theme,
   onToggleTheme,
   currentUser,
-  onSwitchUser,
-  onOpenLogin,
   onLogout
 }) {
   const [isUserDropdownOpen, setIsUserDropdownOpen] = useState(false);
@@ -51,12 +45,6 @@ export default function Navbar({
   const currentName = currentUser?.name || 'Admin';
   const currentUsername = currentUser?.username || 'admin';
   const currentRole = currentUser?.role || 'System Administrator';
-
-  const availableUsers = [
-    { username: 'abarna.s', name: 'Abarna S', role: 'Steel Detailing Executive' },
-    { username: 'girish.j', name: 'Girish J', role: 'Steel Detailing Executive' },
-    { username: 'admin', name: 'Admin', role: 'System Administrator' },
-  ];
 
   return (
     <header className="top-navbar">
@@ -108,7 +96,7 @@ export default function Navbar({
               {todayCount} Due
             </span>
           </div>
-          <p style={{ 
+          <p className="today-navbar-desc" style={{ 
             fontSize: '0.735rem', 
             color: 'var(--text-secondary)', 
             lineHeight: '1.25',
@@ -197,7 +185,7 @@ export default function Navbar({
               cursor: 'pointer',
               transition: 'all 0.15s ease'
             }}
-            title="User Profile & Account Switcher"
+            title="User Profile"
           >
             {/* Avatar Circle */}
             <div style={{
@@ -220,7 +208,7 @@ export default function Navbar({
             </div>
 
             {/* Name & Role Text */}
-            <div style={{ textAlign: 'left', lineHeight: '1.2' }}>
+            <div className="navbar-user-text" style={{ textAlign: 'left', lineHeight: '1.2' }}>
               <div style={{ 
                 fontSize: '0.78rem', 
                 fontWeight: 600, 
@@ -302,94 +290,8 @@ export default function Navbar({
                 </div>
               </div>
 
-              {/* Quick Switch User Section */}
-              <div style={{ padding: '0.25rem 0.5rem', fontSize: '0.68rem', fontWeight: 700, color: 'var(--text-muted)', textTransform: 'uppercase', letterSpacing: '0.04em' }}>
-                Switch Account
-              </div>
-
-              {availableUsers.map((u) => {
-                const isSelected = u.username === currentUsername;
-                return (
-                  <button
-                    key={u.username}
-                    onClick={() => {
-                      if (onSwitchUser) onSwitchUser(u);
-                      setIsUserDropdownOpen(false);
-                    }}
-                    style={{
-                      width: '100%',
-                      display: 'flex',
-                      alignItems: 'center',
-                      justifyContent: 'space-between',
-                      padding: '0.45rem 0.6rem',
-                      borderRadius: 'var(--radius-md)',
-                      border: 'none',
-                      background: isSelected ? 'var(--bg-subtle)' : 'transparent',
-                      color: 'var(--text-primary)',
-                      cursor: 'pointer',
-                      textAlign: 'left',
-                      transition: 'background 0.15s ease',
-                      marginBottom: '2px'
-                    }}
-                    onMouseEnter={(e) => !isSelected && (e.currentTarget.style.background = 'var(--bg-subtle)')}
-                    onMouseLeave={(e) => !isSelected && (e.currentTarget.style.background = 'transparent')}
-                  >
-                    <div style={{ display: 'flex', alignItems: 'center', gap: '0.45rem' }}>
-                      <div style={{
-                        width: '20px',
-                        height: '20px',
-                        borderRadius: '50%',
-                        backgroundColor: isSelected ? 'var(--primary)' : 'var(--border-subtle)',
-                        color: isSelected ? 'white' : 'var(--text-secondary)',
-                        fontSize: '0.62rem',
-                        fontWeight: 700,
-                        display: 'flex',
-                        alignItems: 'center',
-                        justifyContent: 'center'
-                      }}>
-                        {u.name[0]}
-                      </div>
-                      <div>
-                        <div style={{ fontSize: '0.76rem', fontWeight: isSelected ? 700 : 500 }}>
-                          {u.name}
-                        </div>
-                        <div style={{ fontSize: '0.65rem', color: 'var(--text-muted)' }}>
-                          @{u.username}
-                        </div>
-                      </div>
-                    </div>
-                    {isSelected && <Check size={14} color="var(--primary)" />}
-                  </button>
-                );
-              })}
-
+              {/* Only Sign Out option */}
               <div style={{ borderTop: '1px solid var(--border-subtle)', marginTop: '0.4rem', paddingTop: '0.35rem' }}>
-                <button
-                  onClick={() => {
-                    setIsUserDropdownOpen(false);
-                    if (onOpenLogin) onOpenLogin();
-                  }}
-                  style={{
-                    width: '100%',
-                    display: 'flex',
-                    alignItems: 'center',
-                    gap: '0.45rem',
-                    padding: '0.45rem 0.6rem',
-                    borderRadius: 'var(--radius-md)',
-                    border: 'none',
-                    background: 'transparent',
-                    color: 'var(--text-secondary)',
-                    cursor: 'pointer',
-                    fontSize: '0.76rem',
-                    textAlign: 'left'
-                  }}
-                  onMouseEnter={(e) => e.currentTarget.style.background = 'var(--bg-subtle)'}
-                  onMouseLeave={(e) => e.currentTarget.style.background = 'transparent'}
-                >
-                  <UserCheck size={14} />
-                  <span>Login Screen</span>
-                </button>
-
                 <button
                   onClick={() => {
                     setIsUserDropdownOpen(false);
@@ -399,15 +301,17 @@ export default function Navbar({
                     width: '100%',
                     display: 'flex',
                     alignItems: 'center',
-                    gap: '0.45rem',
-                    padding: '0.45rem 0.6rem',
+                    gap: '0.5rem',
+                    padding: '0.5rem 0.65rem',
                     borderRadius: 'var(--radius-md)',
                     border: 'none',
                     background: 'transparent',
                     color: 'var(--danger-color)',
                     cursor: 'pointer',
-                    fontSize: '0.76rem',
-                    textAlign: 'left'
+                    fontSize: '0.78rem',
+                    fontWeight: 600,
+                    textAlign: 'left',
+                    transition: 'background 0.15s ease'
                   }}
                   onMouseEnter={(e) => e.currentTarget.style.background = 'var(--danger-bg)'}
                   onMouseLeave={(e) => e.currentTarget.style.background = 'transparent'}

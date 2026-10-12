@@ -251,8 +251,8 @@ export default function App() {
   const unreadCount = notifications.filter(n => !n.is_read).length;
   const headerInfo = getHeaderInfo();
 
-  // If Login Page preview is active
-  if (showLoginPage) {
+  // If user is not logged in or login screen is requested
+  if (!currentUser || showLoginPage) {
     return (
       <LoginPage
         onLoginSuccess={(user) => {
@@ -260,13 +260,6 @@ export default function App() {
             setCurrentUser(user);
             localStorage.setItem('currentUser', JSON.stringify(user));
           }
-          setShowLoginPage(false);
-          loadData();
-        }}
-        onBypass={(user) => {
-          const u = user || { username: 'admin', name: 'Admin', role: 'System Administrator' };
-          setCurrentUser(u);
-          localStorage.setItem('currentUser', JSON.stringify(u));
           setShowLoginPage(false);
           loadData();
         }}
@@ -288,7 +281,6 @@ export default function App() {
         unreadNotificationsCount={unreadCount}
         onOpenTodayModal={() => setIsTodayModalOpen(true)}
         onOpenDbModal={() => setIsDbModalOpen(true)}
-        onOpenLogin={() => setShowLoginPage(true)}
         dbInfo={dbInfo}
         currentUser={currentUser}
       />
@@ -305,14 +297,9 @@ export default function App() {
           theme={theme}
           onToggleTheme={toggleTheme}
           currentUser={currentUser}
-          onSwitchUser={(user) => {
-            setCurrentUser(user);
-            localStorage.setItem('currentUser', JSON.stringify(user));
-            loadData();
-          }}
-          onOpenLogin={() => setShowLoginPage(true)}
           onLogout={() => {
             localStorage.removeItem('currentUser');
+            setCurrentUser(null);
             setShowLoginPage(true);
           }}
         />

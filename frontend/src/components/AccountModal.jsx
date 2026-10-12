@@ -226,9 +226,9 @@ export default function AccountModal({
     : null;
 
   return (
-    <div className="modal-backdrop" onClick={onClose}>
+    <div className="modal-overlay" onClick={onClose}>
       <div 
-        className="modal-container" 
+        className="modal-card" 
         style={{ maxWidth: '680px', width: '94vw' }} 
         onClick={(e) => e.stopPropagation()}
       >

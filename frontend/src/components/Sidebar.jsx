@@ -8,9 +8,7 @@ import {
   Sparkles, 
   TrendingUp,
   Database,
-  LogIn,
   ScrollText,
-  UserCheck,
   Building2
 } from 'lucide-react';
 
@@ -146,10 +144,9 @@ export default function Sidebar({
         display: 'flex',
         alignItems: 'center',
         justifyContent: 'space-between',
-        cursor: onOpenLogin ? 'pointer' : 'default'
+        cursor: 'default'
       }}
-      onClick={onOpenLogin}
-      title="Click to switch account or sign out"
+      title={`Signed in as ${currentName}`}
       >
         <div style={{ display: 'flex', alignItems: 'center', gap: '0.5rem', minWidth: 0 }}>
           <div style={{
