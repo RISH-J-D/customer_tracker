@@ -10,7 +10,17 @@ export default function ClientModal({
   onSave,
   isLeadMode = false
 }) {
+  const parseName = (fullName = '') => {
+    const trimmed = (fullName || '').trim();
+    if (!trimmed) return { first: '', last: '' };
+    const parts = trimmed.split(/\s+/);
+    if (parts.length === 1) return { first: parts[0], last: '' };
+    return { first: parts[0], last: parts.slice(1).join(' ') };
+  };
+
   const [formData, setFormData] = useState({
+    first_name: '',
+    last_name: '',
     name: '',
     company: '',
     email: '',
@@ -26,7 +36,10 @@ export default function ClientModal({
 
   useEffect(() => {
     if (client) {
+      const { first, last } = parseName(client.name);
       setFormData({
+        first_name: first,
+        last_name: last,
         name: client.name || '',
         company: client.company || '',
         email: client.email || '',
@@ -40,6 +53,8 @@ export default function ClientModal({
       });
     } else {
       setFormData({
+        first_name: '',
+        last_name: '',
         name: '',
         company: '',
         email: '',
@@ -54,13 +69,13 @@ export default function ClientModal({
     }
   }, [client, isOpen, isLeadMode]);
 
-
   if (!isOpen) return null;
 
   const handleSubmit = async (e) => {
     e.preventDefault();
-    if (!formData.name.trim()) {
-      alert('Please enter client name');
+    const fullName = `${formData.first_name} ${formData.last_name}`.trim();
+    if (!formData.first_name.trim() || !formData.last_name.trim()) {
+      alert('Please enter both First Name and Last Name');
       return;
     }
 
@@ -73,7 +88,7 @@ export default function ClientModal({
           origin: { y: 0.6 }
         });
       }
-      await onSave(formData, client?.id);
+      await onSave({ ...formData, name: fullName }, client?.id);
       onClose();
     } catch (err) {
       alert('Error saving client: ' + err.message);
@@ -118,16 +133,34 @@ export default function ClientModal({
 
         <form onSubmit={handleSubmit}>
           <div className="modal-body">
-            <div style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fit, minmax(220px, 1fr))', gap: '0.85rem' }}>
+            <div style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fit, minmax(180px, 1fr))', gap: '0.85rem' }}>
               <div className="form-group">
-                <label className="form-label">Client Name *</label>
+                <label className="form-label">First Name *</label>
                 <input
                   type="text"
                   required
-                  placeholder="e.g. Alexander Wright"
+                  placeholder="e.g. Alexander"
                   className="form-input"
-                  value={formData.name}
-                  onChange={(e) => setFormData({ ...formData, name: e.target.value })}
+                  value={formData.first_name}
+                  onChange={(e) => {
+                    const fn = e.target.value;
+                    setFormData({ ...formData, first_name: fn, name: `${fn} ${formData.last_name}`.trim() });
+                  }}
+                />
+              </div>
+
+              <div className="form-group">
+                <label className="form-label">Last Name *</label>
+                <input
+                  type="text"
+                  required
+                  placeholder="e.g. Wright"
+                  className="form-input"
+                  value={formData.last_name}
+                  onChange={(e) => {
+                    const ln = e.target.value;
+                    setFormData({ ...formData, last_name: ln, name: `${formData.first_name} ${ln}`.trim() });
+                  }}
                 />
               </div>
 

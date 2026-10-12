@@ -92,6 +92,8 @@ class Account(Base):
     company = Column(String(140), nullable=False, index=True)
     project_name = Column(String(200), nullable=False, index=True)
     client_representative = Column(String(120), nullable=False)
+    rep_first_name = Column(String(60), nullable=True)
+    rep_last_name = Column(String(60), nullable=True)
     rep_email = Column(String(120), nullable=True)
     rep_phone = Column(String(50), nullable=True)
     rep_designation = Column(String(100), nullable=True)

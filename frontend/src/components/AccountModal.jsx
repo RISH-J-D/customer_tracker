@@ -13,8 +13,6 @@ import {
   Sparkles,
   Search,
   CheckCircle2,
-  Users,
-  RotateCcw,
   ThumbsUp
 } from 'lucide-react';
 
@@ -33,10 +31,21 @@ export default function AccountModal({
     return (clients && clients.length > 0) ? clients : (availableClients || []);
   }, [clients, availableClients]);
 
+  // Helper to split full name into first and last name
+  const parseName = (fullName = '') => {
+    const trimmed = (fullName || '').trim();
+    if (!trimmed) return { first: '', last: '' };
+    const parts = trimmed.split(/\s+/);
+    if (parts.length === 1) return { first: parts[0], last: '' };
+    return { first: parts[0], last: parts.slice(1).join(' ') };
+  };
+
   const [formData, setFormData] = useState({
     account_name: '',
     company: '',
     project_name: '',
+    rep_first_name: '',
+    rep_last_name: '',
     client_representative: '',
     rep_designation: '',
     rep_email: '',
@@ -72,11 +81,14 @@ export default function AccountModal({
 
   useEffect(() => {
     if (currentEditingAccount) {
+      const { first, last } = parseName(currentEditingAccount.client_representative);
       setFormData({
         account_name: currentEditingAccount.account_name || '',
         company: currentEditingAccount.company || '',
         project_name: currentEditingAccount.project_name || '',
-        client_representative: currentEditingAccount.client_representative || '',
+        rep_first_name: currentEditingAccount.rep_first_name || first,
+        rep_last_name: currentEditingAccount.rep_last_name || last,
+        client_representative: currentEditingAccount.client_representative || `${first} ${last}`.trim(),
         rep_designation: currentEditingAccount.rep_designation || '',
         rep_email: currentEditingAccount.rep_email || '',
         rep_phone: currentEditingAccount.rep_phone || '',
@@ -87,11 +99,14 @@ export default function AccountModal({
         client_id: currentEditingAccount.client_id ? String(currentEditingAccount.client_id) : ''
       });
     } else if (prefilledClient) {
+      const { first, last } = parseName(prefilledClient.name);
       setFormData({
         account_name: `${prefilledClient.company || prefilledClient.name} - Steel Detailing Project`,
         company: prefilledClient.company || prefilledClient.name || '',
         project_name: 'Structural Steel Detailing Package',
-        client_representative: prefilledClient.name || '',
+        rep_first_name: first,
+        rep_last_name: last,
+        client_representative: prefilledClient.name || `${first} ${last}`.trim(),
         rep_designation: 'Project Representative',
         rep_email: prefilledClient.email || '',
         rep_phone: prefilledClient.phone || '',
@@ -106,6 +121,8 @@ export default function AccountModal({
         account_name: '',
         company: '',
         project_name: '',
+        rep_first_name: '',
+        rep_last_name: '',
         client_representative: '',
         rep_designation: '',
         rep_email: '',
@@ -124,13 +141,16 @@ export default function AccountModal({
   if (!isOpen) return null;
 
   const handleSelectLead = (lead) => {
+    const { first, last } = parseName(lead.name);
     setFormData(prev => ({
       ...prev,
       client_id: String(lead.id),
       company: lead.company || lead.name,
       account_name: prev.account_name || `${lead.company || lead.name} - Steel Detailing Project`,
       project_name: prev.project_name || 'Structural Steel Detailing Package',
-      client_representative: lead.name || prev.client_representative,
+      rep_first_name: first,
+      rep_last_name: last,
+      client_representative: lead.name || `${first} ${last}`.trim(),
       rep_designation: prev.rep_designation || 'Project Representative',
       rep_email: lead.email || prev.rep_email || '',
       rep_phone: lead.phone || prev.rep_phone || '',
@@ -148,7 +168,15 @@ export default function AccountModal({
 
   const handleChange = (e) => {
     const { name, value } = e.target;
-    setFormData(prev => ({ ...prev, [name]: value }));
+    setFormData(prev => {
+      const next = { ...prev, [name]: value };
+      if (name === 'rep_first_name' || name === 'rep_last_name') {
+        const first = name === 'rep_first_name' ? value : prev.rep_first_name;
+        const last = name === 'rep_last_name' ? value : prev.rep_last_name;
+        next.client_representative = `${first} ${last}`.trim();
+      }
+      return next;
+    });
 
     if (name === 'client_id' && value) {
       const selected = allClientsList.find(c => String(c.id) === value);
@@ -163,7 +191,8 @@ export default function AccountModal({
     if (!formData.account_name.trim()) newErrors.account_name = 'Account title is required';
     if (!formData.company.trim()) newErrors.company = 'Company name is required';
     if (!formData.project_name.trim()) newErrors.project_name = 'Project name is required';
-    if (!formData.client_representative.trim()) newErrors.client_representative = 'Client representative name is required';
+    if (!formData.rep_first_name.trim()) newErrors.rep_first_name = 'First name is required';
+    if (!formData.rep_last_name.trim()) newErrors.rep_last_name = 'Last name is required';
     setErrors(newErrors);
     return Object.keys(newErrors).length === 0;
   };
@@ -174,8 +203,10 @@ export default function AccountModal({
 
     setIsSubmitting(true);
     try {
+      const repCombined = `${formData.rep_first_name} ${formData.rep_last_name}`.trim();
       const payload = {
         ...formData,
+        client_representative: repCombined,
         deal_value: formData.deal_value ? parseFloat(formData.deal_value) : 0.0,
         steel_tonnage: formData.steel_tonnage ? parseFloat(formData.steel_tonnage) : null,
         client_id: formData.client_id ? parseInt(formData.client_id) : null
@@ -552,7 +583,7 @@ export default function AccountModal({
               </div>
             </div>
 
-            {/* Client Representative Info (Same company can have different reps for different projects) */}
+            {/* Client Representative Info (First Name & Last Name split) */}
             <div style={{
               backgroundColor: 'var(--bg-subtle)',
               border: '1px solid var(--border-subtle)',
@@ -573,22 +604,40 @@ export default function AccountModal({
                 <span>Client Representative (Assigned Contact for this Project)</span>
               </div>
 
-              <div style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fit, minmax(200px, 1fr))', gap: '0.75rem' }}>
+              {/* First Name & Last Name & Designation */}
+              <div style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fit, minmax(180px, 1fr))', gap: '0.75rem' }}>
                 <div className="form-group" style={{ marginBottom: 0 }}>
-                  <label className="form-label" htmlFor="acc-rep" style={{ fontSize: '0.75rem' }}>
-                    Representative Name <span style={{ color: 'var(--danger-color)' }}>*</span>
+                  <label className="form-label" htmlFor="acc-rep-first" style={{ fontSize: '0.75rem' }}>
+                    First Name <span style={{ color: 'var(--danger-color)' }}>*</span>
                   </label>
                   <input
-                    id="acc-rep"
-                    name="client_representative"
+                    id="acc-rep-first"
+                    name="rep_first_name"
                     type="text"
-                    placeholder="e.g. Marcus Sterling"
-                    value={formData.client_representative}
+                    placeholder="e.g. Marcus"
+                    value={formData.rep_first_name}
                     onChange={handleChange}
                     className="form-input"
                     required
                   />
-                  {errors.client_representative && <p className="form-error">{errors.client_representative}</p>}
+                  {errors.rep_first_name && <p className="form-error">{errors.rep_first_name}</p>}
+                </div>
+
+                <div className="form-group" style={{ marginBottom: 0 }}>
+                  <label className="form-label" htmlFor="acc-rep-last" style={{ fontSize: '0.75rem' }}>
+                    Last Name <span style={{ color: 'var(--danger-color)' }}>*</span>
+                  </label>
+                  <input
+                    id="acc-rep-last"
+                    name="rep_last_name"
+                    type="text"
+                    placeholder="e.g. Sterling"
+                    value={formData.rep_last_name}
+                    onChange={handleChange}
+                    className="form-input"
+                    required
+                  />
+                  {errors.rep_last_name && <p className="form-error">{errors.rep_last_name}</p>}
                 </div>
 
                 <div className="form-group" style={{ marginBottom: 0 }}>

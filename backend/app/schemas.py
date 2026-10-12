@@ -111,6 +111,8 @@ class AccountBase(BaseModel):
     company: str
     project_name: str
     client_representative: str
+    rep_first_name: Optional[str] = None
+    rep_last_name: Optional[str] = None
     rep_email: Optional[str] = None
     rep_phone: Optional[str] = None
     rep_designation: Optional[str] = None
@@ -128,6 +130,8 @@ class AccountUpdate(BaseModel):
     company: Optional[str] = None
     project_name: Optional[str] = None
     client_representative: Optional[str] = None
+    rep_first_name: Optional[str] = None
+    rep_last_name: Optional[str] = None
     rep_email: Optional[str] = None
     rep_phone: Optional[str] = None
     rep_designation: Optional[str] = None

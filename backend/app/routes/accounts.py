@@ -67,7 +67,18 @@ def create_account(
     x_user_username: Optional[str] = Header(None),
     db: Session = Depends(get_db)
 ):
-    account = Account(**account_in.model_dump())
+    data = account_in.model_dump()
+    # Auto-synchronize first/last name with full client_representative string
+    first = (data.get("rep_first_name") or "").strip()
+    last = (data.get("rep_last_name") or "").strip()
+    if first or last:
+        data["client_representative"] = f"{first} {last}".strip()
+    elif data.get("client_representative"):
+        parts = data["client_representative"].strip().split(" ", 1)
+        data["rep_first_name"] = parts[0]
+        data["rep_last_name"] = parts[1] if len(parts) > 1 else ""
+
+    account = Account(**data)
     db.add(account)
     db.commit()
     db.refresh(account)
@@ -131,6 +142,15 @@ def update_account(
         raise HTTPException(status_code=404, detail="Account not found")
 
     update_data = account_update.model_dump(exclude_unset=True)
+    if "rep_first_name" in update_data or "rep_last_name" in update_data:
+        first = (update_data.get("rep_first_name", account.rep_first_name) or "").strip()
+        last = (update_data.get("rep_last_name", account.rep_last_name) or "").strip()
+        update_data["client_representative"] = f"{first} {last}".strip()
+    elif "client_representative" in update_data and update_data["client_representative"]:
+        parts = update_data["client_representative"].strip().split(" ", 1)
+        update_data["rep_first_name"] = parts[0]
+        update_data["rep_last_name"] = parts[1] if len(parts) > 1 else ""
+
     diffs = {}
     for field, new_val in update_data.items():
         old_val = getattr(account, field, None)
