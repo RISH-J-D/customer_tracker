@@ -40,7 +40,7 @@ def get_dashboard_stats(db: Session = Depends(get_db)):
         FollowUp.status == "Pending"
     ).count()
 
-    total_value = db.query(func.coalesce(func.sum(Client.deal_value), 0.0)).scalar() or 0.0
+    total_value = db.query(func.coalesce(func.sum(Client.deal_value), 0.0)).filter(Client.is_lead == True).scalar() or 0.0
 
     return DashboardStats(
         total_clients=total_clients,

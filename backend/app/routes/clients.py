@@ -63,9 +63,13 @@ def create_client(
     client = Client(**client_in.model_dump())
     if client.is_lead:
         client.lead_converted_at = datetime.utcnow()
-        client.status = "Lead"
-    elif client.positive_approach:
-        client.status = "Positive Response"
+        if not client.status or client.status == "Prospect":
+            client.status = "Lead"
+    else:
+        # Estimated value should only be added for leads, not for clients!
+        client.deal_value = 0.0
+        if client.positive_approach:
+            client.status = "Positive Response"
         
     db.add(client)
     db.commit()
@@ -144,6 +148,9 @@ def update_client(
         if not update_data.get("status"):
             update_data["status"] = "Lead"
         update_data["positive_approach"] = True
+    elif update_data.get("is_lead") is False or (not client.is_lead and not update_data.get("is_lead")):
+        # Estimated value should only be added for leads, not for clients!
+        update_data["deal_value"] = 0.0
 
     for field, val in update_data.items():
         setattr(client, field, val)

@@ -42,11 +42,15 @@ class ClientBase(BaseModel):
     company: Optional[str] = None
     email: Optional[str] = None
     phone: Optional[str] = None
-    category: str = "Enterprise"
+    category: str = "Steel Detailing"
     status: str = "Prospect"
     is_lead: bool = False
     positive_approach: bool = False
     deal_value: float = 0.0
+    position: Optional[str] = None
+    city: Optional[str] = None
+    state: Optional[str] = None
+    country: Optional[str] = None
     notes: Optional[str] = None
 
 class ClientCreate(ClientBase):
@@ -62,6 +66,10 @@ class ClientUpdate(BaseModel):
     is_lead: Optional[bool] = None
     positive_approach: Optional[bool] = None
     deal_value: Optional[float] = None
+    position: Optional[str] = None
+    city: Optional[str] = None
+    state: Optional[str] = None
+    country: Optional[str] = None
     notes: Optional[str] = None
 
 class ClientResponse(ClientBase):
@@ -119,6 +127,9 @@ class AccountBase(BaseModel):
     deal_value: float = 0.0
     steel_tonnage: Optional[float] = None
     status: str = "Active Project"
+    city: Optional[str] = None
+    state: Optional[str] = None
+    country: Optional[str] = None
     notes: Optional[str] = None
     client_id: Optional[int] = None
 
@@ -138,6 +149,9 @@ class AccountUpdate(BaseModel):
     deal_value: Optional[float] = None
     steel_tonnage: Optional[float] = None
     status: Optional[str] = None
+    city: Optional[str] = None
+    state: Optional[str] = None
+    country: Optional[str] = None
     notes: Optional[str] = None
     client_id: Optional[int] = None
 

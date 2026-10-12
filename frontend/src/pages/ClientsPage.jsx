@@ -263,7 +263,7 @@ export default function ClientsPage({
                 <th style={{ width: '14%' }}>Outreach Stage</th>
                 <th style={{ width: '15%' }}>Approach Reaction</th>
                 <th style={{ width: '18%' }}>Contact Details</th>
-                <th style={{ width: '10%' }}>Est. Value</th>
+                <th style={{ width: '15%' }}>Role & Location</th>
                 <th style={{ width: '15%' }}>Convert / Action</th>
               </tr>
             </thead>
@@ -359,14 +359,14 @@ export default function ClientsPage({
                       </div>
                     </td>
 
-                    {/* Est. Value */}
+                    {/* Role & Location (Estimated value is only for leads!) */}
                     <td>
-                      <div style={{ fontWeight: 600, color: c.deal_value > 0 ? 'var(--text-primary)' : 'var(--text-muted)', fontSize: '0.825rem' }}>
-                        {c.deal_value > 0 ? `$${c.deal_value.toLocaleString()}` : '—'}
+                      <div style={{ fontWeight: 600, color: 'var(--text-primary)', fontSize: '0.825rem' }}>
+                        {c.position || 'Client Contact'}
                       </div>
-                      <span style={{ fontSize: '0.68rem', color: 'var(--text-muted)' }}>
-                        {c.total_followups} touchpoint(s)
-                      </span>
+                      <div style={{ fontSize: '0.72rem', color: 'var(--text-muted)', marginTop: '0.1rem' }}>
+                        {[c.city, c.state].filter(Boolean).join(', ') || c.country || 'Outreach'}
+                      </div>
                     </td>
 
                     {/* Pipeline Action & Row Buttons */}
@@ -487,9 +487,15 @@ export default function ClientsPage({
                     <span>{c.phone}</span>
                   </div>
                 )}
-                {c.deal_value > 0 && (
-                  <div style={{ display: 'flex', alignItems: 'center', gap: '0.35rem', color: 'var(--text-primary)', fontWeight: 600 }}>
-                    <span>Est. Detailing Value: ${c.deal_value.toLocaleString()}</span>
+                {c.position && (
+                  <div style={{ display: 'flex', alignItems: 'center', gap: '0.35rem', color: 'var(--text-secondary)' }}>
+                    <Building size={12} color="#9CA3AF" />
+                    <span>{c.position}</span>
+                  </div>
+                )}
+                {(c.city || c.state || c.country) && (
+                  <div style={{ display: 'flex', alignItems: 'center', gap: '0.35rem', color: 'var(--text-muted)', fontSize: '0.72rem' }}>
+                    <span>📍 {[c.city, c.state, c.country].filter(Boolean).join(', ')}</span>
                   </div>
                 )}
               </div>

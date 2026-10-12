@@ -321,10 +321,10 @@ export default function LeadsPage({
                           <div style={{ fontWeight: 600, color: 'var(--text-primary)', fontSize: '0.85rem' }}>
                             {c.name}
                           </div>
-                          <div style={{ display: 'flex', alignItems: 'center', gap: '0.35rem', color: 'var(--text-muted)', fontSize: '0.75rem', marginTop: '0.1rem' }}>
+                          <div style={{ display: 'flex', alignItems: 'center', gap: '0.35rem', color: 'var(--text-muted)', fontSize: '0.75rem', marginTop: '0.1rem', flexWrap: 'wrap' }}>
                             <span>{c.company || 'Fabricator / Contractor'}</span>
-                            <span>•</span>
-                            <span style={{ color: 'var(--lead-color)', fontWeight: 500 }}>Steel Detailing</span>
+                            {c.position && <span>• <strong style={{ fontWeight: 500, color: 'var(--text-secondary)' }}>{c.position}</strong></span>}
+                            {(c.city || c.state) && <span>• {[c.city, c.state].filter(Boolean).join(', ')}</span>}
                           </div>
                         </div>
                       </div>
@@ -525,6 +525,17 @@ export default function LeadsPage({
 
               {/* Contact info & Deal Value */}
               <div style={{ display: 'flex', flexDirection: 'column', gap: '0.25rem', marginBottom: '0.65rem', fontSize: '0.75rem', color: 'var(--text-secondary)' }}>
+                {c.position && (
+                  <div style={{ display: 'flex', alignItems: 'center', gap: '0.35rem', color: 'var(--text-secondary)' }}>
+                    <Building size={12} color="#9CA3AF" />
+                    <span>{c.position}</span>
+                  </div>
+                )}
+                {(c.city || c.state || c.country) && (
+                  <div style={{ display: 'flex', alignItems: 'center', gap: '0.35rem', color: 'var(--text-muted)', fontSize: '0.72rem' }}>
+                    <span>📍 {[c.city, c.state, c.country].filter(Boolean).join(', ')}</span>
+                  </div>
+                )}
                 {c.email && (
                   <div style={{ display: 'flex', alignItems: 'center', gap: '0.35rem' }}>
                     <Mail size={12} color="#9CA3AF" />
