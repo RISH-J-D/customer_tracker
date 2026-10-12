@@ -68,9 +68,14 @@ from fastapi.responses import FileResponse
 
 STATIC_DIR = os.getenv("STATIC_DIR", "")
 if not STATIC_DIR or not os.path.isdir(STATIC_DIR):
-    possible_dir = os.path.join(os.path.dirname(os.path.dirname(os.path.abspath(__file__))), "frontend_dist")
-    if os.path.isdir(possible_dir):
-        STATIC_DIR = possible_dir
+    for candidate in [
+        os.path.join(os.path.dirname(os.path.dirname(os.path.dirname(os.path.abspath(__file__)))), "frontend_dist"),
+        os.path.join(os.path.dirname(os.path.dirname(os.path.abspath(__file__))), "frontend_dist"),
+        os.path.join(os.path.dirname(os.path.dirname(os.path.dirname(os.path.abspath(__file__)))), "frontend", "dist")
+    ]:
+        if candidate and os.path.isdir(candidate):
+            STATIC_DIR = candidate
+            break
 
 if STATIC_DIR and os.path.exists(os.path.join(STATIC_DIR, "index.html")):
     assets_dir = os.path.join(STATIC_DIR, "assets")
