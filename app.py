@@ -4,6 +4,16 @@ import sys
 # Add project root to sys.path
 sys.path.insert(0, os.path.dirname(os.path.abspath(__file__)))
 
+# ZeroGPU startup requirement
+try:
+    import spaces
+    @spaces.GPU
+    def init_gpu():
+        return True
+    init_gpu()
+except Exception:
+    pass
+
 from backend.app.main import app
 import gradio as gr
 
