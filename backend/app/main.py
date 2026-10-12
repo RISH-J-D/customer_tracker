@@ -26,10 +26,18 @@ app = FastAPI(
     lifespan=lifespan
 )
 
-# Enable CORS for React frontend (Vite port 5173, mobile capacitor, and any origin in dev)
+import os
+
+cors_env = os.getenv("CORS_ORIGINS", "*").strip()
+if cors_env and cors_env != "*":
+    allowed_origins = [o.strip() for o in cors_env.split(",") if o.strip()]
+else:
+    allowed_origins = ["*"]
+
+# Enable CORS for React frontend (Vite port 5173, Vercel deployments, capacitor, and configurable origins)
 app.add_middleware(
     CORSMiddleware,
-    allow_origins=["*"],
+    allow_origins=allowed_origins,
     allow_credentials=True,
     allow_methods=["*"],
     allow_headers=["*"],
@@ -45,6 +53,16 @@ app.include_router(logs.router)
 app.include_router(accounts.router)
 
 from .database import engine, Base, SessionLocal, get_db_info
+
+@app.get("/")
+def root():
+    return {
+        "status": "online",
+        "service": "Customer Tracker & Detailing Accounts API",
+        "version": "1.0.0",
+        "docs": "/docs",
+        "health": "/api/health"
+    }
 
 @app.get("/api/health")
 def health_check():
