@@ -1,4 +1,4 @@
-import React, { useState, useMemo } from 'react';
+import React, { useState, useMemo, useEffect } from 'react';
 import { 
   Building2, 
   FolderKanban, 
@@ -16,13 +16,14 @@ import {
   CheckCircle2, 
   Clock, 
   AlertCircle, 
-  Briefcase,
-  Layers,
-  Table as TableIcon,
-  LayoutGrid,
-  ChevronDown,
-  ChevronRight,
-  ExternalLink
+  Briefcase, 
+  Layers, 
+  Table as TableIcon, 
+  LayoutGrid, 
+  ChevronDown, 
+  ChevronRight, 
+  ChevronLeft, 
+  ExternalLink 
 } from 'lucide-react';
 
 export default function AccountsPage({
@@ -39,6 +40,12 @@ export default function AccountsPage({
   const [companyFilter, setCompanyFilter] = useState('all');
   const [viewMode, setViewMode] = useState('grouped'); // 'grouped' or 'table'
   const [expandedCompanies, setExpandedCompanies] = useState({});
+  const [page, setPage] = useState(1);
+  const [pageSize, setPageSize] = useState(25);
+
+  useEffect(() => {
+    setPage(1);
+  }, [search, statusFilter, companyFilter, viewMode]);
 
   // Unique companies list for filtering
   const uniqueCompanies = useMemo(() => {
@@ -90,6 +97,18 @@ export default function AccountsPage({
     });
     return Object.values(groups);
   }, [filteredAccounts]);
+
+  // Pagination computations
+  const totalItems = viewMode === 'grouped' ? groupedByCompany.length : filteredAccounts.length;
+  const totalPages = Math.ceil(totalItems / pageSize) || 1;
+
+  const paginatedGroups = useMemo(() => {
+    return groupedByCompany.slice((page - 1) * pageSize, page * pageSize);
+  }, [groupedByCompany, page, pageSize]);
+
+  const paginatedAccounts = useMemo(() => {
+    return filteredAccounts.slice((page - 1) * pageSize, page * pageSize);
+  }, [filteredAccounts, page, pageSize]);
 
   // Overall metrics
   const totalValue = useMemo(() => accounts.reduce((sum, a) => sum + (a.deal_value || 0), 0), [accounts]);
@@ -372,7 +391,7 @@ export default function AccountsPage({
       ) : viewMode === 'grouped' ? (
         /* Company-Grouped Accordion View */
         <div style={{ display: 'flex', flexDirection: 'column', gap: '1.25rem' }}>
-          {groupedByCompany.map(group => {
+          {paginatedGroups.map(group => {
             const isCollapsed = expandedCompanies[group.company] === false;
             return (
               <div 
@@ -598,7 +617,7 @@ export default function AccountsPage({
               </tr>
             </thead>
             <tbody>
-              {filteredAccounts.map(acc => {
+              {paginatedAccounts.map(acc => {
                 const badge = getStatusBadge(acc.status);
                 return (
                   <tr key={acc.id}>
@@ -675,6 +694,69 @@ export default function AccountsPage({
               })}
             </tbody>
           </table>
+        </div>
+      )}
+
+      {/* Pagination Controls */}
+      {filteredAccounts.length > 0 && (
+        <div style={{
+          display: 'flex',
+          alignItems: 'center',
+          justifyContent: 'space-between',
+          flexWrap: 'wrap',
+          gap: '0.75rem',
+          marginTop: '1.5rem',
+          padding: '0.85rem 1.15rem',
+          backgroundColor: 'var(--bg-surface)',
+          borderRadius: 'var(--radius-md)',
+          border: '1px solid var(--border-subtle)',
+          boxShadow: 'var(--shadow-xs)'
+        }}>
+          <div style={{ fontSize: '0.8rem', color: 'var(--text-secondary)' }}>
+            Showing <strong>{((page - 1) * pageSize) + 1}</strong>–<strong>{Math.min(page * pageSize, totalItems)}</strong> of <strong>{totalItems.toLocaleString()}</strong> {viewMode === 'grouped' ? 'companies' : 'projects'}
+          </div>
+
+          <div style={{ display: 'flex', alignItems: 'center', gap: '0.75rem', flexWrap: 'wrap' }}>
+            <div style={{ display: 'flex', alignItems: 'center', gap: '0.35rem', fontSize: '0.75rem', color: 'var(--text-muted)' }}>
+              <span>Per page:</span>
+              <select
+                value={pageSize}
+                onChange={(e) => { setPageSize(Number(e.target.value)); setPage(1); }}
+                className="form-select"
+                style={{ fontSize: '0.75rem', height: '30px', padding: '0.1rem 0.5rem' }}
+              >
+                <option value={25}>25</option>
+                <option value={50}>50</option>
+                <option value={100}>100</option>
+              </select>
+            </div>
+
+            <div style={{ display: 'flex', alignItems: 'center', gap: '0.35rem' }}>
+              <button
+                className="btn btn-secondary btn-sm"
+                disabled={page <= 1}
+                onClick={() => setPage(p => Math.max(1, p - 1))}
+                style={{ fontSize: '0.75rem', height: '30px', padding: '0 0.65rem', display: 'flex', alignItems: 'center', gap: '0.25rem' }}
+              >
+                <ChevronLeft size={13} />
+                <span>Prev</span>
+              </button>
+
+              <span style={{ fontSize: '0.75rem', fontWeight: 600, color: 'var(--text-primary)', padding: '0 0.5rem' }}>
+                Page {page} of {totalPages}
+              </span>
+
+              <button
+                className="btn btn-secondary btn-sm"
+                disabled={page >= totalPages}
+                onClick={() => setPage(p => Math.min(totalPages, p + 1))}
+                style={{ fontSize: '0.75rem', height: '30px', padding: '0 0.65rem', display: 'flex', alignItems: 'center', gap: '0.25rem' }}
+              >
+                <span>Next</span>
+                <ChevronRight size={13} />
+              </button>
+            </div>
+          </div>
         </div>
       )}
     </div>

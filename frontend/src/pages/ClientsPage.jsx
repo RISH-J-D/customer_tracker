@@ -1,4 +1,4 @@
-import React, { useState } from 'react';
+import React, { useState, useMemo, useEffect } from 'react';
 import { 
   Users, 
   Search, 
@@ -11,10 +11,12 @@ import {
   Building, 
   Trash2, 
   Edit3, 
-  Table as TableIcon,
-  LayoutGrid,
-  Clock,
-  UploadCloud
+  Table as TableIcon, 
+  LayoutGrid, 
+  Clock, 
+  UploadCloud,
+  ChevronLeft,
+  ChevronRight
 } from 'lucide-react';
 
 import confetti from 'canvas-confetti';
@@ -34,28 +36,41 @@ export default function ClientsPage({
   const [activeFilter, setActiveFilter] = useState('all'); // all, positive, pending_followup
   const [searchQuery, setSearchQuery] = useState('');
   const [viewMode, setViewMode] = useState('table'); // 'table' or 'grid'
+  const [page, setPage] = useState(1);
+  const [pageSize, setPageSize] = useState(25);
+
+  useEffect(() => {
+    setPage(1);
+  }, [searchQuery, activeFilter, viewMode]);
 
   // Only non-converted clients/prospects appear on the Clients page
   const clientProspects = clients.filter(c => !c.is_lead);
 
-  const filteredClients = clientProspects.filter(c => {
-    // Filters
-    if (activeFilter === 'positive' && !c.positive_approach) return false;
-    if (activeFilter === 'pending_followup' && !(c.pending_followups > 0)) return false;
+  const filteredClients = useMemo(() => {
+    return clientProspects.filter(c => {
+      // Filters
+      if (activeFilter === 'positive' && !c.positive_approach) return false;
+      if (activeFilter === 'pending_followup' && !(c.pending_followups > 0)) return false;
 
-    // Search query
-    if (searchQuery.trim()) {
-      const q = searchQuery.toLowerCase();
-      const matchName = c.name?.toLowerCase().includes(q);
-      const matchComp = c.company?.toLowerCase().includes(q);
-      const matchEmail = c.email?.toLowerCase().includes(q);
-      const matchPhone = c.phone?.toLowerCase().includes(q);
-      const matchNotes = c.notes?.toLowerCase().includes(q);
-      if (!matchName && !matchComp && !matchEmail && !matchPhone && !matchNotes) return false;
-    }
+      // Search query
+      if (searchQuery.trim()) {
+        const q = searchQuery.toLowerCase();
+        const matchName = c.name?.toLowerCase().includes(q);
+        const matchComp = c.company?.toLowerCase().includes(q);
+        const matchEmail = c.email?.toLowerCase().includes(q);
+        const matchPhone = c.phone?.toLowerCase().includes(q);
+        const matchNotes = c.notes?.toLowerCase().includes(q);
+        if (!matchName && !matchComp && !matchEmail && !matchPhone && !matchNotes) return false;
+      }
 
-    return true;
-  });
+      return true;
+    });
+  }, [clientProspects, activeFilter, searchQuery]);
+
+  const totalPages = Math.ceil(filteredClients.length / pageSize) || 1;
+  const paginatedClients = useMemo(() => {
+    return filteredClients.slice((page - 1) * pageSize, page * pageSize);
+  }, [filteredClients, page, pageSize]);
 
   const handlePromote = (clientId, e) => {
     if (e) e.stopPropagation();
@@ -253,7 +268,7 @@ export default function ClientsPage({
               </tr>
             </thead>
             <tbody>
-              {filteredClients.map((c) => {
+              {paginatedClients.map((c) => {
                 const initials = c.name ? c.name.split(' ').map(n => n[0]).join('').slice(0, 2).toUpperCase() : 'CL';
                 return (
                   <tr key={c.id}>
@@ -405,7 +420,7 @@ export default function ClientsPage({
       ) : (
         /* CARDS GRID VIEW */
         <div style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fill, minmax(320px, 1fr))', gap: '1rem' }}>
-          {filteredClients.map((c) => (
+          {paginatedClients.map((c) => (
             <div
               key={c.id}
               className="card"
@@ -517,6 +532,69 @@ export default function ClientsPage({
               </div>
             </div>
           ))}
+        </div>
+      )}
+
+      {/* Pagination Controls */}
+      {filteredClients.length > 0 && (
+        <div style={{
+          display: 'flex',
+          alignItems: 'center',
+          justifyContent: 'space-between',
+          flexWrap: 'wrap',
+          gap: '0.75rem',
+          marginTop: '1.5rem',
+          padding: '0.85rem 1.15rem',
+          backgroundColor: 'var(--bg-surface)',
+          borderRadius: 'var(--radius-md)',
+          border: '1px solid var(--border-subtle)',
+          boxShadow: 'var(--shadow-xs)'
+        }}>
+          <div style={{ fontSize: '0.8rem', color: 'var(--text-secondary)' }}>
+            Showing <strong>{((page - 1) * pageSize) + 1}</strong>–<strong>{Math.min(page * pageSize, filteredClients.length)}</strong> of <strong>{filteredClients.length.toLocaleString()}</strong> clients
+          </div>
+
+          <div style={{ display: 'flex', alignItems: 'center', gap: '0.75rem', flexWrap: 'wrap' }}>
+            <div style={{ display: 'flex', alignItems: 'center', gap: '0.35rem', fontSize: '0.75rem', color: 'var(--text-muted)' }}>
+              <span>Per page:</span>
+              <select
+                value={pageSize}
+                onChange={(e) => { setPageSize(Number(e.target.value)); setPage(1); }}
+                className="form-select"
+                style={{ fontSize: '0.75rem', height: '30px', padding: '0.1rem 0.5rem' }}
+              >
+                <option value={25}>25</option>
+                <option value={50}>50</option>
+                <option value={100}>100</option>
+              </select>
+            </div>
+
+            <div style={{ display: 'flex', alignItems: 'center', gap: '0.35rem' }}>
+              <button
+                className="btn btn-secondary btn-sm"
+                disabled={page <= 1}
+                onClick={() => setPage(p => Math.max(1, p - 1))}
+                style={{ fontSize: '0.75rem', height: '30px', padding: '0 0.65rem', display: 'flex', alignItems: 'center', gap: '0.25rem' }}
+              >
+                <ChevronLeft size={13} />
+                <span>Prev</span>
+              </button>
+
+              <span style={{ fontSize: '0.75rem', fontWeight: 600, color: 'var(--text-primary)', padding: '0 0.5rem' }}>
+                Page {page} of {totalPages}
+              </span>
+
+              <button
+                className="btn btn-secondary btn-sm"
+                disabled={page >= totalPages}
+                onClick={() => setPage(p => Math.min(totalPages, p + 1))}
+                style={{ fontSize: '0.75rem', height: '30px', padding: '0 0.65rem', display: 'flex', alignItems: 'center', gap: '0.25rem' }}
+              >
+                <span>Next</span>
+                <ChevronRight size={13} />
+              </button>
+            </div>
+          </div>
         </div>
       )}
     </div>

@@ -1,4 +1,4 @@
-import React, { useState } from 'react';
+import React, { useState, useMemo, useEffect } from 'react';
 import { 
   Sparkles, 
   Search, 
@@ -17,7 +17,9 @@ import {
   Clock,
   UploadCloud,
   RotateCcw,
-  Building2
+  Building2,
+  ChevronLeft,
+  ChevronRight
 } from 'lucide-react';
 import ExportDropdown from '../components/ExportDropdown';
 
@@ -36,6 +38,12 @@ export default function LeadsPage({
   const [activeFilter, setActiveFilter] = useState('all'); // all, positive, pending_followup
   const [searchQuery, setSearchQuery] = useState('');
   const [viewMode, setViewMode] = useState('table'); // 'table' or 'grid'
+  const [page, setPage] = useState(1);
+  const [pageSize, setPageSize] = useState(25);
+
+  useEffect(() => {
+    setPage(1);
+  }, [searchQuery, activeFilter, viewMode]);
 
   const filteredLeads = leads.filter(c => {
     // Only leads belong on this page
@@ -61,6 +69,11 @@ export default function LeadsPage({
 
   const totalLeadValue = leads.filter(c => c.is_lead).reduce((acc, c) => acc + (c.deal_value || 0), 0);
   const positiveLeadCount = leads.filter(c => c.is_lead && c.positive_approach).length;
+
+  const totalPages = Math.ceil(filteredLeads.length / pageSize) || 1;
+  const paginatedLeads = useMemo(() => {
+    return filteredLeads.slice((page - 1) * pageSize, page * pageSize);
+  }, [filteredLeads, page, pageSize]);
 
   return (
     <div>
@@ -281,7 +294,7 @@ export default function LeadsPage({
               </tr>
             </thead>
             <tbody>
-              {filteredLeads.map((c) => {
+              {paginatedLeads.map((c) => {
                 const initials = c.name ? c.name.split(' ').map(n => n[0]).join('').slice(0, 2).toUpperCase() : 'LD';
                 return (
                   <tr key={c.id}>
@@ -456,7 +469,7 @@ export default function LeadsPage({
       ) : (
         /* CARDS GRID VIEW */
         <div style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fill, minmax(320px, 1fr))', gap: '1rem' }}>
-          {filteredLeads.map((c) => (
+          {paginatedLeads.map((c) => (
             <div
               key={c.id}
               className="card"
@@ -588,6 +601,69 @@ export default function LeadsPage({
               </div>
             </div>
           ))}
+        </div>
+      )}
+
+      {/* Pagination Controls */}
+      {filteredLeads.length > 0 && (
+        <div style={{
+          display: 'flex',
+          alignItems: 'center',
+          justifyContent: 'space-between',
+          flexWrap: 'wrap',
+          gap: '0.75rem',
+          marginTop: '1.5rem',
+          padding: '0.85rem 1.15rem',
+          backgroundColor: 'var(--bg-surface)',
+          borderRadius: 'var(--radius-md)',
+          border: '1px solid var(--border-subtle)',
+          boxShadow: 'var(--shadow-xs)'
+        }}>
+          <div style={{ fontSize: '0.8rem', color: 'var(--text-secondary)' }}>
+            Showing <strong>{((page - 1) * pageSize) + 1}</strong>–<strong>{Math.min(page * pageSize, filteredLeads.length)}</strong> of <strong>{filteredLeads.length.toLocaleString()}</strong> leads
+          </div>
+
+          <div style={{ display: 'flex', alignItems: 'center', gap: '0.75rem', flexWrap: 'wrap' }}>
+            <div style={{ display: 'flex', alignItems: 'center', gap: '0.35rem', fontSize: '0.75rem', color: 'var(--text-muted)' }}>
+              <span>Per page:</span>
+              <select
+                value={pageSize}
+                onChange={(e) => { setPageSize(Number(e.target.value)); setPage(1); }}
+                className="form-select"
+                style={{ fontSize: '0.75rem', height: '30px', padding: '0.1rem 0.5rem' }}
+              >
+                <option value={25}>25</option>
+                <option value={50}>50</option>
+                <option value={100}>100</option>
+              </select>
+            </div>
+
+            <div style={{ display: 'flex', alignItems: 'center', gap: '0.35rem' }}>
+              <button
+                className="btn btn-secondary btn-sm"
+                disabled={page <= 1}
+                onClick={() => setPage(p => Math.max(1, p - 1))}
+                style={{ fontSize: '0.75rem', height: '30px', padding: '0 0.65rem', display: 'flex', alignItems: 'center', gap: '0.25rem' }}
+              >
+                <ChevronLeft size={13} />
+                <span>Prev</span>
+              </button>
+
+              <span style={{ fontSize: '0.75rem', fontWeight: 600, color: 'var(--text-primary)', padding: '0 0.5rem' }}>
+                Page {page} of {totalPages}
+              </span>
+
+              <button
+                className="btn btn-secondary btn-sm"
+                disabled={page >= totalPages}
+                onClick={() => setPage(p => Math.min(totalPages, p + 1))}
+                style={{ fontSize: '0.75rem', height: '30px', padding: '0 0.65rem', display: 'flex', alignItems: 'center', gap: '0.25rem' }}
+              >
+                <span>Next</span>
+                <ChevronRight size={13} />
+              </button>
+            </div>
+          </div>
         </div>
       )}
     </div>
