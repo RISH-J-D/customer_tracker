@@ -1,0 +1,15 @@
+{
+  "appId": "com.tracker.clientfollowup",
+  "appName": "ClientFlow Tracker",
+  "webDir": "dist",
+  "server": {
+    "cleartext": true
+  },
+  "plugins": {
+    "LocalNotifications": {
+      "smallIcon": "ic_stat_icon_config_sample",
+      "iconColor": "#4F46E5",
+      "sound": "beep.wav"
+    }
+  }
+}
