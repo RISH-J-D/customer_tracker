@@ -8,7 +8,7 @@ import {
 } from 'lucide-react';
 import { api } from '../services/api';
 
-export default function ExportDropdown({ onOpenModal, label = "Export", align = "right" }) {
+export default function ExportDropdown({ onOpenModal, label = "Export", align = "right", type = "clients" }) {
   const [isOpen, setIsOpen] = useState(false);
   const dropdownRef = useRef(null);
 
@@ -35,7 +35,7 @@ export default function ExportDropdown({ onOpenModal, label = "Export", align = 
   }, [isOpen]);
 
   const handleDownload = (format) => {
-    const url = api.getExportUrl(format);
+    const url = type === 'accounts' ? api.getAccountsExportUrl(format) : api.getExportUrl(format);
     const link = document.createElement('a');
     link.href = url;
     link.setAttribute('download', '');
@@ -143,7 +143,7 @@ export default function ExportDropdown({ onOpenModal, label = "Export", align = 
                 Excel (.xlsx)
               </div>
               <div style={{ fontSize: '0.7rem', color: 'var(--text-muted)' }}>
-                Multi-sheet report
+                {type === 'accounts' ? 'Accounts & projects workbook' : 'Multi-sheet report'}
               </div>
             </div>
           </button>
@@ -186,7 +186,7 @@ export default function ExportDropdown({ onOpenModal, label = "Export", align = 
                 PDF Document (.pdf)
               </div>
               <div style={{ fontSize: '0.7rem', color: 'var(--text-muted)' }}>
-                Printable summary
+                {type === 'accounts' ? 'Executive project summary' : 'Printable summary'}
               </div>
             </div>
           </button>
@@ -229,7 +229,7 @@ export default function ExportDropdown({ onOpenModal, label = "Export", align = 
                 CSV Data (.csv)
               </div>
               <div style={{ fontSize: '0.7rem', color: 'var(--text-muted)' }}>
-                Raw tabular data
+                {type === 'accounts' ? 'Raw project accounts' : 'Raw tabular data'}
               </div>
             </div>
           </button>

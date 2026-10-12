@@ -23,8 +23,10 @@ import {
   ChevronDown, 
   ChevronRight, 
   ChevronLeft, 
-  ExternalLink 
+  ExternalLink,
+  UploadCloud 
 } from 'lucide-react';
+import ExportDropdown from '../components/ExportDropdown';
 
 export default function AccountsPage({
   accounts = [],
@@ -33,7 +35,9 @@ export default function AccountsPage({
   onDeleteAccount,
   onScheduleFollowup,
   clients = [],
-  availableClients = []
+  availableClients = [],
+  onOpenExportModal,
+  onOpenImportModal
 }) {
   const [search, setSearch] = useState('');
   const [statusFilter, setStatusFilter] = useState('all');
@@ -176,7 +180,25 @@ export default function AccountsPage({
           </div>
         </div>
 
-        <div style={{ display: 'flex', alignItems: 'center', gap: '0.5rem' }}>
+        <div style={{ display: 'flex', alignItems: 'center', gap: '0.5rem', flexWrap: 'wrap' }}>
+          {/* Import Excel Button for Accounts */}
+          {onOpenImportModal && (
+            <button 
+              className="btn btn-secondary" 
+              onClick={onOpenImportModal}
+              title="Import accounts and projects from Excel (.xlsx) or CSV"
+            >
+              <UploadCloud size={14} />
+              <span>Import Excel</span>
+            </button>
+          )}
+
+          {/* Export Dropdown for Accounts */}
+          <ExportDropdown 
+            type="accounts" 
+            onOpenModal={onOpenExportModal} 
+          />
+
           <button 
             className="btn btn-primary"
             onClick={onOpenNewAccount}

@@ -70,7 +70,9 @@ export default function App() {
   const [isCompleteModalOpen, setIsCompleteModalOpen] = useState(false);
   const [activeFollowupToComplete, setActiveFollowupToComplete] = useState(null);
   const [isExportModalOpen, setIsExportModalOpen] = useState(false);
+  const [exportModalType, setExportModalType] = useState('clients');
   const [isImportModalOpen, setIsImportModalOpen] = useState(false);
+  const [importModalMode, setImportModalMode] = useState('clients');
   const [isDbModalOpen, setIsDbModalOpen] = useState(false);
 
   // Load all app data
@@ -354,8 +356,14 @@ export default function App() {
                 setPreselectedClientId(String(clientId));
                 setIsFollowupModalOpen(true);
               }}
-              onOpenExportModal={() => setIsExportModalOpen(true)}
-              onOpenImportModal={() => setIsImportModalOpen(true)}
+              onOpenExportModal={() => {
+                setExportModalType('clients');
+                setIsExportModalOpen(true);
+              }}
+              onOpenImportModal={() => {
+                setImportModalMode('clients');
+                setIsImportModalOpen(true);
+              }}
             />
           )}
 
@@ -383,8 +391,14 @@ export default function App() {
                 await api.updateClient(clientId, { is_lead: false, status: 'Prospect' });
                 await loadData();
               }}
-              onOpenExportModal={() => setIsExportModalOpen(true)}
-              onOpenImportModal={() => setIsImportModalOpen(true)}
+              onOpenExportModal={() => {
+                setExportModalType('clients');
+                setIsExportModalOpen(true);
+              }}
+              onOpenImportModal={() => {
+                setImportModalMode('clients');
+                setIsImportModalOpen(true);
+              }}
             />
           )}
 
@@ -410,6 +424,14 @@ export default function App() {
               }}
               onDeleteAccount={handleDeleteAccount}
               onConvertToAccount={handleConvertToAccount}
+              onOpenExportModal={() => {
+                setExportModalType('accounts');
+                setIsExportModalOpen(true);
+              }}
+              onOpenImportModal={() => {
+                setImportModalMode('accounts');
+                setIsImportModalOpen(true);
+              }}
             />
           )}
 
@@ -517,12 +539,13 @@ export default function App() {
         isOpen={isExportModalOpen}
         onClose={() => setIsExportModalOpen(false)}
         stats={stats}
+        defaultType={exportModalType}
       />
 
-      {/* Import option strictly available on Client and Lead pages */}
       <ImportExcelModal
         isOpen={isImportModalOpen}
         onClose={() => setIsImportModalOpen(false)}
+        mode={importModalMode}
         onImportSuccess={() => loadData()}
       />
 

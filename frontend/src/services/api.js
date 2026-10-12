@@ -293,7 +293,7 @@ export const api = {
     return res.json();
   },
 
-  // Export & Import URLs
+  // Export & Import URLs - Clients & Leads
   getExportUrl(format) {
     return `${API_BASE}/export/${format}`;
   },
@@ -313,6 +313,30 @@ export const api = {
     if (!res.ok) {
       const errData = await res.json().catch(() => ({}));
       throw new Error(errData.detail || 'Failed to import Excel spreadsheet');
+    }
+    return res.json();
+  },
+
+  // Export & Import URLs - Accounts & Projects
+  getAccountsExportUrl(format) {
+    return `${API_BASE}/accounts/export/${format}`;
+  },
+
+  getAccountsTemplateUrl() {
+    return `${API_BASE}/accounts/template`;
+  },
+
+  async importAccountsExcel(file) {
+    const formData = new FormData();
+    formData.append('file', file);
+    const res = await fetch(`${API_BASE}/accounts/import-excel`, {
+      method: 'POST',
+      headers: getAuthHeaders(),
+      body: formData
+    });
+    if (!res.ok) {
+      const errData = await res.json().catch(() => ({}));
+      throw new Error(errData.detail || 'Failed to import Accounts spreadsheet');
     }
     return res.json();
   },

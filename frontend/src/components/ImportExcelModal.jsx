@@ -17,7 +17,8 @@ import { api } from '../services/api';
 export default function ImportExcelModal({
   isOpen,
   onClose,
-  onImportSuccess
+  onImportSuccess,
+  mode = 'clients'
 }) {
   const [file, setFile] = useState(null);
   const [isDragging, setIsDragging] = useState(false);
@@ -27,6 +28,8 @@ export default function ImportExcelModal({
   const fileInputRef = useRef(null);
 
   if (!isOpen) return null;
+
+  const isAccounts = mode === 'accounts';
 
   const handleReset = () => {
     setFile(null);
@@ -75,7 +78,9 @@ export default function ImportExcelModal({
     setErrorMessage('');
 
     try {
-      const result = await api.importExcel(file);
+      const result = isAccounts 
+        ? await api.importAccountsExcel(file)
+        : await api.importExcel(file);
       setImportResult(result);
       confetti({
         particleCount: 70,
@@ -93,10 +98,11 @@ export default function ImportExcelModal({
   };
 
   const handleDownloadTemplate = () => {
-    const url = api.getImportTemplateUrl();
+    const url = isAccounts ? api.getAccountsTemplateUrl() : api.getImportTemplateUrl();
+    const filename = isAccounts ? 'Accounts_Import_Template.xlsx' : 'Client_Import_Template.xlsx';
     const link = document.createElement('a');
     link.href = url;
-    link.setAttribute('download', 'Client_Import_Template.xlsx');
+    link.setAttribute('download', filename);
     document.body.appendChild(link);
     link.click();
     document.body.removeChild(link);
@@ -126,10 +132,12 @@ export default function ImportExcelModal({
             </div>
             <div>
               <h3 style={{ fontSize: '1.05rem', fontWeight: 700, color: 'var(--text-primary)' }}>
-                Import Clients from Excel
+                {isAccounts ? 'Import Accounts & Projects from Excel' : 'Import Clients from Excel'}
               </h3>
               <p style={{ fontSize: '0.75rem', color: 'var(--text-muted)' }}>
-                Upload an Excel or CSV file to populate the client and leads table
+                {isAccounts 
+                  ? 'Upload an Excel or CSV file to populate corporate accounts and detailing projects'
+                  : 'Upload an Excel or CSV file to populate the client and leads table'}
               </p>
             </div>
           </div>
@@ -184,9 +192,9 @@ export default function ImportExcelModal({
               <p style={{ fontSize: '0.825rem', color: 'var(--text-primary)' }}>
                 {importResult.message}
               </p>
-              {importResult.skipped_count > 0 && (
+              {(importResult.skipped > 0 || importResult.skipped_count > 0) && (
                 <p style={{ fontSize: '0.75rem', color: 'var(--text-muted)', marginTop: '0.25rem' }}>
-                  ({importResult.skipped_count} row(s) without client names were skipped)
+                  ({importResult.skipped || importResult.skipped_count} row(s) without required names were skipped)
                 </p>
               )}
             </div>
@@ -281,16 +289,35 @@ export default function ImportExcelModal({
               borderRadius: 'var(--radius-sm)',
               border: '1px solid var(--border-light)'
             }}>
-              <strong style={{ color: 'var(--text-secondary)' }}>Supported Column Headers (Steel Detailing):</strong><br />
-              <span style={{ fontFamily: 'var(--font-mono)' }}>Name</span> (Required),{' '}
-              <span style={{ fontFamily: 'var(--font-mono)' }}>Company</span> (Fabricator / Contractor),{' '}
-              <span style={{ fontFamily: 'var(--font-mono)' }}>Email</span>,{' '}
-              <span style={{ fontFamily: 'var(--font-mono)' }}>Phone</span>,{' '}
-              <span style={{ fontFamily: 'var(--font-mono)' }}>Status</span>,{' '}
-              <span style={{ fontFamily: 'var(--font-mono)' }}>Is Lead? (YES/NO)</span>,{' '}
-              <span style={{ fontFamily: 'var(--font-mono)' }}>Positive Approach? (YES/NO)</span>,{' '}
-              <span style={{ fontFamily: 'var(--font-mono)' }}>Est Deal Value ($)</span>,{' '}
-              <span style={{ fontFamily: 'var(--font-mono)' }}>Notes</span>
+              <strong style={{ color: 'var(--text-secondary)' }}>
+                {isAccounts ? 'Supported Column Headers (Corporate Accounts & Projects):' : 'Supported Column Headers (Steel Detailing):'}
+              </strong><br />
+              {isAccounts ? (
+                <>
+                  <span style={{ fontFamily: 'var(--font-mono)' }}>Account Name</span> (or Company),{' '}
+                  <span style={{ fontFamily: 'var(--font-mono)' }}>Contact Person</span> (Client Representative),{' '}
+                  <span style={{ fontFamily: 'var(--font-mono)' }}>Position</span> (Designation),{' '}
+                  <span style={{ fontFamily: 'var(--font-mono)' }}>Phone</span>,{' '}
+                  <span style={{ fontFamily: 'var(--font-mono)' }}>Email</span>,{' '}
+                  <span style={{ fontFamily: 'var(--font-mono)' }}>Project Name</span>,{' '}
+                  <span style={{ fontFamily: 'var(--font-mono)' }}>Status</span>,{' '}
+                  <span style={{ fontFamily: 'var(--font-mono)' }}>Deal Value ($)</span>,{' '}
+                  <span style={{ fontFamily: 'var(--font-mono)' }}>Steel Tonnage</span>,{' '}
+                  <span style={{ fontFamily: 'var(--font-mono)' }}>City / State / Country</span>
+                </>
+              ) : (
+                <>
+                  <span style={{ fontFamily: 'var(--font-mono)' }}>Name</span> (Required),{' '}
+                  <span style={{ fontFamily: 'var(--font-mono)' }}>Company</span> (Fabricator / Contractor),{' '}
+                  <span style={{ fontFamily: 'var(--font-mono)' }}>Email</span>,{' '}
+                  <span style={{ fontFamily: 'var(--font-mono)' }}>Phone</span>,{' '}
+                  <span style={{ fontFamily: 'var(--font-mono)' }}>Status</span>,{' '}
+                  <span style={{ fontFamily: 'var(--font-mono)' }}>Is Lead? (YES/NO)</span>,{' '}
+                  <span style={{ fontFamily: 'var(--font-mono)' }}>Positive Approach? (YES/NO)</span>,{' '}
+                  <span style={{ fontFamily: 'var(--font-mono)' }}>Est Deal Value ($)</span>,{' '}
+                  <span style={{ fontFamily: 'var(--font-mono)' }}>Notes</span>
+                </>
+              )}
             </div>
 
         </div>
@@ -299,7 +326,7 @@ export default function ImportExcelModal({
         <div className="modal-footer">
           {importResult ? (
             <button className="btn btn-primary" onClick={handleClose}>
-              Done & View Clients Table
+              {isAccounts ? 'Done & View Accounts Table' : 'Done & View Clients Table'}
             </button>
           ) : (
             <>
