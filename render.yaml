@@ -9,14 +9,6 @@ services:
       - key: PYTHON_VERSION
         value: 3.11.0
       - key: DATABASE_URL
-        fromDatabase:
-          name: tracker-db
-          property: connectionString
+        sync: false
       - key: CORS_ORIGINS
         value: "*"
-
-databases:
-  - name: tracker-db
-    databaseName: tracker_db
-    user: tracker_user
-    plan: free

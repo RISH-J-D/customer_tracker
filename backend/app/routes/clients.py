@@ -1,5 +1,5 @@
 from fastapi import APIRouter, Depends, HTTPException, Query, Header
-from sqlalchemy.orm import Session
+from sqlalchemy.orm import Session, selectinload
 from sqlalchemy import or_
 from typing import List, Optional
 from datetime import datetime
@@ -19,7 +19,7 @@ def get_clients(
     search: Optional[str] = Query(None),
     db: Session = Depends(get_db)
 ):
-    query = db.query(Client)
+    query = db.query(Client).options(selectinload(Client.followups))
 
     if is_lead is not None:
         query = query.filter(Client.is_lead == is_lead)
