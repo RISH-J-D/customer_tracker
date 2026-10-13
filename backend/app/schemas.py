@@ -110,7 +110,8 @@ class DashboardStats(BaseModel):
     today_followups_count: int
     upcoming_meetups_count: int
     high_priority_count: int
-    total_pipeline_value: float
+    total_pipeline_value: float = 0.0
+    total_followups_count: int = 0
     clients_with_positive_approach: int
 
 # --- Account Schemas ---

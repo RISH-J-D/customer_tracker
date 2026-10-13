@@ -58,7 +58,7 @@ export default function ExportModal({
               </h3>
               <p style={{ fontSize: '0.75rem', color: 'var(--text-muted)' }}>
                 {isAccounts
-                  ? 'Download corporate accounts, multi-rep project details, contract values & tonnage'
+                  ? 'Download corporate accounts, multi-rep project details, scope & tonnage'
                   : 'Download client dataset, pipeline leads, and meetup logs in standard formats'}
               </p>
             </div>
@@ -172,7 +172,7 @@ export default function ExportModal({
                 </div>
                 <p style={{ fontSize: '0.75rem', color: 'var(--text-muted)', marginTop: '0.15rem' }}>
                   {isAccounts
-                    ? 'Structured workbook with accounts, representatives, project values, and tonnage.'
+                    ? 'Structured workbook with accounts, representatives, scope notes, and tonnage.'
                     : 'Multi-sheet workbook with styled headers, lead status, and meetup schedules.'}
                 </p>
               </div>
@@ -219,7 +219,7 @@ export default function ExportModal({
                 <p style={{ fontSize: '0.75rem', color: 'var(--text-muted)', marginTop: '0.15rem' }}>
                   {isAccounts
                     ? 'Executive accounts summary with KPI totals, client reps, and detailing scope.'
-                    : 'Landscape summary report with KPI stat cards, contacts, and deal values.'}
+                    : 'Landscape summary report with KPI stat cards, contacts, and follow-up notes.'}
                 </p>
               </div>
             </div>
@@ -264,7 +264,7 @@ export default function ExportModal({
                 </h4>
                 <p style={{ fontSize: '0.75rem', color: 'var(--text-muted)', marginTop: '0.15rem' }}>
                   {isAccounts
-                    ? 'Raw comma-separated dataset with accounts, reps, positions, values, and tonnages.'
+                    ? 'Raw comma-separated dataset with accounts, reps, positions, scope notes, and tonnages.'
                     : 'Raw comma-separated dataset compatible with Google Sheets & CRM imports.'}
                 </p>
               </div>

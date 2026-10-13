@@ -441,8 +441,8 @@ export default function AccountModal({
                           </div>
 
                           <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', marginTop: '0.15rem' }}>
-                            <span style={{ fontSize: '0.7rem', fontWeight: 700, color: '#10B981' }}>
-                              ${lead.deal_value ? lead.deal_value.toLocaleString() : '0'}
+                            <span style={{ fontSize: '0.7rem', color: 'var(--text-muted)' }}>
+                              {lead.city || lead.state || 'Qualified Lead'}
                             </span>
                             {lead.positive_approach && (
                               <span style={{ fontSize: '0.625rem', color: '#D97706', display: 'flex', alignItems: 'center', gap: '0.15rem' }}>
@@ -693,42 +693,22 @@ export default function AccountModal({
               </div>
             </div>
 
-            {/* Financial & Detailing Metrics */}
-            <div style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fit, minmax(200px, 1fr))', gap: '1rem' }}>
-              <div className="form-group">
-                <label className="form-label" htmlFor="acc-val">Contract / Deal Value ($)</label>
-                <div style={{ position: 'relative' }}>
-                  <DollarSign size={14} color="var(--text-muted)" style={{ position: 'absolute', left: '11px', top: '11px' }} />
-                  <input
-                    id="acc-val"
-                    name="deal_value"
-                    type="number"
-                    step="500"
-                    placeholder="e.g. 55000"
-                    value={formData.deal_value}
-                    onChange={handleChange}
-                    className="form-input"
-                    style={{ paddingLeft: '2.25rem' }}
-                  />
-                </div>
-              </div>
-
-              <div className="form-group">
-                <label className="form-label" htmlFor="acc-tonnage">Estimated Steel Tonnage (Tons)</label>
-                <div style={{ position: 'relative' }}>
-                  <Weight size={14} color="var(--text-muted)" style={{ position: 'absolute', left: '11px', top: '11px' }} />
-                  <input
-                    id="acc-tonnage"
-                    name="steel_tonnage"
-                    type="number"
-                    step="10"
-                    placeholder="e.g. 350"
-                    value={formData.steel_tonnage}
-                    onChange={handleChange}
-                    className="form-input"
-                    style={{ paddingLeft: '2.25rem' }}
-                  />
-                </div>
+            {/* Detailing Scope & Metrics */}
+            <div className="form-group">
+              <label className="form-label" htmlFor="acc-tonnage">Estimated Steel Tonnage (Tons)</label>
+              <div style={{ position: 'relative' }}>
+                <Weight size={14} color="var(--text-muted)" style={{ position: 'absolute', left: '11px', top: '11px' }} />
+                <input
+                  id="acc-tonnage"
+                  name="steel_tonnage"
+                  type="number"
+                  step="10"
+                  placeholder="e.g. 350"
+                  value={formData.steel_tonnage}
+                  onChange={handleChange}
+                  className="form-input"
+                  style={{ paddingLeft: '2.25rem' }}
+                />
               </div>
             </div>
 

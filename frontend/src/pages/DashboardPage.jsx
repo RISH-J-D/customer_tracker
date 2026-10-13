@@ -137,16 +137,16 @@ export default function DashboardPage({
 
         <div className="card stat-card">
           <div className="stat-header">
-            <span className="stat-label">Pipeline Value</span>
+            <span className="stat-label">Total Touchpoints</span>
             <div className="stat-icon" style={{ color: '#D97706', backgroundColor: '#FFFBEB' }}>
-              <DollarSign size={15} />
+              <Clock size={15} />
             </div>
           </div>
-          <div className="stat-value" style={{ fontSize: '1.45rem' }}>
-            ${(stats?.total_pipeline_value || 0).toLocaleString()}
+          <div className="stat-value">
+            {stats?.total_followups_count ?? 0}
           </div>
           <div className="stat-footer">
-            <span>Estimated deal volume</span>
+            <span>Interactions & meetups logged</span>
           </div>
         </div>
       </div>

@@ -910,3 +910,25 @@ body {
   animation: spinIcon 1s linear infinite;
 }
 
+/* ==========================================================================
+   Table Follow-up Timeline & In-table Notes Styling
+   ========================================================================== */
+.table-lead-note-box {
+  transition: all 0.15s ease;
+}
+
+.table-lead-note-box:hover {
+  background-color: var(--bg-hover) !important;
+  border-color: var(--border-focus) !important;
+}
+
+[data-theme='dark'] .table-lead-note-box {
+  background-color: rgba(255, 255, 255, 0.04) !important;
+  border-color: var(--border-subtle) !important;
+}
+
+[data-theme='dark'] .table-lead-note-box:hover {
+  background-color: rgba(255, 255, 255, 0.08) !important;
+  border-color: var(--primary) !important;
+}
+

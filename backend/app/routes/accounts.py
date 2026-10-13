@@ -92,7 +92,7 @@ def export_accounts_excel(db: Session = Depends(get_db)):
     headers = [
         "Account ID", "Company", "Account Name", "Project Name", 
         "Client Representative", "First Name", "Last Name", "Position", 
-        "Email", "Phone", "Status", "Contract Value ($)", "Steel Tonnage", 
+        "Email", "Phone", "Status", "Scope & Notes", "Steel Tonnage", 
         "City", "State", "Country", "Notes", "Created Date"
     ]
     ws.append(headers)
@@ -119,7 +119,7 @@ def export_accounts_excel(db: Session = Depends(get_db)):
             a.rep_email or "",
             a.rep_phone or "",
             a.status or "Active Project",
-            f"${a.deal_value:,.2f}" if a.deal_value else "$0.00",
+            a.notes or "Scope documented",
             f"{a.steel_tonnage:,.1f} Tons" if a.steel_tonnage else "N/A",
             a.city or "",
             a.state or "",
@@ -176,7 +176,6 @@ def export_accounts_csv(db: Session = Depends(get_db)):
             "Email": a.rep_email or "",
             "Phone": a.rep_phone or "",
             "Status": a.status,
-            "Contract Value": a.deal_value,
             "Steel Tonnage": a.steel_tonnage,
             "City": a.city or "",
             "State": a.state or "",
@@ -247,7 +246,6 @@ def export_accounts_pdf(db: Session = Depends(get_db)):
     elements.append(Paragraph(f"Generated on {datetime.utcnow().strftime('%B %d, %Y at %I:%M %p UTC')} | ClientFlow Steel Detailing CRM", subtitle_style))
 
     total_accounts = len(accounts)
-    total_val = sum(a.deal_value for a in accounts)
     total_tons = sum(a.steel_tonnage or 0.0 for a in accounts)
     unique_comps = len(set(a.company.lower() for a in accounts if a.company))
 
@@ -257,8 +255,8 @@ def export_accounts_pdf(db: Session = Depends(get_db)):
             Paragraph(str(total_accounts), cell_bold),
             Paragraph("<b>Companies:</b>", cell_style),
             Paragraph(str(unique_comps), cell_bold),
-            Paragraph("<b>Total Contract Value:</b>", cell_style),
-            Paragraph(f"${total_val:,.2f}", cell_bold),
+            Paragraph("<b>Scope Documented:</b>", cell_style),
+            Paragraph(f"{sum(1 for a in accounts if a.notes)} Projects", cell_bold),
             Paragraph("<b>Total Tonnage:</b>", cell_style),
             Paragraph(f"{total_tons:,.0f} Tons", cell_bold)
         ]
@@ -281,7 +279,7 @@ def export_accounts_pdf(db: Session = Depends(get_db)):
         Paragraph("<b>Position</b>", cell_bold),
         Paragraph("<b>Contact</b>", cell_bold),
         Paragraph("<b>Status</b>", cell_bold),
-        Paragraph("<b>Value</b>", cell_bold),
+        Paragraph("<b>Scope Notes</b>", cell_bold),
         Paragraph("<b>Tonnage</b>", cell_bold)
     ]
     table_data = [table_headers]
@@ -295,7 +293,7 @@ def export_accounts_pdf(db: Session = Depends(get_db)):
             Paragraph(a.rep_designation or "-", cell_style),
             Paragraph(contact_str or "-", cell_style),
             Paragraph(a.status or "Active", cell_style),
-            Paragraph(f"${a.deal_value:,.0f}", cell_style),
+            Paragraph((a.notes[:50] + "...") if a.notes else "-", cell_style),
             Paragraph(f"{a.steel_tonnage:,.0f} T" if a.steel_tonnage else "-", cell_style)
         ])
 
@@ -562,7 +560,7 @@ def create_account(
     action_type = "CONVERT_LEAD_TO_ACCOUNT" if is_from_client else "CREATE_ACCOUNT"
     description = (
         f"Created Account '{account.account_name}' under company '{account.company}' "
-        f"for project '{account.project_name}' (Rep: {account.client_representative}, Value: ${account.deal_value:,.2f})"
+        f"for project '{account.project_name}' (Rep: {account.client_representative})"
     )
 
     log_activity(

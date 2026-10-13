@@ -200,6 +200,15 @@ export default function App() {
     }
   };
 
+  const handleUpdateClientNotes = async (clientId, notes) => {
+    try {
+      await api.updateClient(clientId, { notes });
+      setClients(prev => prev.map(c => c.id === clientId ? { ...c, notes } : c));
+    } catch (err) {
+      console.error('Error updating notes:', err);
+    }
+  };
+
   // Account actions
   const handleSaveAccount = async (formData, accountId) => {
     if (accountId) {
@@ -398,6 +407,7 @@ export default function App() {
                 setImportModalMode('clients');
                 setIsImportModalOpen(true);
               }}
+              onUpdateNotes={handleUpdateClientNotes}
             />
           )}
 
@@ -433,6 +443,7 @@ export default function App() {
                 setImportModalMode('clients');
                 setIsImportModalOpen(true);
               }}
+              onUpdateNotes={handleUpdateClientNotes}
             />
           )}
 

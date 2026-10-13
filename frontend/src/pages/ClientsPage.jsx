@@ -21,6 +21,7 @@ import {
 
 import confetti from 'canvas-confetti';
 import ExportDropdown from '../components/ExportDropdown';
+import FollowupTimelineCell from '../components/FollowupTimelineCell';
 
 export default function ClientsPage({
   clients,
@@ -31,7 +32,8 @@ export default function ClientsPage({
   onTogglePositive,
   onScheduleFollowupForClient,
   onOpenExportModal,
-  onOpenImportModal
+  onOpenImportModal,
+  onUpdateNotes
 }) {
   const [activeFilter, setActiveFilter] = useState('all'); // all, positive, pending_followup
   const [searchQuery, setSearchQuery] = useState('');
@@ -259,12 +261,12 @@ export default function ClientsPage({
           <table className="custom-table">
             <thead>
               <tr>
-                <th style={{ width: '28%' }}>Fabricator / Company</th>
-                <th style={{ width: '14%' }}>Outreach Stage</th>
-                <th style={{ width: '15%' }}>Approach Reaction</th>
-                <th style={{ width: '18%' }}>Contact Details</th>
-                <th style={{ width: '15%' }}>Role & Location</th>
-                <th style={{ width: '15%' }}>Convert / Action</th>
+                <th style={{ width: '25%' }}>Fabricator / Company</th>
+                <th style={{ width: '13%' }}>Outreach Stage</th>
+                <th style={{ width: '12%' }}>Approach Reaction</th>
+                <th style={{ width: '15%' }}>Contact Details</th>
+                <th style={{ width: '23%' }}>Follow-up Timeline & Notes</th>
+                <th style={{ width: '12%' }}>Convert / Action</th>
               </tr>
             </thead>
             <tbody>
@@ -295,10 +297,10 @@ export default function ClientsPage({
                           <div style={{ fontWeight: 600, color: 'var(--text-primary)', fontSize: '0.85rem' }}>
                             {c.name}
                           </div>
-                          <div style={{ display: 'flex', alignItems: 'center', gap: '0.35rem', color: 'var(--text-muted)', fontSize: '0.75rem', marginTop: '0.1rem' }}>
+                          <div style={{ display: 'flex', alignItems: 'center', gap: '0.35rem', color: 'var(--text-muted)', fontSize: '0.75rem', marginTop: '0.1rem', flexWrap: 'wrap' }}>
                             <span>{c.company || 'Fabricator / Contractor'}</span>
-                            <span>•</span>
-                            <span style={{ color: 'var(--text-secondary)' }}>Steel Detailing</span>
+                            {c.position && <span>• <strong style={{ fontWeight: 500, color: 'var(--text-secondary)' }}>{c.position}</strong></span>}
+                            {(c.city || c.state) && <span>• {[c.city, c.state].filter(Boolean).join(', ')}</span>}
                           </div>
                         </div>
                       </div>
@@ -359,14 +361,13 @@ export default function ClientsPage({
                       </div>
                     </td>
 
-                    {/* Role & Location (Estimated value is only for leads!) */}
+                    {/* Follow-up Timeline & Notes */}
                     <td>
-                      <div style={{ fontWeight: 600, color: 'var(--text-primary)', fontSize: '0.825rem' }}>
-                        {c.position || 'Client Contact'}
-                      </div>
-                      <div style={{ fontSize: '0.72rem', color: 'var(--text-muted)', marginTop: '0.1rem' }}>
-                        {[c.city, c.state].filter(Boolean).join(', ') || c.country || 'Outreach'}
-                      </div>
+                      <FollowupTimelineCell
+                        client={c}
+                        onScheduleFollowup={onScheduleFollowupForClient}
+                        onUpdateNotes={onUpdateNotes}
+                      />
                     </td>
 
                     {/* Pipeline Action & Row Buttons */}
@@ -498,6 +499,13 @@ export default function ClientsPage({
                     <span>📍 {[c.city, c.state, c.country].filter(Boolean).join(', ')}</span>
                   </div>
                 )}
+                <div style={{ marginTop: '0.4rem', paddingTop: '0.4rem', borderTop: '1px solid var(--border-light)' }}>
+                  <FollowupTimelineCell
+                    client={c}
+                    onScheduleFollowup={onScheduleFollowupForClient}
+                    onUpdateNotes={onUpdateNotes}
+                  />
+                </div>
               </div>
 
               {/* Card Footer Actions */}

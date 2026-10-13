@@ -41,7 +41,7 @@ def export_clients_excel(db: Session = Depends(get_db)):
         bottom=Side(style='thin', color='E2E8F0')
     )
 
-    client_headers = ["ID", "Name", "Company", "Email", "Phone", "Category", "Status", "Is Lead?", "Positive Approach?", "Est. Deal Value ($)", "Created Date", "Notes"]
+    client_headers = ["ID", "Name", "Company", "Email", "Phone", "Category", "Status", "Is Lead?", "Positive Approach?", "Follow-up Touchpoints", "Created Date", "Notes"]
     ws_clients.append(client_headers)
 
     for col_idx in range(1, len(client_headers) + 1):
@@ -65,7 +65,7 @@ def export_clients_excel(db: Session = Depends(get_db)):
             c.status,
             "YES (Lead)" if c.is_lead else "No",
             "YES" if c.positive_approach else "No",
-            f"${c.deal_value:,.2f}",
+            f"{len(c.followups)} touchpoints",
             c.created_at.strftime("%Y-%m-%d %H:%M") if c.created_at else "",
             c.notes or ""
         ]
@@ -213,11 +213,11 @@ def export_clients_pdf(db: Session = Depends(get_db)):
             Paragraph(f"{total_leads} ({round(total_leads / max(total_clients, 1) * 100, 1)}%)", cell_bold),
             Paragraph("<b>Positive Approach:</b>", cell_style),
             Paragraph(str(positive_count), cell_bold),
-            Paragraph("<b>Pipeline Value:</b>", cell_style),
-            Paragraph(f"${total_pipeline:,.2f}", cell_bold)
+            Paragraph("<b>Total Touchpoints:</b>", cell_style),
+            Paragraph(str(sum(len(c.followups) for c in clients)), cell_bold)
         ]
     ]
-    summary_table = Table(summary_data, colWidths=[100, 50, 70, 70, 90, 50, 80, 80])
+    summary_table = Table(summary_data, colWidths=[100, 50, 70, 70, 90, 50, 90, 70])
     summary_table.setStyle(TableStyle([
         ('BACKGROUND', (0, 0), (-1, -1), colors.HexColor('#F8FAFC')),
         ('BOX', (0, 0), (-1, -1), 1, colors.HexColor('#CBD5E1')),
@@ -237,7 +237,7 @@ def export_clients_pdf(db: Session = Depends(get_db)):
         Paragraph("<b>Status</b>", cell_bold),
         Paragraph("<b>Lead?</b>", cell_bold),
         Paragraph("<b>Positive?</b>", cell_bold),
-        Paragraph("<b>Value</b>", cell_bold),
+        Paragraph("<b>Touchpoints</b>", cell_bold),
         Paragraph("<b>Follow-up Notes</b>", cell_bold)
     ]
     table_data = [table_headers]
@@ -256,7 +256,7 @@ def export_clients_pdf(db: Session = Depends(get_db)):
             Paragraph(c.status, cell_style),
             Paragraph(is_lead_badge, cell_style),
             Paragraph(pos_badge, cell_style),
-            Paragraph(f"${c.deal_value:,.0f}", cell_style),
+            Paragraph(f"{len(c.followups)} touchpoints", cell_style),
             Paragraph(notes_snippet, cell_style)
         ])
 
@@ -305,7 +305,7 @@ def export_clients_csv(db: Session = Depends(get_db)):
             "Status": c.status,
             "Is Lead": "YES" if c.is_lead else "NO",
             "Positive Approach": "YES" if c.positive_approach else "NO",
-            "Est Deal Value": c.deal_value,
+            "Follow-up Touchpoints": len(c.followups),
             "Notes": c.notes or "",
             "Created Date": c.created_at.strftime("%Y-%m-%d %H:%M:%S") if c.created_at else ""
         })

@@ -40,7 +40,7 @@ def get_dashboard_stats(db: Session = Depends(get_db)):
         FollowUp.status == "Pending"
     ).count()
 
-    total_value = db.query(func.coalesce(func.sum(Client.deal_value), 0.0)).filter(Client.is_lead == True).scalar() or 0.0
+    total_followups_count = db.query(FollowUp).count()
 
     return DashboardStats(
         total_clients=total_clients,
@@ -49,7 +49,8 @@ def get_dashboard_stats(db: Session = Depends(get_db)):
         today_followups_count=today_followups,
         upcoming_meetups_count=upcoming_meetups,
         high_priority_count=high_priority,
-        total_pipeline_value=round(float(total_value), 2),
+        total_pipeline_value=0.0,
+        total_followups_count=total_followups_count,
         clients_with_positive_approach=positive_clients
     )
 

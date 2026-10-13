@@ -87,13 +87,11 @@ export default function AccountsPage({
         groups[comp] = {
           company: comp,
           items: [],
-          totalValue: 0,
           totalTonnage: 0,
           representatives: new Set()
         };
       }
       groups[comp].items.push(acc);
-      groups[comp].totalValue += acc.deal_value || 0;
       groups[comp].totalTonnage += acc.steel_tonnage || 0;
       if (acc.client_representative) {
         groups[comp].representatives.add(acc.client_representative);
@@ -115,7 +113,6 @@ export default function AccountsPage({
   }, [filteredAccounts, page, pageSize]);
 
   // Overall metrics
-  const totalValue = useMemo(() => accounts.reduce((sum, a) => sum + (a.deal_value || 0), 0), [accounts]);
   const activeCount = useMemo(() => accounts.filter(a => a.status === 'Active Project' || a.status === 'In Detailing').length, [accounts]);
   const totalTonnage = useMemo(() => accounts.reduce((sum, a) => sum + (a.steel_tonnage || 0), 0), [accounts]);
 
@@ -250,13 +247,13 @@ export default function AccountsPage({
 
         <div className="card" style={{ padding: '0.95rem 1.15rem' }}>
           <div style={{ fontSize: '0.72rem', color: 'var(--text-muted)', fontWeight: 600, textTransform: 'uppercase' }}>
-            Total Contract Value
+            Client Representatives
           </div>
-          <div style={{ fontSize: '1.65rem', fontWeight: 800, color: '#10B981', marginTop: '0.2rem' }}>
-            ${totalValue.toLocaleString()}
+          <div style={{ fontSize: '1.65rem', fontWeight: 800, color: 'var(--lead-action)', marginTop: '0.2rem' }}>
+            {new Set(accounts.map(a => a.client_representative).filter(Boolean)).size}
           </div>
           <div style={{ fontSize: '0.7rem', color: 'var(--text-secondary)', marginTop: '0.2rem' }}>
-            Won & Active Pipeline
+            Across {uniqueCompanies.length} Corporate Companies
           </div>
         </div>
 
@@ -478,11 +475,11 @@ export default function AccountsPage({
 
                   <div style={{ display: 'flex', alignItems: 'center', gap: '1rem' }} onClick={(e) => e.stopPropagation()}>
                     <div style={{ textAlign: 'right' }}>
-                      <div style={{ fontSize: '0.95rem', fontWeight: 800, color: '#10B981' }}>
-                        ${group.totalValue.toLocaleString()}
+                      <div style={{ fontSize: '0.95rem', fontWeight: 800, color: 'var(--primary)' }}>
+                        {group.totalTonnage > 0 ? `${group.totalTonnage.toLocaleString()} Tons` : `${group.items.length} Active`}
                       </div>
                       <div style={{ fontSize: '0.68rem', color: 'var(--text-muted)' }}>
-                        {group.totalTonnage > 0 ? `${group.totalTonnage.toLocaleString()} Tons` : 'Combined Value'}
+                        Structural Detailing Scope
                       </div>
                     </div>
 
@@ -583,14 +580,14 @@ export default function AccountsPage({
                             </div>
                           </div>
 
-                          {/* Project Financials & Actions */}
+                          {/* Project Scope & Actions */}
                           <div style={{ display: 'flex', alignItems: 'center', gap: '1.25rem' }}>
-                            <div style={{ textAlign: 'right' }}>
-                              <div style={{ fontSize: '0.95rem', fontWeight: 800, color: 'var(--text-primary)' }}>
-                                ${acc.deal_value ? acc.deal_value.toLocaleString() : '0'}
+                            <div style={{ textAlign: 'right', maxWidth: '240px' }}>
+                              <div style={{ fontSize: '0.8rem', fontWeight: 600, color: 'var(--text-primary)', overflow: 'hidden', textOverflow: 'ellipsis', whiteSpace: 'nowrap' }} title={acc.notes || ''}>
+                                {acc.notes ? `"${acc.notes}"` : 'Scope in progress'}
                               </div>
                               <div style={{ fontSize: '0.68rem', color: 'var(--text-muted)' }}>
-                                {acc.steel_tonnage ? `${acc.steel_tonnage} Tons Steel` : 'Fixed Contract'}
+                                {acc.steel_tonnage ? `${acc.steel_tonnage} Tons Steel` : 'Structural Detailing'}
                               </div>
                             </div>
 
@@ -632,7 +629,7 @@ export default function AccountsPage({
                 <th>Company</th>
                 <th>Client Representative</th>
                 <th>Contact</th>
-                <th>Value ($)</th>
+                <th>Project Scope & Notes</th>
                 <th>Tonnage</th>
                 <th>Status</th>
                 <th style={{ textAlign: 'right' }}>Actions</th>
@@ -671,9 +668,15 @@ export default function AccountsPage({
                       <div>{acc.rep_phone || ''}</div>
                     </td>
                     <td>
-                      <strong style={{ color: '#10B981', fontSize: '0.85rem' }}>
-                        ${acc.deal_value ? acc.deal_value.toLocaleString() : '0'}
-                      </strong>
+                      <div style={{ fontSize: '0.75rem', color: 'var(--text-primary)', maxWidth: '240px', lineHeight: 1.35 }} title={acc.notes || ''}>
+                        {acc.notes ? (
+                          <span style={{ display: '-webkit-box', WebkitLineClamp: 2, WebkitBoxOrient: 'vertical', overflow: 'hidden' }}>
+                            "{acc.notes}"
+                          </span>
+                        ) : (
+                          <span style={{ color: 'var(--text-muted)', fontStyle: 'italic' }}>No scope notes</span>
+                        )}
+                      </div>
                     </td>
                     <td style={{ fontSize: '0.78rem', color: 'var(--text-secondary)' }}>
                       {acc.steel_tonnage ? `${acc.steel_tonnage} T` : '—'}

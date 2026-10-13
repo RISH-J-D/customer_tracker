@@ -301,9 +301,9 @@ export default function ImportExcelModal({
                   <span style={{ fontFamily: 'var(--font-mono)' }}>Email</span>,{' '}
                   <span style={{ fontFamily: 'var(--font-mono)' }}>Project Name</span>,{' '}
                   <span style={{ fontFamily: 'var(--font-mono)' }}>Status</span>,{' '}
-                  <span style={{ fontFamily: 'var(--font-mono)' }}>Deal Value ($)</span>,{' '}
                   <span style={{ fontFamily: 'var(--font-mono)' }}>Steel Tonnage</span>,{' '}
-                  <span style={{ fontFamily: 'var(--font-mono)' }}>City / State / Country</span>
+                  <span style={{ fontFamily: 'var(--font-mono)' }}>City / State / Country</span>,{' '}
+                  <span style={{ fontFamily: 'var(--font-mono)' }}>Notes</span>
                 </>
               ) : (
                 <>
@@ -314,7 +314,6 @@ export default function ImportExcelModal({
                   <span style={{ fontFamily: 'var(--font-mono)' }}>Status</span>,{' '}
                   <span style={{ fontFamily: 'var(--font-mono)' }}>Is Lead? (YES/NO)</span>,{' '}
                   <span style={{ fontFamily: 'var(--font-mono)' }}>Positive Approach? (YES/NO)</span>,{' '}
-                  <span style={{ fontFamily: 'var(--font-mono)' }}>Est Deal Value ($)</span>,{' '}
                   <span style={{ fontFamily: 'var(--font-mono)' }}>Notes</span>
                 </>
               )}

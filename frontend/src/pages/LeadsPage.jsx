@@ -22,6 +22,7 @@ import {
   ChevronRight
 } from 'lucide-react';
 import ExportDropdown from '../components/ExportDropdown';
+import FollowupTimelineCell from '../components/FollowupTimelineCell';
 
 export default function LeadsPage({
   leads,
@@ -33,7 +34,8 @@ export default function LeadsPage({
   onRevertToClient,
   onConvertToAccount,
   onOpenExportModal,
-  onOpenImportModal
+  onOpenImportModal,
+  onUpdateNotes
 }) {
   const [activeFilter, setActiveFilter] = useState('all'); // all, positive, pending_followup
   const [searchQuery, setSearchQuery] = useState('');
@@ -67,7 +69,7 @@ export default function LeadsPage({
     return true;
   });
 
-  const totalLeadValue = leads.filter(c => c.is_lead).reduce((acc, c) => acc + (c.deal_value || 0), 0);
+  const totalTouchpoints = leads.filter(c => c.is_lead).reduce((acc, c) => acc + (c.total_followups || (c.followups ? c.followups.length : 0)), 0);
   const positiveLeadCount = leads.filter(c => c.is_lead && c.positive_approach).length;
 
   const totalPages = Math.ceil(filteredLeads.length / pageSize) || 1;
@@ -191,13 +193,13 @@ export default function LeadsPage({
 
         <div className="card" style={{ padding: '0.85rem 1rem' }}>
           <div style={{ fontSize: '0.72rem', color: 'var(--text-muted)', fontWeight: 600, textTransform: 'uppercase' }}>
-            Pipeline Deal Value
+            Follow-up Touchpoints
           </div>
           <div style={{ fontSize: '1.4rem', fontWeight: 800, color: 'var(--text-primary)', marginTop: '0.2rem' }}>
-            ${totalLeadValue.toLocaleString()}
+            {totalTouchpoints}
           </div>
           <div style={{ fontSize: '0.72rem', color: 'var(--text-muted)', marginTop: '0.15rem' }}>
-            Estimated detailing quotes
+            Interactions & meetings logged
           </div>
         </div>
 
@@ -285,12 +287,12 @@ export default function LeadsPage({
           <table className="custom-table">
             <thead>
               <tr>
-                <th style={{ width: '28%' }}>Lead & Fabricator / Client</th>
-                <th style={{ width: '15%' }}>Conversion & Status</th>
-                <th style={{ width: '14%' }}>Positive Interest</th>
-                <th style={{ width: '18%' }}>Contact Details</th>
-                <th style={{ width: '12%' }}>Est. Detailing Value</th>
-                <th style={{ width: '13%' }}>Actions</th>
+                <th style={{ width: '25%' }}>Lead & Fabricator / Client</th>
+                <th style={{ width: '13%' }}>Conversion & Status</th>
+                <th style={{ width: '11%' }}>Positive Interest</th>
+                <th style={{ width: '15%' }}>Contact Details</th>
+                <th style={{ width: '24%' }}>Follow-up Timeline & Notes</th>
+                <th style={{ width: '12%' }}>Actions</th>
               </tr>
             </thead>
             <tbody>
@@ -386,14 +388,13 @@ export default function LeadsPage({
                       </div>
                     </td>
 
-                    {/* Deal Value */}
+                    {/* Follow-up Timeline & Notes */}
                     <td>
-                      <div style={{ fontWeight: 700, color: c.deal_value > 0 ? 'var(--lead-color)' : 'var(--text-muted)', fontSize: '0.85rem' }}>
-                        {c.deal_value > 0 ? `$${c.deal_value.toLocaleString()}` : '—'}
-                      </div>
-                      <span style={{ fontSize: '0.68rem', color: 'var(--text-muted)' }}>
-                        {c.total_followups} touchpoint(s)
-                      </span>
+                      <FollowupTimelineCell
+                        client={c}
+                        onScheduleFollowup={onScheduleFollowupForLead}
+                        onUpdateNotes={onUpdateNotes}
+                      />
                     </td>
 
                     {/* Actions */}
@@ -548,17 +549,13 @@ export default function LeadsPage({
                     <span>{c.phone}</span>
                   </div>
                 )}
-                {c.deal_value > 0 && (
-                  <div style={{ display: 'flex', alignItems: 'center', gap: '0.35rem', color: 'var(--lead-color)', fontWeight: 700 }}>
-                    <DollarSign size={12} />
-                    <span>Est. Detailing Quote: ${c.deal_value.toLocaleString()}</span>
-                  </div>
-                )}
-                {c.notes && (
-                  <p style={{ fontSize: '0.72rem', color: 'var(--text-muted)', marginTop: '0.25rem', fontStyle: 'italic' }}>
-                    "{c.notes}"
-                  </p>
-                )}
+                <div style={{ marginTop: '0.4rem', paddingTop: '0.4rem', borderTop: '1px solid var(--border-light)' }}>
+                  <FollowupTimelineCell
+                    client={c}
+                    onScheduleFollowup={onScheduleFollowupForLead}
+                    onUpdateNotes={onUpdateNotes}
+                  />
+                </div>
               </div>
 
               {/* Card Footer Actions */}

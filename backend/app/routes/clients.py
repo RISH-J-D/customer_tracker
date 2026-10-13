@@ -248,7 +248,7 @@ def promote_client_to_lead(
         entity_type="Lead",
         entity_id=client.id,
         entity_name=f"{client.name} ({client.company or 'Steel Detailing'})",
-        description=f"Promoted prospect '{client.name}' to Qualified Lead (Deal Value: ${client.deal_value:,.2f})",
+        description=f"Promoted prospect '{client.name}' to Qualified Lead",
         changes={"is_lead": True, "status": "Lead", "positive_approach": True},
         user_name=x_user_name,
         user_username=x_user_username

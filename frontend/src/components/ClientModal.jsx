@@ -254,57 +254,31 @@ export default function ClientModal({
               </div>
             </div>
 
-            <div style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fit, minmax(200px, 1fr))', gap: '0.85rem' }}>
-              <div className="form-group">
-                <label className="form-label">Status Stage</label>
-                <select
-                  className="form-select"
-                  value={formData.status}
-                  onChange={(e) => {
-                    const st = e.target.value;
-                    const isL = st === 'Lead' || st === 'New Lead' || st === 'Accepted' || st === 'Active';
-                    const isPos = isL || st === 'Positive Response';
-                    setFormData({ ...formData, status: st, is_lead: isL, positive_approach: isPos });
-                  }}
-                >
-                  <option value="Prospect">Prospect</option>
-                  <option value="FollowUp">FollowUp</option>
-                  <option value="In Discussion">In Discussion</option>
-                  <option value="Meeting Scheduled">Meeting Scheduled</option>
-                  <option value="Positive Response">Positive Response</option>
-                  <option value="Lead">Lead</option>
-                  <option value="New Lead">New Lead</option>
-                  <option value="Accepted">Accepted</option>
-                  <option value="Voicemail">Voicemail</option>
-                  <option value="No Need">No Need</option>
-                  <option value="Closed Won">Closed Won</option>
-                  <option value="Lost">Lost</option>
-                </select>
-              </div>
-
-              {(isLeadMode || formData.is_lead) ? (
-                <div className="form-group">
-                  <label className="form-label" style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between' }}>
-                    <span>Estimated Steel Detailing Deal Value ($)</span>
-                    <span style={{ fontSize: '0.72rem', color: 'var(--lead-color)', fontWeight: 600 }}>Lead Quote</span>
-                  </label>
-                  <input
-                    type="number"
-                    min="0"
-                    step="500"
-                    placeholder="25000"
-                    className="form-input"
-                    value={formData.deal_value}
-                    onChange={(e) => setFormData({ ...formData, deal_value: parseFloat(e.target.value) || 0 })}
-                  />
-                </div>
-              ) : (
-                <div className="form-group" style={{ display: 'flex', flexDirection: 'column', justifyContent: 'center' }}>
-                  <div style={{ fontSize: '0.75rem', color: 'var(--text-muted)', backgroundColor: 'var(--bg-subtle)', padding: '0.5rem 0.65rem', borderRadius: 'var(--radius-sm)', border: '1px solid var(--border-light)' }}>
-                    ℹ️ <strong>Client Prospect Stage</strong>: Estimated values are only added once qualified and converted into a <strong>Lead</strong>.
-                  </div>
-                </div>
-              )}
+            <div className="form-group">
+              <label className="form-label">Status Stage</label>
+              <select
+                className="form-select"
+                value={formData.status}
+                onChange={(e) => {
+                  const st = e.target.value;
+                  const isL = st === 'Lead' || st === 'New Lead' || st === 'Accepted' || st === 'Active';
+                  const isPos = isL || st === 'Positive Response';
+                  setFormData({ ...formData, status: st, is_lead: isL, positive_approach: isPos });
+                }}
+              >
+                <option value="Prospect">Prospect</option>
+                <option value="FollowUp">FollowUp</option>
+                <option value="In Discussion">In Discussion</option>
+                <option value="Meeting Scheduled">Meeting Scheduled</option>
+                <option value="Positive Response">Positive Response</option>
+                <option value="Lead">Lead</option>
+                <option value="New Lead">New Lead</option>
+                <option value="Accepted">Accepted</option>
+                <option value="Voicemail">Voicemail</option>
+                <option value="No Need">No Need</option>
+                <option value="Closed Won">Closed Won</option>
+                <option value="Lost">Lost</option>
+              </select>
             </div>
 
 
