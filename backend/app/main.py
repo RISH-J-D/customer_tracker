@@ -56,7 +56,7 @@ from .database import engine, Base, SessionLocal, get_db_info
 
 @app.get("/api/health")
 def health_check():
-    return {"status": "healthy", "service": "client-reminder-backend", "version": "1.0.0"}
+    return {"status": "healthy", "service": "client-reminder-backend", "version": "1.0.1"}
 
 @app.get("/api/db-status")
 def database_status():
