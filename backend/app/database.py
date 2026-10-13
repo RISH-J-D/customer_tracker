@@ -26,9 +26,11 @@ if not DATABASE_URL:
     DATABASE_URL = f"sqlite:///{os.path.join(DB_DIR, 'tracker.db')}"
 
 
-# SQLAlchemy 2.0 / psycopg compatibility: convert postgres:// to postgresql://
+# SQLAlchemy 2.x defaults to psycopg (v3) for postgresql:// — force psycopg2 driver explicitly
 if DATABASE_URL.startswith("postgres://"):
-    DATABASE_URL = DATABASE_URL.replace("postgres://", "postgresql://", 1)
+    DATABASE_URL = DATABASE_URL.replace("postgres://", "postgresql+psycopg2://", 1)
+elif DATABASE_URL.startswith("postgresql://"):
+    DATABASE_URL = DATABASE_URL.replace("postgresql://", "postgresql+psycopg2://", 1)
 
 IS_SQLITE = DATABASE_URL.startswith("sqlite")
 IS_POSTGRES = DATABASE_URL.startswith("postgresql")
