@@ -37,11 +37,25 @@ export default function App() {
     }
   });
   const [clients, setClients] = useState([]);
-  const [accounts, setAccounts] = useState([]);
+  const [accounts, setAccounts] = useState(() => {
+    try {
+      const saved = localStorage.getItem('cached_accounts_count');
+      return saved ? new Array(parseInt(saved, 10)).fill({}) : [];
+    } catch {
+      return [];
+    }
+  });
   const [followups, setFollowups] = useState([]);
   const [todayFollowups, setTodayFollowups] = useState([]);
   const [upcomingMeetups, setUpcomingMeetups] = useState([]);
-  const [stats, setStats] = useState(null);
+  const [stats, setStats] = useState(() => {
+    try {
+      const saved = localStorage.getItem('cached_stats');
+      return saved ? JSON.parse(saved) : null;
+    } catch {
+      return null;
+    }
+  });
   const [notifications, setNotifications] = useState([]);
   const [dbInfo, setDbInfo] = useState(null);
   const [showLoginPage, setShowLoginPage] = useState(false);
@@ -77,27 +91,47 @@ export default function App() {
 
   // Load all app data
   const loadData = useCallback(async () => {
+    // 1. Fetch dashboard stats & DB status immediately (fast: ~100ms)
+    api.getDashboardStats().then(st => {
+      if (st) {
+        setStats(st);
+        try { localStorage.setItem('cached_stats', JSON.stringify(st)); } catch {}
+      }
+    }).catch(err => console.error('Error fetching dashboard stats:', err));
+
+    api.getDbStatus().then(status => {
+      if (status) setDbInfo(status);
+    }).catch(() => null);
+
+    // 2. Fetch full lists with Promise.allSettled so no single slow query blocks other data
     try {
-      const [cls, accs, flws, tFlws, uFlws, st, notifs, dbStatus] = await Promise.all([
+      const [clsRes, accsRes, flwsRes, tFlwsRes, uFlwsRes, notifsRes] = await Promise.allSettled([
         api.getClients(),
-        api.getAccounts().catch(() => []),
+        api.getAccounts(),
         api.getFollowups(),
         api.getFollowups({ today_only: true }),
         api.getFollowups({ upcoming_only: true }),
-        api.getDashboardStats(),
-        api.getNotifications(),
-        api.getDbStatus().catch(() => null)
+        api.getNotifications()
       ]);
 
-      setClients(cls);
-      setAccounts(accs);
-      setFollowups(flws);
-      setTodayFollowups(tFlws);
-      setUpcomingMeetups(uFlws);
-      setStats(st);
-      setNotifications(notifs);
-      if (dbStatus) {
-        setDbInfo(dbStatus);
+      if (clsRes.status === 'fulfilled' && clsRes.value) {
+        setClients(clsRes.value);
+      }
+      if (accsRes.status === 'fulfilled' && accsRes.value) {
+        setAccounts(accsRes.value);
+        try { localStorage.setItem('cached_accounts_count', String(accsRes.value.length)); } catch {}
+      }
+      if (flwsRes.status === 'fulfilled' && flwsRes.value) {
+        setFollowups(flwsRes.value);
+      }
+      if (tFlwsRes.status === 'fulfilled' && tFlwsRes.value) {
+        setTodayFollowups(tFlwsRes.value);
+      }
+      if (uFlwsRes.status === 'fulfilled' && uFlwsRes.value) {
+        setUpcomingMeetups(uFlwsRes.value);
+      }
+      if (notifsRes.status === 'fulfilled' && notifsRes.value) {
+        setNotifications(notifsRes.value);
       }
     } catch (err) {
       console.error('Error fetching tracker data:', err);
