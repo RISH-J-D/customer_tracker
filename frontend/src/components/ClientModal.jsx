@@ -1,6 +1,5 @@
 import React, { useState, useEffect } from 'react';
 import { X, UserPlus } from 'lucide-react';
-import confetti from 'canvas-confetti';
 
 
 export default function ClientModal({
@@ -97,11 +96,6 @@ export default function ClientModal({
     setSubmitting(true);
     try {
       if (isLeadFinal && (!client || !client.is_lead)) {
-        confetti({
-          particleCount: 80,
-          spread: 70,
-          origin: { y: 0.6 }
-        });
       }
       await onSave({ 
         ...formData, 
@@ -129,7 +123,7 @@ export default function ClientModal({
               width: '32px',
               height: '32px',
               borderRadius: 'var(--radius-md)',
-              backgroundColor: '#EFF6FF',
+              backgroundColor: 'var(--primary-subtle)',
               color: 'var(--primary)',
               display: 'flex',
               alignItems: 'center',
@@ -301,7 +295,7 @@ export default function ClientModal({
                   type="checkbox"
                   checked={formData.positive_approach}
                   onChange={(e) => setFormData({ ...formData, positive_approach: e.target.checked })}
-                  style={{ width: '16px', height: '16px', accentColor: '#D97706' }}
+                  style={{ width: '16px', height: '16px', accentColor: 'var(--warning-strong)' }}
                 />
               </label>
 
@@ -318,7 +312,7 @@ export default function ClientModal({
                     status: e.target.checked ? 'Lead' : formData.status,
                     positive_approach: e.target.checked ? true : formData.positive_approach
                   })}
-                  style={{ width: '16px', height: '16px', accentColor: '#059669' }}
+                  style={{ width: '16px', height: '16px', accentColor: 'var(--lead-action)' }}
                 />
               </label>
             </div>

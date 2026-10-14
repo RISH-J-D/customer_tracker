@@ -4,8 +4,8 @@ from sqlalchemy import or_
 from typing import List, Optional
 from datetime import datetime
 from ..database import get_db
-from ..models import Client, FollowUp, NotificationItem
-from ..schemas import ClientCreate, ClientUpdate, ClientResponse, ClientWithDetails
+from ..models import Client, ClientNote, FollowUp, NotificationItem
+from ..schemas import ClientCreate, ClientUpdate, ClientResponse, ClientWithDetails, ClientNoteCreate, ClientNoteResponse
 from ..activity_logger import log_activity
 
 router = APIRouter(prefix="/api/clients", tags=["Clients"])
@@ -19,7 +19,7 @@ def get_clients(
     search: Optional[str] = Query(None),
     db: Session = Depends(get_db)
 ):
-    query = db.query(Client).options(selectinload(Client.followups))
+    query = db.query(Client).options(selectinload(Client.followups), selectinload(Client.note_entries))
 
     if is_lead is not None:
         query = query.filter(Client.is_lead == is_lead)
@@ -37,7 +37,8 @@ def get_clients(
                 Client.company.ilike(search_fmt),
                 Client.email.ilike(search_fmt),
                 Client.phone.ilike(search_fmt),
-                Client.notes.ilike(search_fmt)
+                Client.notes.ilike(search_fmt),
+                Client.note_entries.any(ClientNote.content.ilike(search_fmt))
             )
         )
 
@@ -213,6 +214,101 @@ def delete_client(
 
     return {"message": "Client deleted successfully", "id": client_id}
 
+def _get_note_or_404(db: Session, client_id: int, note_id: int) -> ClientNote:
+    note = db.query(ClientNote).filter(ClientNote.id == note_id, ClientNote.client_id == client_id).first()
+    if not note:
+        raise HTTPException(status_code=404, detail="Note not found")
+    return note
+
+@router.post("/{client_id}/notes", response_model=ClientNoteResponse)
+def add_client_note(
+    client_id: int,
+    note_in: ClientNoteCreate,
+    x_user_name: Optional[str] = Header(None),
+    x_user_username: Optional[str] = Header(None),
+    db: Session = Depends(get_db)
+):
+    client = db.query(Client).filter(Client.id == client_id).first()
+    if not client:
+        raise HTTPException(status_code=404, detail="Client not found")
+    content = note_in.content.strip()
+    if not content:
+        raise HTTPException(status_code=400, detail="Note cannot be empty")
+
+    note = ClientNote(client_id=client_id, content=content, author=x_user_name)
+    db.add(note)
+    client.updated_at = datetime.utcnow()
+    db.commit()
+    db.refresh(note)
+
+    log_activity(
+        db=db,
+        action="ADD_NOTE",
+        entity_type="Lead" if client.is_lead else "Client",
+        entity_id=client.id,
+        entity_name=f"{client.name} ({client.company or 'Steel Detailing'})",
+        description=f"Added note to {client.name}: '{content[:80]}'",
+        user_name=x_user_name,
+        user_username=x_user_username
+    )
+    return note
+
+@router.put("/{client_id}/notes/{note_id}", response_model=ClientNoteResponse)
+def update_client_note(
+    client_id: int,
+    note_id: int,
+    note_in: ClientNoteCreate,
+    x_user_name: Optional[str] = Header(None),
+    x_user_username: Optional[str] = Header(None),
+    db: Session = Depends(get_db)
+):
+    note = _get_note_or_404(db, client_id, note_id)
+    content = note_in.content.strip()
+    if not content:
+        raise HTTPException(status_code=400, detail="Note cannot be empty")
+    old_content = note.content
+    note.content = content
+    db.commit()
+    db.refresh(note)
+
+    log_activity(
+        db=db,
+        action="UPDATE_NOTE",
+        entity_type="Note",
+        entity_id=note.id,
+        entity_name=f"Note on client #{client_id}",
+        description=f"Edited note: '{content[:80]}'",
+        changes={"content": {"old": old_content, "new": content}},
+        user_name=x_user_name,
+        user_username=x_user_username
+    )
+    return note
+
+@router.delete("/{client_id}/notes/{note_id}")
+def delete_client_note(
+    client_id: int,
+    note_id: int,
+    x_user_name: Optional[str] = Header(None),
+    x_user_username: Optional[str] = Header(None),
+    db: Session = Depends(get_db)
+):
+    note = _get_note_or_404(db, client_id, note_id)
+    old_content = note.content
+    db.delete(note)
+    db.commit()
+
+    log_activity(
+        db=db,
+        action="DELETE_NOTE",
+        entity_type="Note",
+        entity_id=note_id,
+        entity_name=f"Note on client #{client_id}",
+        description=f"Deleted note: '{old_content[:80]}'",
+        user_name=x_user_name,
+        user_username=x_user_username
+    )
+    return {"message": "Note deleted", "id": note_id}
+
 @router.patch("/{client_id}/promote-to-lead", response_model=ClientResponse)
 def promote_client_to_lead(
     client_id: int,
@@ -250,6 +346,38 @@ def promote_client_to_lead(
         entity_name=f"{client.name} ({client.company or 'Steel Detailing'})",
         description=f"Promoted prospect '{client.name}' to Qualified Lead",
         changes={"is_lead": True, "status": "Lead", "positive_approach": True},
+        user_name=x_user_name,
+        user_username=x_user_username
+    )
+
+    return client
+
+@router.patch("/{client_id}/toggle-account", response_model=ClientResponse)
+def toggle_account_conversion(
+    client_id: int,
+    x_user_name: Optional[str] = Header(None),
+    x_user_username: Optional[str] = Header(None),
+    db: Session = Depends(get_db)
+):
+    """Mark a lead as converted to an account, or undo that"""
+    client = db.query(Client).filter(Client.id == client_id).first()
+    if not client:
+        raise HTTPException(status_code=404, detail="Client not found")
+
+    was_converted = client.account_converted_at is not None
+    client.account_converted_at = None if was_converted else datetime.utcnow()
+    client.updated_at = datetime.utcnow()
+    db.commit()
+    db.refresh(client)
+
+    log_activity(
+        db=db,
+        action="UPDATE_CLIENT",
+        entity_type="Lead" if client.is_lead else "Client",
+        entity_id=client.id,
+        entity_name=f"{client.name} ({client.company or 'Steel Detailing'})",
+        description=f"{'Reverted account conversion for' if was_converted else 'Converted to account:'} '{client.name}'",
+        changes={"account_converted": {"old": was_converted, "new": not was_converted}},
         user_name=x_user_name,
         user_username=x_user_username
     )

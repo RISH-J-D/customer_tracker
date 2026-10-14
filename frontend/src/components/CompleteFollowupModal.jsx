@@ -1,6 +1,5 @@
 import React, { useState, useEffect } from 'react';
-import { X, CheckCircle2, Sparkles, ThumbsUp } from 'lucide-react';
-import confetti from 'canvas-confetti';
+import { X, CheckCircle2, Target, ThumbsUp } from 'lucide-react';
 
 export default function CompleteFollowupModal({
   isOpen,
@@ -28,11 +27,6 @@ export default function CompleteFollowupModal({
     setSubmitting(true);
     try {
       if (convertToLead) {
-        confetti({
-          particleCount: 80,
-          spread: 70,
-          origin: { y: 0.6 }
-        });
       }
       await onComplete(followup.id, {
         isPositive,
@@ -60,8 +54,8 @@ export default function CompleteFollowupModal({
               width: '32px',
               height: '32px',
               borderRadius: 'var(--radius-md)',
-              backgroundColor: '#ECFDF5',
-              color: '#059669',
+              backgroundColor: 'var(--lead-bg)',
+              color: 'var(--lead-action)',
               display: 'flex',
               alignItems: 'center',
               justifyContent: 'center'
@@ -109,7 +103,7 @@ export default function CompleteFollowupModal({
             onClick={() => setIsPositive(!isPositive)}
             >
               <div style={{ display: 'flex', alignItems: 'center', gap: '0.65rem' }}>
-                <ThumbsUp size={16} color={isPositive ? '#D97706' : '#9CA3AF'} />
+                <ThumbsUp size={16} color={isPositive ? 'var(--warning-strong)' : 'var(--text-placeholder)'} />
                 <div>
                   <div style={{ fontSize: '0.815rem', fontWeight: 600, color: isPositive ? 'var(--positive-color)' : 'var(--text-primary)' }}>
                     Positive Approach from Client
@@ -123,7 +117,7 @@ export default function CompleteFollowupModal({
                 type="checkbox"
                 checked={isPositive}
                 onChange={(e) => setIsPositive(e.target.checked)}
-                style={{ width: '16px', height: '16px', accentColor: '#D97706' }}
+                style={{ width: '16px', height: '16px', accentColor: 'var(--warning-strong)' }}
               />
             </div>
 
@@ -139,12 +133,12 @@ export default function CompleteFollowupModal({
                 justifyContent: 'space-between',
               }}>
                 <div style={{ display: 'flex', alignItems: 'center', gap: '0.65rem' }}>
-                  <Sparkles size={16} color="#059669" />
+                  <Target size={16} color="var(--lead-action)" />
                   <div>
                     <div style={{ fontSize: '0.815rem', fontWeight: 600, color: 'var(--lead-color)' }}>
                       Convert Client to Qualified Lead?
                     </div>
-                    <div style={{ fontSize: '0.72rem', color: '#065F46' }}>
+                    <div style={{ fontSize: '0.72rem', color: 'var(--lead-color)' }}>
                       Promote {followup.client_name} to active high-priority Lead
                     </div>
                   </div>
@@ -153,7 +147,7 @@ export default function CompleteFollowupModal({
                   type="checkbox"
                   checked={convertToLead}
                   onChange={(e) => setConvertToLead(e.target.checked)}
-                  style={{ width: '16px', height: '16px', accentColor: '#059669' }}
+                  style={{ width: '16px', height: '16px', accentColor: 'var(--lead-action)' }}
                 />
               </div>
             )}
@@ -168,7 +162,7 @@ export default function CompleteFollowupModal({
               className={`btn ${convertToLead && isPositive ? 'btn-lead' : 'btn-primary'}`} 
               disabled={submitting}
             >
-              {convertToLead && isPositive ? <Sparkles size={14} /> : <CheckCircle2 size={14} />}
+              {convertToLead && isPositive ? <Target size={14} /> : <CheckCircle2 size={14} />}
               <span>{submitting ? 'Saving...' : convertToLead && isPositive ? 'Complete & Convert to Lead' : 'Complete Interaction'}</span>
             </button>
           </div>

@@ -7,18 +7,16 @@ import {
   CheckCircle2, 
   AlertCircle, 
   Loader2, 
-  Sparkles,
+  Target,
   Info
 } from 'lucide-react';
 
-import confetti from 'canvas-confetti';
 import { api } from '../services/api';
 
 export default function ImportExcelModal({
   isOpen,
   onClose,
-  onImportSuccess,
-  mode = 'clients'
+  onImportSuccess
 }) {
   const [file, setFile] = useState(null);
   const [isDragging, setIsDragging] = useState(false);
@@ -28,8 +26,6 @@ export default function ImportExcelModal({
   const fileInputRef = useRef(null);
 
   if (!isOpen) return null;
-
-  const isAccounts = mode === 'accounts';
 
   const handleReset = () => {
     setFile(null);
@@ -78,15 +74,8 @@ export default function ImportExcelModal({
     setErrorMessage('');
 
     try {
-      const result = isAccounts 
-        ? await api.importAccountsExcel(file)
-        : await api.importExcel(file);
+      const result = await api.importExcel(file);
       setImportResult(result);
-      confetti({
-        particleCount: 70,
-        spread: 60,
-        origin: { y: 0.6 }
-      });
       if (onImportSuccess) {
         onImportSuccess(result);
       }
@@ -98,8 +87,8 @@ export default function ImportExcelModal({
   };
 
   const handleDownloadTemplate = () => {
-    const url = isAccounts ? api.getAccountsTemplateUrl() : api.getImportTemplateUrl();
-    const filename = isAccounts ? 'Accounts_Import_Template.xlsx' : 'Client_Import_Template.xlsx';
+    const url = api.getImportTemplateUrl();
+    const filename = 'Client_Import_Template.xlsx';
     const link = document.createElement('a');
     link.href = url;
     link.setAttribute('download', filename);
@@ -132,12 +121,10 @@ export default function ImportExcelModal({
             </div>
             <div>
               <h3 style={{ fontSize: '1.05rem', fontWeight: 700, color: 'var(--text-primary)' }}>
-                {isAccounts ? 'Import Accounts & Projects from Excel' : 'Import Clients from Excel'}
+                Import Clients from Excel
               </h3>
               <p style={{ fontSize: '0.75rem', color: 'var(--text-muted)' }}>
-                {isAccounts 
-                  ? 'Upload an Excel or CSV file to populate corporate accounts and detailing projects'
-                  : 'Upload an Excel or CSV file to populate the client and leads table'}
+                Upload an Excel or CSV file to populate the client and leads table
               </p>
             </div>
           </div>
@@ -290,22 +277,8 @@ export default function ImportExcelModal({
               border: '1px solid var(--border-light)'
             }}>
               <strong style={{ color: 'var(--text-secondary)' }}>
-                {isAccounts ? 'Supported Column Headers (Corporate Accounts & Projects):' : 'Supported Column Headers (Steel Detailing):'}
+                Supported Column Headers (Steel Detailing):
               </strong><br />
-              {isAccounts ? (
-                <>
-                  <span style={{ fontFamily: 'var(--font-mono)' }}>Account Name</span> (or Company),{' '}
-                  <span style={{ fontFamily: 'var(--font-mono)' }}>Contact Person</span> (Client Representative),{' '}
-                  <span style={{ fontFamily: 'var(--font-mono)' }}>Position</span> (Designation),{' '}
-                  <span style={{ fontFamily: 'var(--font-mono)' }}>Phone</span>,{' '}
-                  <span style={{ fontFamily: 'var(--font-mono)' }}>Email</span>,{' '}
-                  <span style={{ fontFamily: 'var(--font-mono)' }}>Project Name</span>,{' '}
-                  <span style={{ fontFamily: 'var(--font-mono)' }}>Status</span>,{' '}
-                  <span style={{ fontFamily: 'var(--font-mono)' }}>Steel Tonnage</span>,{' '}
-                  <span style={{ fontFamily: 'var(--font-mono)' }}>City / State / Country</span>,{' '}
-                  <span style={{ fontFamily: 'var(--font-mono)' }}>Notes</span>
-                </>
-              ) : (
                 <>
                   <span style={{ fontFamily: 'var(--font-mono)' }}>Name</span> (Required),{' '}
                   <span style={{ fontFamily: 'var(--font-mono)' }}>Company</span> (Fabricator / Contractor),{' '}
@@ -316,7 +289,6 @@ export default function ImportExcelModal({
                   <span style={{ fontFamily: 'var(--font-mono)' }}>Positive Approach? (YES/NO)</span>,{' '}
                   <span style={{ fontFamily: 'var(--font-mono)' }}>Notes</span>
                 </>
-              )}
             </div>
 
         </div>
@@ -325,7 +297,7 @@ export default function ImportExcelModal({
         <div className="modal-footer">
           {importResult ? (
             <button className="btn btn-primary" onClick={handleClose}>
-              {isAccounts ? 'Done & View Accounts Table' : 'Done & View Clients Table'}
+              Done & View Clients Table
             </button>
           ) : (
             <>
@@ -345,7 +317,7 @@ export default function ImportExcelModal({
                   </>
                 ) : (
                   <>
-                    <Sparkles size={14} />
+                    <Target size={14} />
                     <span>Import to Table</span>
                   </>
                 )}

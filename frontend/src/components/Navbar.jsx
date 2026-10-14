@@ -1,6 +1,7 @@
 import React, { useState, useRef, useEffect } from 'react';
 import { 
   Bell, 
+  CalendarCheck, 
   Sun, 
   Moon, 
   ChevronDown, 
@@ -54,60 +55,19 @@ export default function Navbar({
       </div>
 
       <div className="navbar-actions" style={{ display: 'flex', alignItems: 'center', gap: '0.65rem' }}>
-        {/* 1. Today's Agenda Card in Top Bar */}
-        <div 
+        {/* Today's agenda */}
+        <button
+          type="button"
           onClick={onOpenTodayModal}
-          style={{
-            backgroundColor: 'var(--danger-bg)',
-            border: '1px solid var(--danger-border)',
-            borderRadius: 'var(--radius-md)',
-            padding: '0.4rem 0.85rem',
-            cursor: 'pointer',
-            transition: 'all 0.15s ease',
-            display: 'flex',
-            flexDirection: 'column',
-            justifyContent: 'center',
-            textAlign: 'left',
-            boxShadow: 'var(--shadow-xs)',
-          }}
-          className="today-navbar-card"
-          title="Click to view and complete today's client meetups"
+          className="btn btn-secondary today-navbar-card"
+          title="Today's follow-ups"
         >
-          <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', gap: '0.75rem', marginBottom: '0.15rem' }}>
-            <span style={{ 
-              fontSize: '0.7rem', 
-              fontWeight: 800, 
-              color: 'var(--danger-color)', 
-              textTransform: 'uppercase', 
-              letterSpacing: '0.04em' 
-            }}>
-              Today's Agenda
-            </span>
-            <span style={{
-              backgroundColor: 'var(--danger-btn)',
-              color: 'white',
-              fontSize: '0.65rem',
-              fontWeight: 800,
-              padding: '0.05rem 0.45rem',
-              borderRadius: '999px',
-              whiteSpace: 'nowrap',
-              boxShadow: todayCount > 0 ? '0 0 0 2px rgba(239, 68, 68, 0.2)' : 'none'
-            }}>
-              {todayCount} Due
-            </span>
-          </div>
-          <p className="today-navbar-desc" style={{ 
-            fontSize: '0.735rem', 
-            color: 'var(--text-secondary)', 
-            lineHeight: '1.25',
-            margin: 0,
-            whiteSpace: 'nowrap'
-          }}>
-            Click to view and complete today's client meetups.
-          </p>
-        </div>
+          <CalendarCheck size={15} />
+          <span className="today-navbar-label">Today</span>
+          <span className={`today-navbar-count${todayCount > 0 ? ' has-due' : ''}`}>{todayCount}</span>
+        </button>
 
-        {/* 2. Professional Dark Mode Toggle Button */}
+        {/* Theme toggle */}
         {onToggleTheme && (
           <button
             className="btn btn-secondary btn-icon"
@@ -124,7 +84,7 @@ export default function Navbar({
             aria-label="Toggle dark mode"
           >
             {theme === 'dark' ? (
-              <Sun size={16} color="#FBBF24" />
+              <Sun size={16} color="var(--warning-strong)" />
             ) : (
               <Moon size={16} color="var(--text-secondary)" />
             )}
@@ -193,8 +153,8 @@ export default function Navbar({
               height: '28px',
               borderRadius: '50%',
               background: currentUsername === 'admin' 
-                ? 'linear-gradient(135deg, #10B981, #059669)' 
-                : 'linear-gradient(135deg, #4F46E5, #7C3AED)',
+                ? 'linear-gradient(135deg, var(--lead-action), var(--lead-action))' 
+                : 'var(--avatar-bg)',
               color: 'white',
               display: 'flex',
               alignItems: 'center',
@@ -256,8 +216,8 @@ export default function Navbar({
                     height: '32px',
                     borderRadius: '50%',
                     background: currentUsername === 'admin' 
-                      ? 'linear-gradient(135deg, #10B981, #059669)' 
-                      : 'linear-gradient(135deg, #4F46E5, #7C3AED)',
+                      ? 'linear-gradient(135deg, var(--lead-action), var(--lead-action))' 
+                      : 'var(--avatar-bg)',
                     color: 'white',
                     display: 'flex',
                     alignItems: 'center',

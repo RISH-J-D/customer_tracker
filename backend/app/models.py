@@ -16,6 +16,7 @@ class Client(Base):
     is_lead = Column(Boolean, default=False, index=True)
     positive_approach = Column(Boolean, default=False, index=True)
     lead_converted_at = Column(DateTime, nullable=True)
+    account_converted_at = Column(DateTime, nullable=True)  # set when a lead is converted to an account
     deal_value = Column(Float, default=0.0)
     position = Column(Text, nullable=True)
     city = Column(Text, nullable=True)
@@ -27,6 +28,7 @@ class Client(Base):
 
     # Relationships
     followups = relationship("FollowUp", back_populates="client", cascade="all, delete-orphan", order_by="desc(FollowUp.scheduled_at)")
+    note_entries = relationship("ClientNote", back_populates="client", cascade="all, delete-orphan", order_by="desc(ClientNote.created_at)")
     accounts = relationship("Account", back_populates="client", cascade="all, delete-orphan", order_by="desc(Account.created_at)")
 
 class FollowUp(Base):
@@ -49,6 +51,19 @@ class FollowUp(Base):
 
     # Relationship
     client = relationship("Client", back_populates="followups")
+
+class ClientNote(Base):
+    """A single dated note in a client's notes history."""
+    __tablename__ = "client_notes"
+
+    id = Column(Integer, primary_key=True, index=True)
+    client_id = Column(Integer, ForeignKey("clients.id", ondelete="CASCADE"), nullable=False, index=True)
+    content = Column(Text, nullable=False)
+    author = Column(String(100), nullable=True)
+    created_at = Column(DateTime, default=datetime.utcnow, index=True)
+    updated_at = Column(DateTime, default=datetime.utcnow, onupdate=datetime.utcnow)
+
+    client = relationship("Client", back_populates="note_entries")
 
 class NotificationItem(Base):
     __tablename__ = "notifications"

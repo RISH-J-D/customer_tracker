@@ -86,18 +86,8 @@ def load_accounts_from_excel(file_path: str):
             first_name = parts[0] if parts else "Representative"
             last_name = "Principal"
 
-        # Location details
-        loc_parts = [p for p in [city, state, country] if p]
-        location_str = ", ".join(loc_parts) if loc_parts else "USA"
-
-        # Notes summary
-        notes_parts = []
-        if position:
-            notes_parts.append(f"Position: {position}")
-        if location_str:
-            notes_parts.append(f"Location: {location_str}")
-        notes_parts.append(f"Original CRM Status: {raw_status}")
-        notes = " | ".join(notes_parts)
+        # Position, location and CRM status have their own columns; don't duplicate them into notes
+        notes = None
 
         # Categorize into Leads vs Clients
         if raw_status in ['Accepted', 'Active']:

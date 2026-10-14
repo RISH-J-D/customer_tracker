@@ -8,8 +8,11 @@ import {
 } from 'lucide-react';
 import { api } from '../services/api';
 
-export default function ExportDropdown({ onOpenModal, label = "Export", align = "right", type = "clients" }) {
+const MENU_WIDTH = 220;
+
+export default function ExportDropdown({ onOpenModal, label = "Export", align = "right" }) {
   const [isOpen, setIsOpen] = useState(false);
+  const [menuSide, setMenuSide] = useState(align === 'right' ? 'right' : 'left');
   const dropdownRef = useRef(null);
 
   // Close dropdown on click outside
@@ -35,7 +38,7 @@ export default function ExportDropdown({ onOpenModal, label = "Export", align = 
   }, [isOpen]);
 
   const handleDownload = (format) => {
-    const url = type === 'accounts' ? api.getAccountsExportUrl(format) : api.getExportUrl(format);
+    const url = api.getExportUrl(format);
     const link = document.createElement('a');
     link.href = url;
     link.setAttribute('download', '');
@@ -50,7 +53,16 @@ export default function ExportDropdown({ onOpenModal, label = "Export", align = 
       <button
         type="button"
         className="btn btn-secondary"
-        onClick={() => setIsOpen(prev => !prev)}
+        onClick={() => {
+          // Open toward whichever side has room for the menu (matters on narrow screens)
+          const rect = dropdownRef.current?.getBoundingClientRect();
+          if (rect) {
+            const fitsRight = rect.right >= MENU_WIDTH + 8;
+            const fitsLeft = window.innerWidth - rect.left >= MENU_WIDTH + 8;
+            setMenuSide(align === 'right' ? (fitsRight || !fitsLeft ? 'right' : 'left') : (fitsLeft || !fitsRight ? 'left' : 'right'));
+          }
+          setIsOpen(prev => !prev);
+        }}
         style={{
           display: 'flex',
           alignItems: 'center',
@@ -60,7 +72,7 @@ export default function ExportDropdown({ onOpenModal, label = "Export", align = 
           padding: '0.4rem 0.75rem',
           height: '34px',
           borderColor: isOpen ? 'var(--primary)' : 'var(--border-subtle)',
-          backgroundColor: isOpen ? '#F1F5F9' : 'var(--bg-surface)'
+          backgroundColor: isOpen ? 'var(--bg-hover)' : 'var(--bg-surface)'
         }}
         title="Export options (Excel, PDF, CSV)"
         aria-haspopup="true"
@@ -83,10 +95,10 @@ export default function ExportDropdown({ onOpenModal, label = "Export", align = 
           style={{
             position: 'absolute',
             top: 'calc(100% + 4px)',
-            [align === 'right' ? 'right' : 'left']: 0,
+            [menuSide]: 0,
             zIndex: 1050,
-            minWidth: '220px',
-            backgroundColor: '#FFFFFF',
+            minWidth: `${MENU_WIDTH}px`,
+            backgroundColor: 'var(--bg-surface)',
             borderRadius: 'var(--radius-md)',
             border: '1px solid var(--border-subtle)',
             boxShadow: 'var(--shadow-lg)',
@@ -122,15 +134,15 @@ export default function ExportDropdown({ onOpenModal, label = "Export", align = 
               textAlign: 'left',
               transition: 'background-color 0.1s ease',
             }}
-            onMouseEnter={(e) => e.currentTarget.style.backgroundColor = '#F8FAFC'}
+            onMouseEnter={(e) => e.currentTarget.style.backgroundColor = 'var(--bg-hover)'}
             onMouseLeave={(e) => e.currentTarget.style.backgroundColor = 'transparent'}
           >
             <div style={{
               width: '24px',
               height: '24px',
               borderRadius: '4px',
-              backgroundColor: '#DCFCE7',
-              color: '#16A34A',
+              backgroundColor: 'var(--lead-bg)',
+              color: 'var(--lead-action)',
               display: 'flex',
               alignItems: 'center',
               justifyContent: 'center',
@@ -143,7 +155,7 @@ export default function ExportDropdown({ onOpenModal, label = "Export", align = 
                 Excel (.xlsx)
               </div>
               <div style={{ fontSize: '0.7rem', color: 'var(--text-muted)' }}>
-                {type === 'accounts' ? 'Accounts & projects workbook' : 'Multi-sheet report'}
+                Multi-sheet report
               </div>
             </div>
           </button>
@@ -165,15 +177,15 @@ export default function ExportDropdown({ onOpenModal, label = "Export", align = 
               textAlign: 'left',
               transition: 'background-color 0.1s ease',
             }}
-            onMouseEnter={(e) => e.currentTarget.style.backgroundColor = '#F8FAFC'}
+            onMouseEnter={(e) => e.currentTarget.style.backgroundColor = 'var(--bg-hover)'}
             onMouseLeave={(e) => e.currentTarget.style.backgroundColor = 'transparent'}
           >
             <div style={{
               width: '24px',
               height: '24px',
               borderRadius: '4px',
-              backgroundColor: '#FEE2E2',
-              color: '#DC2626',
+              backgroundColor: 'var(--danger-bg)',
+              color: 'var(--danger-btn)',
               display: 'flex',
               alignItems: 'center',
               justifyContent: 'center',
@@ -186,7 +198,7 @@ export default function ExportDropdown({ onOpenModal, label = "Export", align = 
                 PDF Document (.pdf)
               </div>
               <div style={{ fontSize: '0.7rem', color: 'var(--text-muted)' }}>
-                {type === 'accounts' ? 'Executive project summary' : 'Printable summary'}
+                Printable summary
               </div>
             </div>
           </button>
@@ -208,15 +220,15 @@ export default function ExportDropdown({ onOpenModal, label = "Export", align = 
               textAlign: 'left',
               transition: 'background-color 0.1s ease',
             }}
-            onMouseEnter={(e) => e.currentTarget.style.backgroundColor = '#F8FAFC'}
+            onMouseEnter={(e) => e.currentTarget.style.backgroundColor = 'var(--bg-hover)'}
             onMouseLeave={(e) => e.currentTarget.style.backgroundColor = 'transparent'}
           >
             <div style={{
               width: '24px',
               height: '24px',
               borderRadius: '4px',
-              backgroundColor: '#F1F5F9',
-              color: '#475569',
+              backgroundColor: 'var(--bg-hover)',
+              color: 'var(--text-secondary)',
               display: 'flex',
               alignItems: 'center',
               justifyContent: 'center',
@@ -229,7 +241,7 @@ export default function ExportDropdown({ onOpenModal, label = "Export", align = 
                 CSV Data (.csv)
               </div>
               <div style={{ fontSize: '0.7rem', color: 'var(--text-muted)' }}>
-                {type === 'accounts' ? 'Raw project accounts' : 'Raw tabular data'}
+                Raw tabular data
               </div>
             </div>
           </button>
@@ -259,7 +271,7 @@ export default function ExportDropdown({ onOpenModal, label = "Export", align = 
                   color: 'var(--primary)',
                   transition: 'background-color 0.1s ease',
                 }}
-                onMouseEnter={(e) => e.currentTarget.style.backgroundColor = '#EFF6FF'}
+                onMouseEnter={(e) => e.currentTarget.style.backgroundColor = 'var(--primary-subtle)'}
                 onMouseLeave={(e) => e.currentTarget.style.backgroundColor = 'transparent'}
               >
                 <ExternalLink size={13} />

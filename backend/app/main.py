@@ -1,20 +1,50 @@
+import re
 from fastapi import FastAPI
 from fastapi.middleware.cors import CORSMiddleware
 from contextlib import asynccontextmanager
+from sqlalchemy import inspect, text
 from .database import engine, Base, SessionLocal
-from .seed_data import seed_initial_data, seed_users_and_logs, seed_accounts
-from .routes import clients, followups, dashboard, notifications, export, auth, logs, accounts
+from .seed_data import seed_initial_data, seed_users_and_logs
+from .routes import clients, followups, dashboard, notifications, export, auth, logs
+
+def migrate_client_columns():
+    """Add columns introduced after the clients table was first created (create_all won't alter existing tables)."""
+    existing = {c["name"] for c in inspect(engine).get_columns("clients")}
+    if "account_converted_at" not in existing:
+        with engine.begin() as conn:
+            conn.execute(text("ALTER TABLE clients ADD COLUMN account_converted_at TIMESTAMP"))
+            # Leads imported with CRM status Accepted/Active were the ones converted to accounts
+            # (the accounts table can't be used here: bulk imports linked it to almost every client)
+            conn.execute(text(
+                "UPDATE clients SET account_converted_at = COALESCE(lead_converted_at, created_at) "
+                "WHERE is_lead = TRUE AND status IN ('Accepted', 'Active')"
+            ))
+
+IMPORT_NOTE_FIELD = re.compile(r"^(Position|Location|Original CRM Status):")
+
+def strip_import_generated_notes():
+    """Remove the 'Position: … | Location: … | Original CRM Status: …' text the Excel loader wrote into notes.
+    Those values already live in the position / city / state / country / status columns."""
+    with engine.begin() as conn:
+        rows = conn.execute(text("SELECT id, notes FROM clients WHERE notes LIKE '%Original CRM Status:%'")).all()
+        for client_id, notes in rows:
+            kept = [p.strip() for p in notes.split("|") if p.strip() and not IMPORT_NOTE_FIELD.match(p.strip())]
+            conn.execute(
+                text("UPDATE clients SET notes = :notes WHERE id = :id"),
+                {"notes": " | ".join(kept) or None, "id": client_id}
+            )
 
 @asynccontextmanager
 async def lifespan(app: FastAPI):
     # Initialize DB tables
     Base.metadata.create_all(bind=engine)
-    # Seed initial test clients, follow-up reminders, users, and accounts
+    migrate_client_columns()
+    strip_import_generated_notes()
+    # Seed initial test clients, follow-up reminders, and users
     db = SessionLocal()
     try:
         seed_initial_data(db)
         seed_users_and_logs(db)
-        seed_accounts(db)
     finally:
         db.close()
     yield
@@ -50,7 +80,6 @@ app.include_router(notifications.router)
 app.include_router(export.router)
 app.include_router(auth.router)
 app.include_router(logs.router)
-app.include_router(accounts.router)
 
 from .database import engine, Base, SessionLocal, get_db_info
 

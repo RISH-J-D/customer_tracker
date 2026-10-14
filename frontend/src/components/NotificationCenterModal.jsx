@@ -1,5 +1,5 @@
 import React from 'react';
-import { X, Bell, CheckCheck, Sparkles, Clock, Calendar } from 'lucide-react';
+import { X, Bell, CheckCheck, Target, Clock, Calendar } from 'lucide-react';
 
 export default function NotificationCenterModal({
   isOpen,
@@ -24,7 +24,7 @@ export default function NotificationCenterModal({
               width: '32px',
               height: '32px',
               borderRadius: 'var(--radius-md)',
-              backgroundColor: '#EFF6FF',
+              backgroundColor: 'var(--primary-subtle)',
               color: 'var(--primary)',
               display: 'flex',
               alignItems: 'center',
@@ -105,14 +105,14 @@ export default function NotificationCenterModal({
                       width: '28px',
                       height: '28px',
                       borderRadius: 'var(--radius-sm)',
-                      backgroundColor: isLead ? 'var(--lead-bg)' : isToday ? 'var(--danger-bg)' : '#EFF6FF',
+                      backgroundColor: isLead ? 'var(--lead-bg)' : isToday ? 'var(--danger-bg)' : 'var(--primary-subtle)',
                       color: isLead ? 'var(--lead-color)' : isToday ? 'var(--danger-color)' : 'var(--primary)',
                       display: 'flex',
                       alignItems: 'center',
                       justifyContent: 'center',
                       flexShrink: 0
                     }}>
-                      {isLead ? <Sparkles size={14} /> : isToday ? <Clock size={14} /> : <Calendar size={14} />}
+                      {isLead ? <Target size={14} /> : isToday ? <Clock size={14} /> : <Calendar size={14} />}
                     </div>
 
                     <div style={{ flex: 1, minWidth: 0 }}>

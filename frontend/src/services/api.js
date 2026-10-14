@@ -73,61 +73,6 @@ export const api = {
     return res.json();
   },
 
-  // Accounts & Projects
-  async getAccounts(params = {}) {
-    const query = new URLSearchParams();
-    if (params.company) query.set('company', params.company);
-    if (params.client_id) query.set('client_id', params.client_id);
-    if (params.status) query.set('status', params.status);
-    if (params.search) query.set('search', params.search);
-
-    const res = await fetch(`${API_BASE}/accounts?${query.toString()}`);
-    if (!res.ok) throw new Error('Failed to fetch accounts');
-    return res.json();
-  },
-
-  async getAccountStats() {
-    const res = await fetch(`${API_BASE}/accounts/stats`);
-    if (!res.ok) throw new Error('Failed to fetch account stats');
-    return res.json();
-  },
-
-  async getAccount(id) {
-    const res = await fetch(`${API_BASE}/accounts/${id}`);
-    if (!res.ok) throw new Error('Failed to fetch account');
-    return res.json();
-  },
-
-  async createAccount(data) {
-    const res = await fetch(`${API_BASE}/accounts`, {
-      method: 'POST',
-      headers: getAuthHeaders({ 'Content-Type': 'application/json' }),
-      body: JSON.stringify(data)
-    });
-    if (!res.ok) throw new Error('Failed to create account');
-    return res.json();
-  },
-
-  async updateAccount(id, data) {
-    const res = await fetch(`${API_BASE}/accounts/${id}`, {
-      method: 'PUT',
-      headers: getAuthHeaders({ 'Content-Type': 'application/json' }),
-      body: JSON.stringify(data)
-    });
-    if (!res.ok) throw new Error('Failed to update account');
-    return res.json();
-  },
-
-  async deleteAccount(id) {
-    const res = await fetch(`${API_BASE}/accounts/${id}`, {
-      method: 'DELETE',
-      headers: getAuthHeaders()
-    });
-    if (!res.ok) throw new Error('Failed to delete account');
-    return res.json();
-  },
-
-
   // Clients
   async getClients(params = {}) {
     const query = new URLSearchParams();
@@ -168,6 +113,35 @@ export const api = {
     return res.json();
   },
 
+  async addClientNote(clientId, content) {
+    const res = await fetch(`${API_BASE}/clients/${clientId}/notes`, {
+      method: 'POST',
+      headers: getAuthHeaders({ 'Content-Type': 'application/json' }),
+      body: JSON.stringify({ content })
+    });
+    if (!res.ok) throw new Error('Failed to add note');
+    return res.json();
+  },
+
+  async updateClientNote(clientId, noteId, content) {
+    const res = await fetch(`${API_BASE}/clients/${clientId}/notes/${noteId}`, {
+      method: 'PUT',
+      headers: getAuthHeaders({ 'Content-Type': 'application/json' }),
+      body: JSON.stringify({ content })
+    });
+    if (!res.ok) throw new Error('Failed to update note');
+    return res.json();
+  },
+
+  async deleteClientNote(clientId, noteId) {
+    const res = await fetch(`${API_BASE}/clients/${clientId}/notes/${noteId}`, {
+      method: 'DELETE',
+      headers: getAuthHeaders()
+    });
+    if (!res.ok) throw new Error('Failed to delete note');
+    return res.json();
+  },
+
   async deleteClient(id) {
     const res = await fetch(`${API_BASE}/clients/${id}`, {
       method: 'DELETE',
@@ -183,6 +157,15 @@ export const api = {
       headers: getAuthHeaders()
     });
     if (!res.ok) throw new Error('Failed to promote client to lead');
+    return res.json();
+  },
+
+  async toggleAccountConversion(id) {
+    const res = await fetch(`${API_BASE}/clients/${id}/toggle-account`, {
+      method: 'PATCH',
+      headers: getAuthHeaders()
+    });
+    if (!res.ok) throw new Error('Failed to update account conversion');
     return res.json();
   },
 
@@ -314,30 +297,6 @@ export const api = {
     if (!res.ok) {
       const errData = await res.json().catch(() => ({}));
       throw new Error(errData.detail || 'Failed to import Excel spreadsheet');
-    }
-    return res.json();
-  },
-
-  // Export & Import URLs - Accounts & Projects
-  getAccountsExportUrl(format) {
-    return `${API_BASE}/accounts/export/${format}`;
-  },
-
-  getAccountsTemplateUrl() {
-    return `${API_BASE}/accounts/template`;
-  },
-
-  async importAccountsExcel(file) {
-    const formData = new FormData();
-    formData.append('file', file);
-    const res = await fetch(`${API_BASE}/accounts/import-excel`, {
-      method: 'POST',
-      headers: getAuthHeaders(),
-      body: formData
-    });
-    if (!res.ok) {
-      const errData = await res.json().catch(() => ({}));
-      throw new Error(errData.detail || 'Failed to import Accounts spreadsheet');
     }
     return res.json();
   },

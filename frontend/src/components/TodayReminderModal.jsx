@@ -1,6 +1,5 @@
 import React from 'react';
-import { X, CalendarCheck, Clock, Video, CheckCircle2, Sparkles, ExternalLink, ArrowRight } from 'lucide-react';
-import confetti from 'canvas-confetti';
+import { MapPin, X, CalendarCheck, Clock, Video, CheckCircle2, Target, ExternalLink, ArrowRight } from 'lucide-react';
 
 export default function TodayReminderModal({
   isOpen,
@@ -16,11 +15,6 @@ export default function TodayReminderModal({
   const completedItems = todayFollowups.filter(f => f.status === 'Completed');
 
   const triggerLeadCelebration = (clientId) => {
-    confetti({
-      particleCount: 80,
-      spread: 70,
-      origin: { y: 0.6 }
-    });
     onPromoteClientToLead(clientId);
   };
 
@@ -37,7 +31,7 @@ export default function TodayReminderModal({
               width: '32px',
               height: '32px',
               borderRadius: 'var(--radius-md)',
-              backgroundColor: '#EFF6FF',
+              backgroundColor: 'var(--primary-subtle)',
               color: 'var(--primary)',
               display: 'flex',
               alignItems: 'center',
@@ -105,12 +99,12 @@ export default function TodayReminderModal({
                           title="Convert to Lead"
                           style={{ fontSize: '0.7rem', padding: '0.2rem 0.5rem' }}
                         >
-                          <Sparkles size={11} />
+                          <Target size={11} />
                           <span>Convert to Lead</span>
                         </button>
                       ) : (
                         <span className="badge-status badge-lead" style={{ fontSize: '0.68rem' }}>
-                          <Sparkles size={10} />
+                          <Target size={10} />
                           <span>Active Lead</span>
                         </span>
                       )}
@@ -160,7 +154,7 @@ export default function TodayReminderModal({
                             target="_blank"
                             rel="noopener noreferrer"
                             className="btn btn-secondary btn-sm"
-                            style={{ fontSize: '0.725rem', color: '#0284C7', padding: '0.2rem 0.5rem' }}
+                            style={{ fontSize: '0.725rem', color: 'var(--primary)', padding: '0.2rem 0.5rem' }}
                           >
                             <Video size={12} />
                             <span>Join Meeting</span>
@@ -168,7 +162,7 @@ export default function TodayReminderModal({
                         )}
                         {f.location && !f.meeting_link && (
                           <span style={{ fontSize: '0.72rem', color: 'var(--text-muted)' }}>
-                            📍 {f.location}
+                            <MapPin size={11} style={{ verticalAlign: '-1px', marginRight: '3px' }} />{f.location}
                           </span>
                         )}
                       </div>
@@ -207,7 +201,7 @@ export default function TodayReminderModal({
                         }}
                       >
                         <div style={{ display: 'flex', alignItems: 'center', gap: '0.4rem' }}>
-                          <CheckCircle2 size={14} color="#059669" />
+                          <CheckCircle2 size={14} color="var(--lead-action)" />
                           <span style={{ fontSize: '0.785rem', textDecoration: 'line-through', color: 'var(--text-muted)' }}>
                             {cf.title} ({cf.client_name})
                           </span>

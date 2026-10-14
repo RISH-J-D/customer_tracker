@@ -3,25 +3,27 @@ import {
   Users, 
   Search, 
   Plus, 
-  Sparkles, 
+  Target, 
   ThumbsUp, 
-  CalendarPlus, 
   Mail, 
   Phone, 
+  MapPin,
   Building, 
   Trash2, 
   Edit3, 
   Table as TableIcon, 
   LayoutGrid, 
-  Clock, 
   UploadCloud,
   ChevronLeft,
   ChevronRight
 } from 'lucide-react';
 
-import confetti from 'canvas-confetti';
 import ExportDropdown from '../components/ExportDropdown';
-import FollowupTimelineCell from '../components/FollowupTimelineCell';
+import NotesCell from '../components/NotesCell';
+import { splitPhoneNumbers } from '../components/phoneUtils';
+
+// Imported rows without a named contact were saved as "<Company> Contact"
+const getRepresentativeName = (c) => (c.name && c.name !== `${c.company} Contact` ? c.name : null);
 
 export default function ClientsPage({
   clients,
@@ -30,12 +32,14 @@ export default function ClientsPage({
   onDeleteClient,
   onPromoteClientToLead,
   onTogglePositive,
-  onScheduleFollowupForClient,
   onOpenExportModal,
   onOpenImportModal,
-  onUpdateNotes
+  onUpdateNotes,
+  onAddNote,
+  onEditNote,
+  onDeleteNote
 }) {
-  const [activeFilter, setActiveFilter] = useState('all'); // all, positive, pending_followup
+  const [activeFilter, setActiveFilter] = useState('all'); // all, positive
   const [searchQuery, setSearchQuery] = useState('');
   const [viewMode, setViewMode] = useState('table'); // 'table' or 'grid'
   const [page, setPage] = useState(1);
@@ -52,7 +56,6 @@ export default function ClientsPage({
     return clientProspects.filter(c => {
       // Filters
       if (activeFilter === 'positive' && !c.positive_approach) return false;
-      if (activeFilter === 'pending_followup' && !(c.pending_followups > 0)) return false;
 
       // Search query
       if (searchQuery.trim()) {
@@ -61,7 +64,7 @@ export default function ClientsPage({
         const matchComp = c.company?.toLowerCase().includes(q);
         const matchEmail = c.email?.toLowerCase().includes(q);
         const matchPhone = c.phone?.toLowerCase().includes(q);
-        const matchNotes = c.notes?.toLowerCase().includes(q);
+        const matchNotes = c.notes?.toLowerCase().includes(q) || (c.note_entries || []).some(n => n.content?.toLowerCase().includes(q));
         if (!matchName && !matchComp && !matchEmail && !matchPhone && !matchNotes) return false;
       }
 
@@ -76,11 +79,6 @@ export default function ClientsPage({
 
   const handlePromote = (clientId, e) => {
     if (e) e.stopPropagation();
-    confetti({
-      particleCount: 80,
-      spread: 70,
-      origin: { y: 0.6 }
-    });
     onPromoteClientToLead(clientId);
   };
 
@@ -92,28 +90,7 @@ export default function ClientsPage({
   return (
     <div>
       {/* Page Header */}
-      <div style={{ display: 'flex', alignItems: 'flex-start', justifyContent: 'space-between', flexWrap: 'wrap', gap: '1rem', marginBottom: '1.25rem' }}>
-        <div>
-          <div style={{ display: 'flex', alignItems: 'center', gap: '0.5rem' }}>
-            <h2 style={{ fontSize: '1.25rem', fontWeight: 700, color: 'var(--text-primary)', letterSpacing: '-0.02em' }}>
-              Steel Detailing Clients
-            </h2>
-            <span style={{
-              backgroundColor: 'var(--bg-subtle)',
-              color: 'var(--text-secondary)',
-              border: '1px solid var(--border-subtle)',
-              fontSize: '0.72rem',
-              fontWeight: 600,
-              padding: '0.15rem 0.5rem',
-              borderRadius: 'var(--radius-full)'
-            }}>
-              Outreach & Prospects
-            </span>
-          </div>
-          <p style={{ fontSize: '0.815rem', color: 'var(--text-muted)', marginTop: '0.15rem' }}>
-            Track prospective steel fabricators and contractors. Converting a client promotes them to the Leads page.
-          </p>
-        </div>
+      <div style={{ display: 'flex', alignItems: 'flex-start', justifyContent: 'flex-end', flexWrap: 'wrap', gap: '1rem', marginBottom: '1.25rem' }}>
         
         <div style={{ display: 'flex', alignItems: 'center', gap: '0.5rem', flexWrap: 'wrap' }}>
           {/* Table vs Grid Switcher */}
@@ -204,20 +181,13 @@ export default function ClientsPage({
               className={`segmented-btn ${activeFilter === 'positive' ? 'active' : ''}`}
               onClick={() => setActiveFilter('positive')}
             >
-              <ThumbsUp size={12} color="#D97706" />
+              <ThumbsUp size={12} color="var(--warning-strong)" />
               <span>Positive ({clientProspects.filter(c => c.positive_approach).length})</span>
-            </button>
-            <button
-              className={`segmented-btn ${activeFilter === 'pending_followup' ? 'active' : ''}`}
-              onClick={() => setActiveFilter('pending_followup')}
-            >
-              <Clock size={12} color="var(--primary)" />
-              <span>Due Follow-up ({clientProspects.filter(c => c.pending_followups > 0).length})</span>
             </button>
           </div>
 
           {/* Search Input (No Industry selection required) */}
-          <div style={{ position: 'relative', width: '100%', maxWidth: '280px' }}>
+          <div className="search-box" style={{ position: 'relative', width: '100%', maxWidth: '280px' }}>
             <Search size={14} color="var(--text-muted)" style={{ position: 'absolute', left: '9px', top: '9px' }} />
             <input
               type="text"
@@ -257,25 +227,28 @@ export default function ClientsPage({
         </div>
       ) : viewMode === 'table' ? (
         /* TABLE LIST VIEW */
-        <div className="table-responsive">
+        <div className="table-responsive table-mobile-cards">
           <table className="custom-table">
             <thead>
               <tr>
-                <th style={{ width: '25%' }}>Fabricator / Company</th>
-                <th style={{ width: '13%' }}>Outreach Stage</th>
-                <th style={{ width: '12%' }}>Approach Reaction</th>
-                <th style={{ width: '15%' }}>Contact Details</th>
-                <th style={{ width: '23%' }}>Follow-up Timeline & Notes</th>
-                <th style={{ width: '12%' }}>Convert / Action</th>
+                <th style={{ width: '20%' }}>Fabricator / Company</th>
+                <th style={{ width: '15%' }}>Client Representative</th>
+                <th style={{ width: '14%' }}>Email</th>
+                <th style={{ width: '11%' }}>Mobile</th>
+                <th style={{ width: '13%' }}>Address</th>
+                <th style={{ width: '26%' }}>Notes</th>
+                <th style={{ width: '1%' }}>Convert / Action</th>
               </tr>
             </thead>
             <tbody>
               {paginatedClients.map((c) => {
-                const initials = c.name ? c.name.split(' ').map(n => n[0]).join('').slice(0, 2).toUpperCase() : 'CL';
+                const companyName = c.company || c.name;
+                const initials = companyName ? companyName.split(' ').map(n => n[0]).join('').slice(0, 2).toUpperCase() : 'CL';
+                const repName = getRepresentativeName(c);
                 return (
                   <tr key={c.id}>
                     {/* Client & Company */}
-                    <td>
+                    <td className="td-name">
                       <div style={{ display: 'flex', alignItems: 'center', gap: '0.65rem' }}>
                         <div style={{
                           width: '32px',
@@ -293,122 +266,112 @@ export default function ClientsPage({
                         }}>
                           {initials}
                         </div>
-                        <div>
-                          <div style={{ fontWeight: 600, color: 'var(--text-primary)', fontSize: '0.85rem' }}>
-                            {c.name}
-                          </div>
-                          <div style={{ display: 'flex', alignItems: 'center', gap: '0.35rem', color: 'var(--text-muted)', fontSize: '0.75rem', marginTop: '0.1rem', flexWrap: 'wrap' }}>
-                            <span>{c.company || 'Fabricator / Contractor'}</span>
-                            {c.position && <span>• <strong style={{ fontWeight: 500, color: 'var(--text-secondary)' }}>{c.position}</strong></span>}
-                            {(c.city || c.state) && <span>• {[c.city, c.state].filter(Boolean).join(', ')}</span>}
-                          </div>
+                        <div style={{ fontWeight: 600, color: 'var(--text-primary)', fontSize: '0.85rem' }}>
+                          {companyName}
                         </div>
                       </div>
                     </td>
 
-                    {/* Status */}
-                    <td>
-                      <div>
-                        <span className="badge-status badge-prospect">
-                          {c.status}
-                        </span>
-                        {c.pending_followups > 0 && (
-                          <div style={{ display: 'flex', alignItems: 'center', gap: '0.25rem', color: 'var(--danger-color)', fontSize: '0.7rem', fontWeight: 500, marginTop: '0.2rem' }}>
-                            <span style={{ width: '5px', height: '5px', borderRadius: '50%', backgroundColor: 'var(--danger-btn)' }}></span>
-                            <span>{c.pending_followups} follow-up pending</span>
-                          </div>
+                    {/* Client Representative */}
+                    <td className="td-rep" data-label="Representative">
+                      <div style={{ fontSize: '0.8rem' }}>
+                        {repName ? (
+                          <>
+                            <div style={{ fontWeight: 600, color: 'var(--text-primary)' }}>{repName}</div>
+                            {c.position && (
+                              <div style={{ fontSize: '0.72rem', color: 'var(--text-muted)', marginTop: '0.1rem' }}>{c.position}</div>
+                            )}
+                          </>
+                        ) : (
+                          <span style={{ color: 'var(--text-muted)' }}>{c.position || '-'}</span>
                         )}
                       </div>
                     </td>
 
-                    {/* Positive Approach Toggle Button */}
-                    <td>
-                      <button
-                        onClick={(e) => handleTogglePositive(c.id, e)}
-                        className="btn btn-sm"
-                        style={{
-                          padding: '0.2rem 0.5rem',
-                          fontSize: '0.725rem',
-                          backgroundColor: c.positive_approach ? 'var(--positive-bg)' : 'transparent',
-                          color: c.positive_approach ? 'var(--positive-color)' : 'var(--text-muted)',
-                          border: `1px solid ${c.positive_approach ? 'var(--positive-border)' : 'var(--border-subtle)'}`,
-                          fontWeight: 500
-                        }}
-                        title="Click to toggle positive approach reaction"
-                      >
-                        <ThumbsUp size={11} color={c.positive_approach ? '#D97706' : '#9CA3AF'} />
-                        <span>{c.positive_approach ? 'Positive' : 'Standard'}</span>
-                      </button>
-                    </td>
-
-                    {/* Contact */}
-                    <td>
-                      <div style={{ display: 'flex', flexDirection: 'column', gap: '0.15rem', fontSize: '0.75rem', color: 'var(--text-secondary)' }}>
+                    {/* Email */}
+                    <td className="td-email" data-label="Email">
+                      <div style={{ fontSize: '0.75rem', color: 'var(--text-secondary)' }}>
                         {c.email ? (
-                          <a href={`mailto:${c.email}`} style={{ color: 'inherit', textDecoration: 'none', display: 'flex', alignItems: 'center', gap: '0.3rem' }} title={c.email}>
-                            <Mail size={11} color="#9CA3AF" />
-                            <span style={{ overflow: 'hidden', textOverflow: 'ellipsis', whiteSpace: 'nowrap', maxWidth: '160px' }}>{c.email}</span>
+                          <a href={`mailto:${c.email}`} style={{ color: 'inherit', textDecoration: 'none', display: 'flex', alignItems: 'flex-start', gap: '0.3rem' }} title={c.email}>
+                            <Mail size={11} color="var(--text-placeholder)" style={{ flexShrink: 0, marginTop: '0.15rem' }} />
+                            <span style={{ wordBreak: 'break-all', minWidth: 0 }}>{c.email}</span>
                           </a>
                         ) : (
                           <span style={{ color: 'var(--text-muted)' }}>-</span>
                         )}
-                        {c.phone && (
-                          <div style={{ display: 'flex', alignItems: 'center', gap: '0.3rem', color: 'var(--text-muted)' }}>
-                            <Phone size={11} />
-                            <span>{c.phone}</span>
-                          </div>
+                      </div>
+                    </td>
+
+                    {/* Mobile */}
+                    <td className="td-mobile" data-label="Mobile">
+                      <div style={{ fontSize: '0.75rem', color: 'var(--text-secondary)' }}>
+                        {c.phone ? (
+                          <a href={`tel:${c.phone}`} style={{ color: 'inherit', textDecoration: 'none', display: 'flex', alignItems: 'flex-start', gap: '0.3rem' }}>
+                            <Phone size={11} color="var(--text-placeholder)" style={{ marginTop: '0.15rem', flexShrink: 0 }} />
+                            <span style={{ display: 'flex', flexDirection: 'column', minWidth: 0 }}>
+                              {splitPhoneNumbers(c.phone).map((num, i) => (
+                                <span key={i}>{num}</span>
+                              ))}
+                            </span>
+                          </a>
+                        ) : (
+                          <span style={{ color: 'var(--text-muted)' }}>-</span>
                         )}
                       </div>
                     </td>
 
-                    {/* Follow-up Timeline & Notes */}
-                    <td>
-                      <FollowupTimelineCell
+                    {/* Address */}
+                    <td className="td-address" data-label="Address">
+                      <div style={{ display: 'flex', alignItems: 'flex-start', gap: '0.3rem', fontSize: '0.75rem', color: 'var(--text-secondary)' }}>
+                        {(c.city || c.state || c.country) ? (
+                          <>
+                            <MapPin size={11} color="var(--text-placeholder)" style={{ marginTop: '0.15rem', flexShrink: 0 }} />
+                            <span>{[c.city, c.state, c.country].filter(Boolean).join(', ')}</span>
+                          </>
+                        ) : (
+                          <span style={{ color: 'var(--text-muted)' }}>-</span>
+                        )}
+                      </div>
+                    </td>
+
+                    {/* Notes (calendar grouped) */}
+                    <td className="td-stack" data-label="Notes">
+                      <NotesCell
                         client={c}
-                        onScheduleFollowup={onScheduleFollowupForClient}
+                        onAddNote={onAddNote}
+                        onEditNote={onEditNote}
+                        onDeleteNote={onDeleteNote}
                         onUpdateNotes={onUpdateNotes}
                       />
                     </td>
 
                     {/* Pipeline Action & Row Buttons */}
-                    <td>
-                      <div style={{ display: 'flex', alignItems: 'center', gap: '0.35rem' }}>
+                    <td className="td-actions" data-label="Actions">
+                      <div className="row-actions">
                         {/* 1-Click Convert to Lead */}
                         <button
-                          className="btn btn-lead btn-sm"
+                          className="btn btn-lead btn-sm row-action-wide"
                           onClick={(e) => handlePromote(c.id, e)}
                           title="Convert this client to Lead (moves to Leads page)"
-                          style={{ padding: '0.25rem 0.55rem', fontSize: '0.725rem' }}
                         >
-                          <Sparkles size={11} />
+                          <Target size={13} />
                           <span>To Lead</span>
                         </button>
 
                         <button
-                          className="btn btn-secondary btn-sm"
-                          onClick={() => onScheduleFollowupForClient(c.id)}
-                          title="Schedule follow-up"
-                          style={{ padding: '0.25rem 0.4rem' }}
-                        >
-                          <CalendarPlus size={12} />
-                        </button>
-
-                        <button
-                          className="btn btn-secondary btn-sm"
+                          className="btn btn-secondary btn-sm row-action-btn"
                           onClick={() => onEditClient(c)}
                           title="Edit client"
-                          style={{ padding: '0.25rem 0.4rem' }}
                         >
-                          <Edit3 size={12} />
+                          <Edit3 size={15} />
                         </button>
 
                         <button
-                          className="btn btn-danger btn-sm"
+                          className="btn btn-danger btn-sm row-action-btn"
                           onClick={() => onDeleteClient(c.id)}
                           title="Delete client"
-                          style={{ padding: '0.25rem 0.4rem' }}
                         >
-                          <Trash2 size={12} />
+                          <Trash2 size={15} />
                         </button>
                       </div>
                     </td>
@@ -435,12 +398,14 @@ export default function ClientsPage({
               <div style={{ display: 'flex', alignItems: 'flex-start', justifyContent: 'space-between', marginBottom: '0.65rem' }}>
                 <div>
                   <h3 style={{ fontSize: '0.95rem', fontWeight: 700, color: 'var(--text-primary)' }}>
-                    {c.name}
+                    {c.company || c.name}
                   </h3>
-                  <div style={{ display: 'flex', alignItems: 'center', gap: '0.35rem', color: 'var(--text-muted)', fontSize: '0.785rem', marginTop: '0.1rem' }}>
-                    <Building size={12} />
-                    <span>{c.company || 'Fabricator / Contractor'}</span>
-                  </div>
+                  {getRepresentativeName(c) && (
+                    <div style={{ display: 'flex', alignItems: 'center', gap: '0.35rem', color: 'var(--text-secondary)', fontSize: '0.785rem', marginTop: '0.1rem' }}>
+                      <Users size={12} />
+                      <span>{getRepresentativeName(c)}</span>
+                    </div>
+                  )}
                 </div>
 
                 <span className="badge-status badge-prospect">
@@ -460,7 +425,7 @@ export default function ClientsPage({
                 marginBottom: '0.65rem'
               }}>
                 <div style={{ display: 'flex', alignItems: 'center', gap: '0.35rem' }}>
-                  <ThumbsUp size={12} color={c.positive_approach ? '#D97706' : '#9CA3AF'} />
+                  <ThumbsUp size={12} color={c.positive_approach ? 'var(--warning-strong)' : 'var(--text-placeholder)'} />
                   <span style={{ fontSize: '0.725rem', fontWeight: 500, color: c.positive_approach ? 'var(--positive-color)' : 'var(--text-muted)' }}>
                     {c.positive_approach ? 'Positive Approach' : 'Standard Response'}
                   </span>
@@ -478,31 +443,33 @@ export default function ClientsPage({
               <div style={{ display: 'flex', flexDirection: 'column', gap: '0.25rem', marginBottom: '0.65rem', fontSize: '0.75rem', color: 'var(--text-secondary)' }}>
                 {c.email && (
                   <div style={{ display: 'flex', alignItems: 'center', gap: '0.35rem' }}>
-                    <Mail size={12} color="#9CA3AF" />
+                    <Mail size={12} color="var(--text-placeholder)" />
                     <span>{c.email}</span>
                   </div>
                 )}
                 {c.phone && (
                   <div style={{ display: 'flex', alignItems: 'center', gap: '0.35rem' }}>
-                    <Phone size={12} color="#9CA3AF" />
+                    <Phone size={12} color="var(--text-placeholder)" />
                     <span>{c.phone}</span>
                   </div>
                 )}
                 {c.position && (
                   <div style={{ display: 'flex', alignItems: 'center', gap: '0.35rem', color: 'var(--text-secondary)' }}>
-                    <Building size={12} color="#9CA3AF" />
+                    <Building size={12} color="var(--text-placeholder)" />
                     <span>{c.position}</span>
                   </div>
                 )}
                 {(c.city || c.state || c.country) && (
                   <div style={{ display: 'flex', alignItems: 'center', gap: '0.35rem', color: 'var(--text-muted)', fontSize: '0.72rem' }}>
-                    <span>📍 {[c.city, c.state, c.country].filter(Boolean).join(', ')}</span>
+                    <span><MapPin size={11} style={{ verticalAlign: '-1px', marginRight: '3px' }} />{[c.city, c.state, c.country].filter(Boolean).join(', ')}</span>
                   </div>
                 )}
                 <div style={{ marginTop: '0.4rem', paddingTop: '0.4rem', borderTop: '1px solid var(--border-light)' }}>
-                  <FollowupTimelineCell
+                  <NotesCell
                     client={c}
-                    onScheduleFollowup={onScheduleFollowupForClient}
+                    onAddNote={onAddNote}
+                    onEditNote={onEditNote}
+                    onDeleteNote={onDeleteNote}
                     onUpdateNotes={onUpdateNotes}
                   />
                 </div>
@@ -516,16 +483,8 @@ export default function ClientsPage({
                   style={{ flex: 1 }}
                   title="Promote to lead (moves client to Leads page)"
                 >
-                  <Sparkles size={12} />
+                  <Target size={12} />
                   <span>Convert to Lead</span>
-                </button>
-
-                <button
-                  className="btn btn-secondary btn-sm"
-                  onClick={() => onScheduleFollowupForClient(c.id)}
-                  title="Schedule follow-up"
-                >
-                  <CalendarPlus size={12} />
                 </button>
 
                 <button

@@ -8,7 +8,7 @@ import {
   Calendar, 
   Clock, 
   CheckCircle2, 
-  Sparkles, 
+  Target, 
   UploadCloud, 
   LogIn, 
   Trash2, 
@@ -75,13 +75,13 @@ export default function LogsPage() {
           color: 'var(--lead-action)',
           bg: 'var(--lead-surface)',
           border: 'var(--lead-border)',
-          icon: Sparkles
+          icon: Target
         };
       case 'CREATE_CLIENT':
       case 'CREATE_LEAD':
         return {
           label: 'Created',
-          color: '#10B981',
+          color: 'var(--lead-action)',
           bg: 'rgba(16, 185, 129, 0.1)',
           border: 'rgba(16, 185, 129, 0.25)',
           icon: PlusCircle
@@ -90,7 +90,7 @@ export default function LogsPage() {
       case 'UPDATE_FOLLOWUP':
         return {
           label: 'Updated',
-          color: '#3B82F6',
+          color: 'var(--primary)',
           bg: 'rgba(59, 130, 246, 0.1)',
           border: 'rgba(59, 130, 246, 0.25)',
           icon: Edit3
@@ -98,7 +98,7 @@ export default function LogsPage() {
       case 'COMPLETE_FOLLOWUP':
         return {
           label: 'Followup Done',
-          color: '#059669',
+          color: 'var(--lead-action)',
           bg: 'rgba(5, 150, 105, 0.12)',
           border: 'rgba(5, 150, 105, 0.25)',
           icon: CheckCircle2
@@ -106,7 +106,7 @@ export default function LogsPage() {
       case 'SCHEDULE_FOLLOWUP':
         return {
           label: 'Scheduled',
-          color: '#F59E0B',
+          color: 'var(--warning-strong)',
           bg: 'rgba(245, 158, 11, 0.1)',
           border: 'rgba(245, 158, 11, 0.25)',
           icon: CalendarPlus
@@ -114,7 +114,7 @@ export default function LogsPage() {
       case 'IMPORT_EXCEL':
         return {
           label: 'Excel Import',
-          color: '#8B5CF6',
+          color: 'var(--primary)',
           bg: 'rgba(139, 92, 246, 0.1)',
           border: 'rgba(139, 92, 246, 0.25)',
           icon: UploadCloud
@@ -122,7 +122,7 @@ export default function LogsPage() {
       case 'LOGIN':
         return {
           label: 'Signed In',
-          color: '#6366F1',
+          color: 'var(--primary)',
           bg: 'rgba(99, 102, 241, 0.1)',
           border: 'rgba(99, 102, 241, 0.25)',
           icon: LogIn
@@ -131,7 +131,7 @@ export default function LogsPage() {
       case 'DELETE_FOLLOWUP':
         return {
           label: 'Deleted',
-          color: '#EF4444',
+          color: 'var(--danger-btn)',
           bg: 'rgba(239, 68, 68, 0.1)',
           border: 'rgba(239, 68, 68, 0.25)',
           icon: Trash2
@@ -179,37 +179,11 @@ export default function LogsPage() {
       <div style={{
         display: 'flex',
         alignItems: 'center',
-        justifyContent: 'space-between',
+        justifyContent: 'flex-end',
         flexWrap: 'wrap',
         gap: '1rem',
         marginBottom: '1.25rem'
       }}>
-        <div>
-          <div style={{ display: 'flex', alignItems: 'center', gap: '0.65rem' }}>
-            <div style={{
-              width: '36px',
-              height: '36px',
-              borderRadius: 'var(--radius-md)',
-              backgroundColor: 'var(--primary-subtle)',
-              color: 'var(--primary)',
-              display: 'flex',
-              alignItems: 'center',
-              justifyContent: 'center',
-              border: '1px solid var(--primary-border)'
-            }}>
-              <ScrollText size={18} />
-            </div>
-            <div>
-              <h2 style={{ fontSize: '1.35rem', fontWeight: 800, color: 'var(--text-primary)', margin: 0 }}>
-                Audit & Activity Logs
-              </h2>
-              <p style={{ fontSize: '0.785rem', color: 'var(--text-muted)', margin: 0, marginTop: '2px' }}>
-                Complete live change history — tracks client edits, status updates, lead conversions, follow-up events, and imports.
-              </p>
-            </div>
-          </div>
-        </div>
-
         <div style={{ display: 'flex', alignItems: 'center', gap: '0.5rem' }}>
           <button
             onClick={fetchLogs}
@@ -381,7 +355,7 @@ export default function LogsPage() {
                       width: '32px',
                       height: '32px',
                       borderRadius: '50%',
-                      backgroundColor: log.user_username === 'admin' ? '#10B981' : '#4F46E5',
+                      backgroundColor: log.user_username === 'admin' ? 'var(--lead-action)' : 'var(--primary)',
                       color: 'white',
                       fontSize: '0.72rem',
                       fontWeight: 700,

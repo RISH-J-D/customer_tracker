@@ -36,6 +36,19 @@ class FollowUpResponse(FollowUpBase):
     updated_at: datetime
     model_config = ConfigDict(from_attributes=True)
 
+# --- Client Note Schemas ---
+class ClientNoteCreate(BaseModel):
+    content: str
+
+class ClientNoteResponse(BaseModel):
+    id: int
+    client_id: int
+    content: str
+    author: Optional[str] = None
+    created_at: datetime
+    updated_at: datetime
+    model_config = ConfigDict(from_attributes=True)
+
 # --- Client Schemas ---
 class ClientBase(BaseModel):
     name: str
@@ -75,6 +88,7 @@ class ClientUpdate(BaseModel):
 class ClientResponse(ClientBase):
     id: int
     lead_converted_at: Optional[datetime] = None
+    account_converted_at: Optional[datetime] = None
     created_at: datetime
     updated_at: datetime
     model_config = ConfigDict(from_attributes=True)
@@ -86,6 +100,7 @@ class FollowUpWithClientInfo(FollowUpResponse):
 
 class ClientWithDetails(ClientResponse):
     followups: List[FollowUpResponse] = []
+    note_entries: List[ClientNoteResponse] = []
     total_followups: int = 0
     pending_followups: int = 0
     model_config = ConfigDict(from_attributes=True)

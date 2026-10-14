@@ -1,19 +1,18 @@
 import React from 'react';
 import { 
   Users, 
-  Sparkles, 
+  Target, 
   CalendarCheck, 
   Video, 
   TrendingUp, 
   DollarSign, 
-  Clock, 
   ArrowRight, 
   CheckCircle2, 
   ExternalLink,
   ThumbsUp,
-  Calendar
+  Calendar,
+  MapPin
 } from 'lucide-react';
-import confetti from 'canvas-confetti';
 
 export default function DashboardPage({
   stats,
@@ -28,51 +27,30 @@ export default function DashboardPage({
   setActiveTab
 }) {
   const triggerLeadPromotion = (clientId) => {
-    confetti({
-      particleCount: 80,
-      spread: 70,
-      origin: { y: 0.6 }
-    });
     onPromoteClientToLead(clientId);
   };
 
   return (
     <div>
-      {/* Today's Follow-up Alert Banner (Linear Style) */}
+      {/* Today's follow-ups notice */}
       {stats?.today_followups_count > 0 && (
         <div className="today-reminder-banner">
           <div className="banner-content">
-            <div className="banner-icon-pulse">
-              <CalendarCheck size={18} />
-            </div>
+            <CalendarCheck size={18} color="var(--primary)" style={{ flexShrink: 0 }} />
             <div>
-              <div style={{ display: 'flex', alignItems: 'center', gap: '0.45rem', marginBottom: '0.15rem' }}>
-                <span style={{
-                  backgroundColor: '#DC2626',
-                  color: 'white',
-                  fontSize: '0.65rem',
-                  fontWeight: 700,
-                  padding: '0.1rem 0.4rem',
-                  borderRadius: '999px',
-                  textTransform: 'uppercase',
-                  letterSpacing: '0.03em'
-                }}>
-                  Today's Action
-                </span>
-                <span style={{ fontSize: '0.785rem', color: '#1E40AF', fontWeight: 500 }}>
-                  {stats.today_followups_count} client interactions scheduled for today
-                </span>
+              <div style={{ fontSize: '0.88rem', fontWeight: 600, color: 'var(--text-primary)' }}>
+                {stats.today_followups_count} follow-up{stats.today_followups_count === 1 ? '' : 's'} due today
               </div>
-              <h3 style={{ fontSize: '0.985rem', fontWeight: 700, color: '#1E3A8A' }}>
-                You have {stats.today_followups_count} client follow-ups due today.
-              </h3>
+              <div style={{ fontSize: '0.78rem', color: 'var(--text-muted)' }}>
+                {stats.high_priority_count || 0} high priority pending
+              </div>
             </div>
           </div>
           <button 
-            className="btn btn-primary btn-sm" 
+            className="btn btn-secondary btn-sm" 
             onClick={onOpenTodayModal}
           >
-            <span>View Today's Agenda</span>
+            <span>Open agenda</span>
             <ArrowRight size={13} />
           </button>
         </div>
@@ -89,32 +67,32 @@ export default function DashboardPage({
           </div>
           <div className="stat-value">{stats?.total_clients || 0}</div>
           <div className="stat-footer">
-            <span>{stats?.clients_with_positive_approach || 0} with positive approach</span>
+            <span>{stats?.clients_with_positive_approach || 0} marked positive</span>
           </div>
         </div>
 
         <div className="card stat-card">
           <div className="stat-header">
             <span className="stat-label">Active Leads</span>
-            <div className="stat-icon" style={{ color: '#059669', backgroundColor: '#ECFDF5' }}>
-              <Sparkles size={15} />
+            <div className="stat-icon">
+              <Target size={15} />
             </div>
           </div>
-          <div className="stat-value" style={{ color: '#065F46' }}>{stats?.total_leads || 0}</div>
-          <div className="stat-footer" style={{ color: '#059669' }}>
-            <TrendingUp size={13} />
-            <span>{stats?.conversion_rate || 0}% Conversion Rate</span>
+          <div className="stat-value">{stats?.total_leads || 0}</div>
+          <div className="stat-footer">
+            <TrendingUp size={13} color="var(--lead-action)" />
+            <span>{stats?.conversion_rate || 0}% conversion rate</span>
           </div>
         </div>
 
         <div className="card stat-card">
           <div className="stat-header">
-            <span className="stat-label">Today's Due</span>
-            <div className="stat-icon" style={{ color: stats?.today_followups_count > 0 ? '#DC2626' : 'var(--text-muted)', backgroundColor: stats?.today_followups_count > 0 ? '#FEF2F2' : 'var(--bg-hover)' }}>
+            <span className="stat-label">Due Today</span>
+            <div className="stat-icon">
               <CalendarCheck size={15} />
             </div>
           </div>
-          <div className="stat-value" style={{ color: stats?.today_followups_count > 0 ? '#991B1B' : 'var(--text-primary)' }}>
+          <div className="stat-value" style={{ color: stats?.today_followups_count > 0 ? 'var(--danger-color)' : 'var(--text-primary)' }}>
             {stats?.today_followups_count || 0}
           </div>
           <div className="stat-footer">
@@ -125,35 +103,20 @@ export default function DashboardPage({
         <div className="card stat-card">
           <div className="stat-header">
             <span className="stat-label">Upcoming Meetups</span>
-            <div className="stat-icon" style={{ color: '#0284C7', backgroundColor: '#F0F9FF' }}>
+            <div className="stat-icon">
               <Video size={15} />
             </div>
           </div>
           <div className="stat-value">{stats?.upcoming_meetups_count || 0}</div>
           <div className="stat-footer">
-            <span>Scheduled meetings & calls</span>
-          </div>
-        </div>
-
-        <div className="card stat-card">
-          <div className="stat-header">
-            <span className="stat-label">Total Touchpoints</span>
-            <div className="stat-icon" style={{ color: '#D97706', backgroundColor: '#FFFBEB' }}>
-              <Clock size={15} />
-            </div>
-          </div>
-          <div className="stat-value">
-            {stats?.total_followups_count ?? 0}
-          </div>
-          <div className="stat-footer">
-            <span>Interactions & meetups logged</span>
+            <span>Scheduled meetings and calls</span>
           </div>
         </div>
       </div>
 
       {/* Two Column Section */}
       <div style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fit, minmax(min(100%, 320px), 1fr))', gap: '1.25rem', marginBottom: '1.5rem' }}>
-        {/* Today's Action Center */}
+        {/* Today's schedule */}
         <div className="card">
           <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', marginBottom: '1rem', paddingBottom: '0.75rem', borderBottom: '1px solid var(--border-light)' }}>
             <div>
@@ -172,7 +135,7 @@ export default function DashboardPage({
 
           {todayFollowups.length === 0 ? (
             <div style={{ textAlign: 'center', padding: '2.5rem 1rem', color: 'var(--text-muted)' }}>
-              <CheckCircle2 size={32} color="#059669" style={{ margin: '0 auto 0.5rem auto' }} />
+              <CheckCircle2 size={32} color="var(--lead-action)" style={{ margin: '0 auto 0.5rem auto' }} />
               <p style={{ fontWeight: 600, color: 'var(--text-primary)', fontSize: '0.85rem' }}>All caught up for today!</p>
               <p style={{ fontSize: '0.75rem', marginTop: '0.15rem' }}>No pending follow-ups or meetups scheduled for today.</p>
             </div>
@@ -218,13 +181,13 @@ export default function DashboardPage({
                           title="Convert to Lead"
                           style={{ fontSize: '0.7rem', padding: '0.15rem 0.45rem' }}
                         >
-                          <Sparkles size={11} />
+                          <Target size={11} />
                           <span>Convert to Lead</span>
                         </button>
                       )}
                       {f.client_is_lead && (
                         <span className="badge-status badge-lead" style={{ fontSize: '0.68rem' }}>
-                          <Sparkles size={10} />
+                          <Target size={10} />
                           <span>Lead</span>
                         </span>
                       )}
@@ -242,14 +205,14 @@ export default function DashboardPage({
                           target="_blank" 
                           rel="noreferrer" 
                           className="btn btn-secondary btn-sm"
-                          style={{ fontSize: '0.725rem', padding: '0.2rem 0.5rem', color: '#0284C7' }}
+                          style={{ fontSize: '0.725rem', padding: '0.2rem 0.5rem', color: 'var(--primary)' }}
                         >
                           <Video size={12} />
                           <span>Join Meeting</span>
                         </a>
                       ) : (
                         <span style={{ fontSize: '0.72rem', color: 'var(--text-muted)' }}>
-                          📍 {f.location || 'Direct Call'}
+                          <MapPin size={11} style={{ verticalAlign: '-1px', marginRight: '3px' }} />{f.location || 'Direct Call'}
                         </span>
                       )}
 
@@ -346,7 +309,7 @@ export default function DashboardPage({
                           onClick={() => triggerLeadPromotion(f.client_id)}
                           style={{ fontSize: '0.65rem', padding: '0.15rem 0.35rem' }}
                         >
-                          <Sparkles size={10} color="#059669" />
+                          <Target size={10} color="var(--lead-action)" />
                           <span>Make Lead</span>
                         </button>
                       )}

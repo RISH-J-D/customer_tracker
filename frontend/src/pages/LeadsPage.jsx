@@ -1,12 +1,13 @@
 import React, { useState, useMemo, useEffect } from 'react';
 import { 
-  Sparkles, 
+  Target, 
   Search, 
   Plus, 
   ThumbsUp, 
   CalendarPlus, 
   Mail, 
   Phone, 
+  MapPin,
   Building, 
   Trash2, 
   Edit3, 
@@ -17,12 +18,16 @@ import {
   Clock,
   UploadCloud,
   RotateCcw,
-  Building2,
   ChevronLeft,
-  ChevronRight
+  ChevronRight,
+  Handshake,
+  CalendarDays
 } from 'lucide-react';
 import ExportDropdown from '../components/ExportDropdown';
 import FollowupTimelineCell from '../components/FollowupTimelineCell';
+import NotesCell from '../components/NotesCell';
+import { splitPhoneNumbers } from '../components/phoneUtils';
+import LeadCalendarModal from '../components/LeadCalendarModal';
 
 export default function LeadsPage({
   leads,
@@ -30,16 +35,29 @@ export default function LeadsPage({
   onEditLead,
   onDeleteLead,
   onTogglePositive,
+  onToggleAccount,
   onScheduleFollowupForLead,
   onRevertToClient,
-  onConvertToAccount,
   onOpenExportModal,
   onOpenImportModal,
-  onUpdateNotes
+  onUpdateNotes,
+  onAddNote,
+  onEditNote,
+  onDeleteNote
 }) {
   const [activeFilter, setActiveFilter] = useState('all'); // all, positive, pending_followup
   const [searchQuery, setSearchQuery] = useState('');
   const [viewMode, setViewMode] = useState('table'); // 'table' or 'grid'
+  const [calendarLeadId, setCalendarLeadId] = useState(null);
+  const calendarLead = calendarLeadId ? leads.find(l => l.id === calendarLeadId) : null;
+  const openCalendarProps = (lead) => ({
+    className: 'lead-open-calendar',
+    role: 'button',
+    tabIndex: 0,
+    title: 'Click to view this lead\'s follow-up calendar',
+    onClick: () => setCalendarLeadId(lead.id),
+    onKeyDown: (e) => { if (e.key === 'Enter' || e.key === ' ') { e.preventDefault(); setCalendarLeadId(lead.id); } }
+  });
   const [page, setPage] = useState(1);
   const [pageSize, setPageSize] = useState(25);
 
@@ -62,14 +80,13 @@ export default function LeadsPage({
       const matchComp = c.company?.toLowerCase().includes(q);
       const matchEmail = c.email?.toLowerCase().includes(q);
       const matchPhone = c.phone?.toLowerCase().includes(q);
-      const matchNotes = c.notes?.toLowerCase().includes(q);
+      const matchNotes = c.notes?.toLowerCase().includes(q) || (c.note_entries || []).some(n => n.content?.toLowerCase().includes(q));
       if (!matchName && !matchComp && !matchEmail && !matchPhone && !matchNotes) return false;
     }
 
     return true;
   });
 
-  const totalTouchpoints = leads.filter(c => c.is_lead).reduce((acc, c) => acc + (c.total_followups || (c.followups ? c.followups.length : 0)), 0);
   const positiveLeadCount = leads.filter(c => c.is_lead && c.positive_approach).length;
 
   const totalPages = Math.ceil(filteredLeads.length / pageSize) || 1;
@@ -80,28 +97,7 @@ export default function LeadsPage({
   return (
     <div>
       {/* Page Header */}
-      <div style={{ display: 'flex', alignItems: 'flex-start', justifyContent: 'space-between', flexWrap: 'wrap', gap: '1rem', marginBottom: '1.25rem' }}>
-        <div>
-          <div style={{ display: 'flex', alignItems: 'center', gap: '0.5rem' }}>
-            <h2 style={{ fontSize: '1.25rem', fontWeight: 700, color: 'var(--text-primary)', letterSpacing: '-0.02em' }}>
-              Qualified Leads
-            </h2>
-            <span style={{
-              backgroundColor: 'var(--lead-bg)',
-              color: 'var(--lead-color)',
-              border: '1px solid var(--lead-border)',
-              fontSize: '0.72rem',
-              fontWeight: 700,
-              padding: '0.15rem 0.5rem',
-              borderRadius: 'var(--radius-full)'
-            }}>
-              Steel Detailing
-            </span>
-          </div>
-          <p style={{ fontSize: '0.815rem', color: 'var(--text-muted)', marginTop: '0.15rem' }}>
-            Converted prospects ready for steel detailing contracts, structural takeoffs, and project execution.
-          </p>
-        </div>
+      <div style={{ display: 'flex', alignItems: 'flex-start', justifyContent: 'flex-end', flexWrap: 'wrap', gap: '1rem', marginBottom: '1.25rem' }}>
         
         <div style={{ display: 'flex', alignItems: 'center', gap: '0.5rem', flexWrap: 'wrap' }}>
           {/* Table vs Grid Switcher */}
@@ -178,40 +174,28 @@ export default function LeadsPage({
       </div>
 
       {/* Leads Summary KPI Cards */}
-      <div style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fit, minmax(210px, 1fr))', gap: '0.85rem', marginBottom: '1.25rem' }}>
+      <div className="kpi-grid" style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fit, minmax(210px, 1fr))', gap: '0.85rem', marginBottom: '1.25rem' }}>
         <div className="card" style={{ padding: '0.85rem 1rem' }}>
-          <div style={{ fontSize: '0.72rem', color: 'var(--text-muted)', fontWeight: 600, textTransform: 'uppercase' }}>
-            Active Leads
+          <div style={{ fontSize: '0.78rem', color: 'var(--text-secondary)', fontWeight: 500 }}>
+            Active leads
           </div>
-          <div style={{ fontSize: '1.4rem', fontWeight: 800, color: 'var(--lead-color)', marginTop: '0.2rem' }}>
+          <div className="stat-value" style={{ fontSize: '1.4rem', marginTop: '0.2rem' }}>
             {leads.filter(c => c.is_lead).length}
           </div>
           <div style={{ fontSize: '0.72rem', color: 'var(--text-muted)', marginTop: '0.15rem' }}>
-            Qualified steel detailing clients
+            Converted from clients
           </div>
         </div>
 
         <div className="card" style={{ padding: '0.85rem 1rem' }}>
-          <div style={{ fontSize: '0.72rem', color: 'var(--text-muted)', fontWeight: 600, textTransform: 'uppercase' }}>
-            Follow-up Touchpoints
+          <div style={{ fontSize: '0.78rem', color: 'var(--text-secondary)', fontWeight: 500 }}>
+            Positive responses
           </div>
-          <div style={{ fontSize: '1.4rem', fontWeight: 800, color: 'var(--text-primary)', marginTop: '0.2rem' }}>
-            {totalTouchpoints}
-          </div>
-          <div style={{ fontSize: '0.72rem', color: 'var(--text-muted)', marginTop: '0.15rem' }}>
-            Interactions & meetings logged
-          </div>
-        </div>
-
-        <div className="card" style={{ padding: '0.85rem 1rem' }}>
-          <div style={{ fontSize: '0.72rem', color: 'var(--text-muted)', fontWeight: 600, textTransform: 'uppercase' }}>
-            Positive Reactions
-          </div>
-          <div style={{ fontSize: '1.4rem', fontWeight: 800, color: '#D97706', marginTop: '0.2rem' }}>
+          <div className="stat-value" style={{ fontSize: '1.4rem', marginTop: '0.2rem' }}>
             {positiveLeadCount}
           </div>
           <div style={{ fontSize: '0.72rem', color: 'var(--text-muted)', marginTop: '0.15rem' }}>
-            Enthusiastic responses
+            Leads marked positive
           </div>
         </div>
       </div>
@@ -225,14 +209,14 @@ export default function LeadsPage({
               className={`segmented-btn ${activeFilter === 'all' ? 'active' : ''}`}
               onClick={() => setActiveFilter('all')}
             >
-              <Sparkles size={12} color="#059669" />
+              <Target size={12} color="var(--lead-action)" />
               <span>All Leads ({leads.filter(c => c.is_lead).length})</span>
             </button>
             <button
               className={`segmented-btn ${activeFilter === 'positive' ? 'active' : ''}`}
               onClick={() => setActiveFilter('positive')}
             >
-              <ThumbsUp size={12} color="#D97706" />
+              <ThumbsUp size={12} color="var(--warning-strong)" />
               <span>Positive ({leads.filter(c => c.is_lead && c.positive_approach).length})</span>
             </button>
             <button
@@ -245,7 +229,7 @@ export default function LeadsPage({
           </div>
 
           {/* Search Input (No Industry selection required) */}
-          <div style={{ position: 'relative', width: '100%', maxWidth: '280px' }}>
+          <div className="search-box" style={{ position: 'relative', width: '100%', maxWidth: '280px' }}>
             <Search size={14} color="var(--text-muted)" style={{ position: 'absolute', left: '9px', top: '9px' }} />
             <input
               type="text"
@@ -261,7 +245,7 @@ export default function LeadsPage({
 
       {filteredLeads.length === 0 ? (
         <div className="card" style={{ textAlign: 'center', padding: '3.5rem 1.5rem', color: 'var(--text-muted)' }}>
-          <Sparkles size={38} color="#059669" style={{ margin: '0 auto 0.75rem auto', opacity: 0.5 }} />
+          <Target size={38} color="var(--lead-action)" style={{ margin: '0 auto 0.75rem auto', opacity: 0.5 }} />
           <h3 style={{ fontSize: '1rem', fontWeight: 600, color: 'var(--text-primary)', marginBottom: '0.25rem' }}>
             No Leads Found
           </h3>
@@ -283,26 +267,27 @@ export default function LeadsPage({
         </div>
       ) : viewMode === 'table' ? (
         /* TABLE LIST VIEW */
-        <div className="table-responsive">
+        <div className="table-responsive table-mobile-cards">
           <table className="custom-table">
             <thead>
               <tr>
-                <th style={{ width: '25%' }}>Lead & Fabricator / Client</th>
-                <th style={{ width: '13%' }}>Conversion & Status</th>
-                <th style={{ width: '11%' }}>Positive Interest</th>
-                <th style={{ width: '15%' }}>Contact Details</th>
-                <th style={{ width: '24%' }}>Follow-up Timeline & Notes</th>
-                <th style={{ width: '12%' }}>Actions</th>
+                <th style={{ width: '18%' }}>Lead & Fabricator / Client</th>
+                <th style={{ width: '13%' }}>Email</th>
+                <th style={{ width: '10%' }}>Mobile</th>
+                <th style={{ width: '11%' }}>Address</th>
+                <th style={{ width: '20%' }}>Follow-ups</th>
+                <th style={{ width: '19%' }}>Notes</th>
+                <th style={{ width: '1%' }}>Actions</th>
               </tr>
             </thead>
             <tbody>
               {paginatedLeads.map((c) => {
                 const initials = c.name ? c.name.split(' ').map(n => n[0]).join('').slice(0, 2).toUpperCase() : 'LD';
                 return (
-                  <tr key={c.id}>
+                  <tr key={c.id} className={c.account_converted_at ? 'row-account-converted' : undefined}>
                     {/* Lead Name & Company */}
-                    <td>
-                      <div style={{ display: 'flex', alignItems: 'center', gap: '0.65rem' }}>
+                    <td className="td-name">
+                      <div {...openCalendarProps(c)} style={{ display: 'flex', alignItems: 'center', gap: '0.65rem' }}>
                         <div style={{
                           width: '32px',
                           height: '32px',
@@ -320,144 +305,130 @@ export default function LeadsPage({
                           {initials}
                         </div>
                         <div>
-                          <div style={{ fontWeight: 600, color: 'var(--text-primary)', fontSize: '0.85rem' }}>
-                            {c.name}
+                          <div style={{ fontWeight: 600, color: 'var(--text-primary)', fontSize: '0.85rem', display: 'flex', alignItems: 'center', gap: '0.35rem' }}>
+                            <span className="lead-name-text">{c.name}</span>
+                            <CalendarDays size={13} color="var(--text-muted)" style={{ flexShrink: 0 }} />
                           </div>
                           <div style={{ display: 'flex', alignItems: 'center', gap: '0.35rem', color: 'var(--text-muted)', fontSize: '0.75rem', marginTop: '0.1rem', flexWrap: 'wrap' }}>
                             <span>{c.company || 'Fabricator / Contractor'}</span>
                             {c.position && <span>• <strong style={{ fontWeight: 500, color: 'var(--text-secondary)' }}>{c.position}</strong></span>}
-                            {(c.city || c.state) && <span>• {[c.city, c.state].filter(Boolean).join(', ')}</span>}
                           </div>
                         </div>
                       </div>
                     </td>
 
-                    {/* Status & Converted Badge */}
-                    <td>
-                      <div>
-                        <span className="badge-status badge-lead">
-                          <CheckCircle2 size={11} />
-                          <span>Active Lead</span>
-                        </span>
-                        {c.pending_followups > 0 && (
-                          <div style={{ display: 'flex', alignItems: 'center', gap: '0.25rem', color: 'var(--danger-color)', fontSize: '0.7rem', fontWeight: 500, marginTop: '0.2rem' }}>
-                            <span style={{ width: '5px', height: '5px', borderRadius: '50%', backgroundColor: 'var(--danger-btn)' }}></span>
-                            <span>{c.pending_followups} follow-up pending</span>
-                          </div>
-                        )}
-                      </div>
-                    </td>
-
-                    {/* Positive Approach Toggle Button */}
-                    <td>
-                      <button
-                        onClick={() => onTogglePositive(c.id)}
-                        className="btn btn-sm"
-                        style={{
-                          padding: '0.2rem 0.5rem',
-                          fontSize: '0.725rem',
-                          backgroundColor: c.positive_approach ? 'var(--positive-bg)' : 'transparent',
-                          color: c.positive_approach ? 'var(--positive-color)' : 'var(--text-muted)',
-                          border: `1px solid ${c.positive_approach ? 'var(--positive-border)' : 'var(--border-subtle)'}`,
-                          fontWeight: 500
-                        }}
-                        title="Click to toggle positive response"
-                      >
-                        <ThumbsUp size={11} color={c.positive_approach ? '#D97706' : '#9CA3AF'} />
-                        <span>{c.positive_approach ? 'Positive' : 'Standard'}</span>
-                      </button>
-                    </td>
-
-                    {/* Contact */}
-                    <td>
-                      <div style={{ display: 'flex', flexDirection: 'column', gap: '0.15rem', fontSize: '0.75rem', color: 'var(--text-secondary)' }}>
+                    {/* Email */}
+                    <td className="td-email" data-label="Email">
+                      <div style={{ fontSize: '0.75rem', color: 'var(--text-secondary)' }}>
                         {c.email ? (
-                          <a href={`mailto:${c.email}`} style={{ color: 'inherit', textDecoration: 'none', display: 'flex', alignItems: 'center', gap: '0.3rem' }}>
-                            <Mail size={11} color="#9CA3AF" />
-                            <span style={{ overflow: 'hidden', textOverflow: 'ellipsis', whiteSpace: 'nowrap', maxWidth: '160px' }}>{c.email}</span>
+                          <a href={`mailto:${c.email}`} style={{ color: 'inherit', textDecoration: 'none', display: 'flex', alignItems: 'flex-start', gap: '0.3rem' }} title={c.email}>
+                            <Mail size={11} color="var(--text-placeholder)" style={{ flexShrink: 0, marginTop: '0.15rem' }} />
+                            <span style={{ wordBreak: 'break-all', minWidth: 0 }}>{c.email}</span>
                           </a>
                         ) : (
                           <span style={{ color: 'var(--text-muted)' }}>-</span>
                         )}
-                        {c.phone && (
-                          <div style={{ display: 'flex', alignItems: 'center', gap: '0.3rem', color: 'var(--text-muted)' }}>
-                            <Phone size={11} />
-                            <span>{c.phone}</span>
-                          </div>
+                      </div>
+                    </td>
+
+                    {/* Mobile */}
+                    <td className="td-mobile" data-label="Mobile">
+                      <div style={{ fontSize: '0.75rem', color: 'var(--text-secondary)' }}>
+                        {c.phone ? (
+                          <a href={`tel:${c.phone}`} style={{ color: 'inherit', textDecoration: 'none', display: 'flex', alignItems: 'flex-start', gap: '0.3rem' }}>
+                            <Phone size={11} color="var(--text-placeholder)" style={{ marginTop: '0.15rem', flexShrink: 0 }} />
+                            <span style={{ display: 'flex', flexDirection: 'column', minWidth: 0 }}>
+                              {splitPhoneNumbers(c.phone).map((num, i) => (
+                                <span key={i}>{num}</span>
+                              ))}
+                            </span>
+                          </a>
+                        ) : (
+                          <span style={{ color: 'var(--text-muted)' }}>-</span>
                         )}
                       </div>
                     </td>
 
-                    {/* Follow-up Timeline & Notes */}
-                    <td>
+                    {/* Address */}
+                    <td className="td-address" data-label="Address">
+                      <div style={{ display: 'flex', alignItems: 'flex-start', gap: '0.3rem', fontSize: '0.75rem', color: 'var(--text-secondary)' }}>
+                        {(c.city || c.state || c.country) ? (
+                          <>
+                            <MapPin size={11} color="var(--text-placeholder)" style={{ marginTop: '0.15rem', flexShrink: 0 }} />
+                            <span>{[c.city, c.state, c.country].filter(Boolean).join(', ')}</span>
+                          </>
+                        ) : (
+                          <span style={{ color: 'var(--text-muted)' }}>-</span>
+                        )}
+                      </div>
+                    </td>
+
+                    {/* Follow-ups (calendar grouped) */}
+                    <td className="td-stack" data-label="Follow-ups">
                       <FollowupTimelineCell
                         client={c}
-                        onScheduleFollowup={onScheduleFollowupForLead}
+                      />
+                    </td>
+
+                    {/* Notes (calendar grouped) */}
+                    <td className="td-stack" data-label="Notes">
+                      <NotesCell
+                        client={c}
+                        onAddNote={onAddNote}
+                        onEditNote={onEditNote}
+                        onDeleteNote={onDeleteNote}
                         onUpdateNotes={onUpdateNotes}
                       />
                     </td>
 
                     {/* Actions */}
-                    <td>
-                      <div style={{ display: 'flex', alignItems: 'center', gap: '0.35rem' }}>
-                        {onConvertToAccount && (
+                    <td className="td-actions" data-label="Actions">
+                      <div className="row-actions">
+                        {onToggleAccount && (
                           <button
-                            className="btn btn-sm"
-                            onClick={() => onConvertToAccount(c)}
-                            title="Turn this lead into an Account with projects & representatives"
-                            style={{
-                              padding: '0.25rem 0.5rem',
-                              backgroundColor: 'var(--lead-surface)',
-                              color: 'var(--lead-action)',
-                              border: '1px solid var(--lead-border)',
-                              fontSize: '0.72rem',
-                              fontWeight: 700,
-                              display: 'flex',
-                              alignItems: 'center',
-                              gap: '0.25rem'
-                            }}
+                            className={`btn btn-secondary btn-sm row-action-btn btn-account-toggle${c.account_converted_at ? ' is-converted' : ''}`}
+                            onClick={() => onToggleAccount(c.id)}
+                            title={c.account_converted_at
+                              ? `Converted to account on ${new Date(c.account_converted_at + 'Z').toLocaleDateString()} — click to undo`
+                              : 'Mark as converted to account (highlights the row green)'}
+                            aria-pressed={Boolean(c.account_converted_at)}
                           >
-                            <Building2 size={12} />
-                            <span>To Account</span>
+                            <Handshake size={15} />
                           </button>
                         )}
-
                         <button
-                          className="btn btn-secondary btn-sm"
+                          className="btn btn-secondary btn-sm row-action-btn"
                           onClick={() => onScheduleFollowupForLead(c.id)}
                           title="Schedule steel detailing meetup or follow-up"
-                          style={{ padding: '0.25rem 0.4rem' }}
                         >
-                          <CalendarPlus size={12} />
+                          <CalendarPlus size={15} />
                         </button>
 
                         <button
-                          className="btn btn-secondary btn-sm"
+                          className="btn btn-secondary btn-sm row-action-btn"
                           onClick={() => onEditLead(c)}
                           title="Edit lead details"
-                          style={{ padding: '0.25rem 0.4rem' }}
                         >
-                          <Edit3 size={12} />
+                          <Edit3 size={15} />
                         </button>
 
                         {onRevertToClient && (
                           <button
-                            className="btn btn-secondary btn-sm"
+                            className="btn btn-secondary btn-sm row-action-btn"
                             onClick={() => onRevertToClient(c.id)}
                             title="Revert lead back to regular prospect client"
                             style={{ padding: '0.25rem 0.4rem' }}
                           >
-                            <RotateCcw size={12} />
+                            <RotateCcw size={15} />
                           </button>
                         )}
 
                         <button
-                          className="btn btn-danger btn-sm"
+                          className="btn btn-danger btn-sm row-action-btn"
                           onClick={() => onDeleteLead(c.id)}
                           title="Delete lead record"
-                          style={{ padding: '0.25rem 0.4rem' }}
                         >
-                          <Trash2 size={12} />
+                          <Trash2 size={15} />
                         </button>
                       </div>
                     </td>
@@ -473,18 +444,19 @@ export default function LeadsPage({
           {paginatedLeads.map((c) => (
             <div
               key={c.id}
-              className="card"
+              className={`card${c.account_converted_at ? ' card-account-converted' : ''}`}
               style={{
                 display: 'flex',
                 flexDirection: 'column',
                 border: '1px solid var(--lead-border)',
-                backgroundColor: 'var(--bg-surface)'
+                backgroundColor: c.account_converted_at ? 'var(--account-row-bg)' : 'var(--bg-surface)'
               }}
             >
               <div style={{ display: 'flex', alignItems: 'flex-start', justifyContent: 'space-between', marginBottom: '0.65rem' }}>
                 <div>
-                  <h3 style={{ fontSize: '0.95rem', fontWeight: 700, color: 'var(--text-primary)' }}>
-                    {c.name}
+                  <h3 {...openCalendarProps(c)} style={{ fontSize: '0.95rem', fontWeight: 700, color: 'var(--text-primary)', display: 'flex', alignItems: 'center', gap: '0.35rem' }}>
+                    <span className="lead-name-text">{c.name}</span>
+                    <CalendarDays size={14} color="var(--text-muted)" style={{ flexShrink: 0 }} />
                   </h3>
                   <div style={{ display: 'flex', alignItems: 'center', gap: '0.35rem', color: 'var(--text-muted)', fontSize: '0.785rem', marginTop: '0.1rem' }}>
                     <Building size={12} />
@@ -510,7 +482,7 @@ export default function LeadsPage({
                 marginBottom: '0.65rem'
               }}>
                 <div style={{ display: 'flex', alignItems: 'center', gap: '0.35rem' }}>
-                  <ThumbsUp size={12} color={c.positive_approach ? '#D97706' : '#9CA3AF'} />
+                  <ThumbsUp size={12} color={c.positive_approach ? 'var(--warning-strong)' : 'var(--text-placeholder)'} />
                   <span style={{ fontSize: '0.725rem', fontWeight: 500, color: c.positive_approach ? 'var(--positive-color)' : 'var(--text-muted)' }}>
                     {c.positive_approach ? 'Positive Response' : 'Standard Response'}
                   </span>
@@ -528,31 +500,38 @@ export default function LeadsPage({
               <div style={{ display: 'flex', flexDirection: 'column', gap: '0.25rem', marginBottom: '0.65rem', fontSize: '0.75rem', color: 'var(--text-secondary)' }}>
                 {c.position && (
                   <div style={{ display: 'flex', alignItems: 'center', gap: '0.35rem', color: 'var(--text-secondary)' }}>
-                    <Building size={12} color="#9CA3AF" />
+                    <Building size={12} color="var(--text-placeholder)" />
                     <span>{c.position}</span>
                   </div>
                 )}
                 {(c.city || c.state || c.country) && (
                   <div style={{ display: 'flex', alignItems: 'center', gap: '0.35rem', color: 'var(--text-muted)', fontSize: '0.72rem' }}>
-                    <span>📍 {[c.city, c.state, c.country].filter(Boolean).join(', ')}</span>
+                    <span><MapPin size={11} style={{ verticalAlign: '-1px', marginRight: '3px' }} />{[c.city, c.state, c.country].filter(Boolean).join(', ')}</span>
                   </div>
                 )}
                 {c.email && (
                   <div style={{ display: 'flex', alignItems: 'center', gap: '0.35rem' }}>
-                    <Mail size={12} color="#9CA3AF" />
+                    <Mail size={12} color="var(--text-placeholder)" />
                     <span>{c.email}</span>
                   </div>
                 )}
                 {c.phone && (
                   <div style={{ display: 'flex', alignItems: 'center', gap: '0.35rem' }}>
-                    <Phone size={12} color="#9CA3AF" />
+                    <Phone size={12} color="var(--text-placeholder)" />
                     <span>{c.phone}</span>
                   </div>
                 )}
                 <div style={{ marginTop: '0.4rem', paddingTop: '0.4rem', borderTop: '1px solid var(--border-light)' }}>
                   <FollowupTimelineCell
                     client={c}
-                    onScheduleFollowup={onScheduleFollowupForLead}
+                  />
+                </div>
+                <div style={{ marginTop: '0.4rem', paddingTop: '0.4rem', borderTop: '1px solid var(--border-light)' }}>
+                  <NotesCell
+                    client={c}
+                    onAddNote={onAddNote}
+                    onEditNote={onEditNote}
+                    onDeleteNote={onDeleteNote}
                     onUpdateNotes={onUpdateNotes}
                   />
                 </div>
@@ -560,18 +539,18 @@ export default function LeadsPage({
 
               {/* Card Footer Actions */}
               <div style={{ marginTop: 'auto', display: 'flex', alignItems: 'center', justifyContent: 'space-between', gap: '0.4rem', borderTop: '1px solid var(--border-light)', paddingTop: '0.65rem' }}>
-                {onConvertToAccount && (
+                {onToggleAccount && (
                   <button
-                    className="btn btn-primary btn-sm"
-                    onClick={() => onConvertToAccount(c)}
-                    title="Turn to Corporate Account & Projects"
-                    style={{ background: 'var(--accent-primary)', fontSize: '0.72rem', padding: '0.25rem 0.5rem' }}
+                    className={`btn btn-secondary btn-sm btn-account-toggle${c.account_converted_at ? ' is-converted' : ''}`}
+                    onClick={() => onToggleAccount(c.id)}
+                    title={c.account_converted_at
+                      ? `Converted to account on ${new Date(c.account_converted_at + 'Z').toLocaleDateString()} — click to undo`
+                      : 'Mark as converted to account (highlights the row green)'}
+                    aria-pressed={Boolean(c.account_converted_at)}
                   >
-                    <Building2 size={12} />
-                    <span>To Account</span>
+                    <Handshake size={12} />
                   </button>
                 )}
-
                 <button
                   className="btn btn-secondary btn-sm"
                   onClick={() => onScheduleFollowupForLead(c.id)}
@@ -673,6 +652,10 @@ export default function LeadsPage({
             </div>
           </div>
         </div>
+      )}
+
+      {calendarLead && (
+        <LeadCalendarModal lead={calendarLead} onClose={() => setCalendarLeadId(null)} />
       )}
     </div>
   );

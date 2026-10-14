@@ -1,24 +1,26 @@
 import React, { useState } from 'react';
 import { 
   Calendar, 
-  CalendarPlus, 
   Clock, 
-  Video, 
-  CheckCircle2, 
-  Sparkles, 
-  Trash2, 
   Filter,
-  Check
+  MapPin,
+  Link as LinkIcon
 } from 'lucide-react';
-import confetti from 'canvas-confetti';
 import ExportDropdown from '../components/ExportDropdown';
+
+// Read-only status label shown on each follow-up
+const getStatusLabel = (f, isToday, isPast) => {
+  if (f.status === 'Pending') {
+    if (isToday) return { text: 'Due Today', color: 'var(--danger-color)', bg: 'var(--danger-bg)' };
+    if (isPast) return { text: 'Overdue', color: 'var(--positive-color)', bg: 'var(--positive-bg)' };
+    return { text: 'Upcoming', color: 'var(--primary)', bg: 'var(--primary-subtle)' };
+  }
+  if (f.status === 'Completed') return { text: 'Completed', color: 'var(--lead-color)', bg: 'var(--lead-bg)' };
+  return { text: f.status, color: 'var(--text-muted)', bg: 'var(--bg-hover)' };
+};
 
 export default function FollowUpsPage({
   followups,
-  onOpenNewFollowup,
-  onOpenCompleteModal,
-  onDeleteFollowup,
-  onPromoteClientToLead,
   onOpenExportModal
 }) {
   const [filterType, setFilterType] = useState('all');
@@ -32,33 +34,11 @@ export default function FollowUpsPage({
     return true;
   });
 
-  const triggerLeadPromotion = (clientId) => {
-    confetti({
-      particleCount: 80,
-      spread: 70,
-      origin: { y: 0.6 }
-    });
-    onPromoteClientToLead(clientId);
-  };
-
   return (
     <div>
-      <div style={{ display: 'flex', alignItems: 'flex-start', justifyContent: 'space-between', flexWrap: 'wrap', gap: '1rem', marginBottom: '1.25rem' }}>
-        <div>
-          <h2 style={{ fontSize: '1.25rem', fontWeight: 700, color: 'var(--text-primary)', letterSpacing: '-0.02em' }}>
-            Meetups & Follow-up Logs
-          </h2>
-          <p style={{ fontSize: '0.815rem', color: 'var(--text-muted)', marginTop: '0.15rem' }}>
-            Schedule and manage client meetups, demo sessions, check-in calls, and log outcomes.
-          </p>
-        </div>
-
+      <div style={{ display: 'flex', alignItems: 'flex-start', justifyContent: 'flex-end', flexWrap: 'wrap', gap: '1rem', marginBottom: '1.25rem' }}>
         <div style={{ display: 'flex', alignItems: 'center', gap: '0.5rem' }}>
           <ExportDropdown onOpenModal={onOpenExportModal} />
-          <button className="btn btn-primary" onClick={onOpenNewFollowup}>
-            <CalendarPlus size={14} />
-            <span>Schedule Interaction</span>
-          </button>
         </div>
       </div>
 
@@ -128,6 +108,7 @@ export default function FollowUpsPage({
             const dateStr = dateObj.toLocaleDateString([], { weekday: 'short', month: 'short', day: 'numeric', year: 'numeric' });
             const timeStr = dateObj.toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' });
             const isToday = new Date().toDateString() === dateObj.toDateString();
+            const status = getStatusLabel(f, isToday, dateObj < new Date());
 
             return (
               <div
@@ -141,7 +122,7 @@ export default function FollowUpsPage({
                   flexWrap: 'wrap',
                   padding: '0.85rem 1.15rem',
                   backgroundColor: isPending ? 'var(--bg-surface)' : 'var(--bg-subtle)',
-                  borderColor: isToday && isPending ? '#FECACA' : 'var(--border-subtle)',
+                  borderColor: isToday && isPending ? 'var(--danger-border)' : 'var(--border-subtle)',
                   opacity: isPending ? 1 : 0.7
                 }}
               >
@@ -150,7 +131,7 @@ export default function FollowUpsPage({
                   <div style={{ display: 'flex', alignItems: 'center', gap: '0.4rem', marginBottom: '0.2rem', flexWrap: 'wrap' }}>
                     {isToday && (
                       <span style={{
-                        backgroundColor: '#DC2626',
+                        backgroundColor: 'var(--danger-btn)',
                         color: 'white',
                         fontSize: '0.65rem',
                         fontWeight: 700,
@@ -186,6 +167,23 @@ export default function FollowUpsPage({
                     {f.client_company ? ` (${f.client_company})` : ''}
                   </div>
 
+                  {(f.location || f.meeting_link) && (
+                    <div style={{ display: 'flex', flexWrap: 'wrap', gap: '0.85rem', fontSize: '0.74rem', color: 'var(--text-muted)', marginTop: '0.25rem' }}>
+                      {f.location && (
+                        <span style={{ display: 'inline-flex', alignItems: 'center', gap: '0.25rem' }}>
+                          <MapPin size={11} />
+                          {f.location}
+                        </span>
+                      )}
+                      {f.meeting_link && (
+                        <span style={{ display: 'inline-flex', alignItems: 'center', gap: '0.25rem', minWidth: 0, wordBreak: 'break-all' }}>
+                          <LinkIcon size={11} style={{ flexShrink: 0 }} />
+                          {f.meeting_link}
+                        </span>
+                      )}
+                    </div>
+                  )}
+
                   {f.notes && (
                     <p style={{ fontSize: '0.75rem', color: 'var(--text-muted)', marginTop: '0.25rem', lineHeight: '1.3' }}>
                       {f.notes}
@@ -193,58 +191,18 @@ export default function FollowUpsPage({
                   )}
                 </div>
 
-                {/* Actions */}
-                <div style={{ display: 'flex', alignItems: 'center', gap: '0.4rem', flexWrap: 'wrap' }}>
-                  {f.meeting_link && (
-                    <a
-                      href={f.meeting_link}
-                      target="_blank"
-                      rel="noopener noreferrer"
-                      className="btn btn-secondary btn-sm"
-                      style={{ color: '#0284C7', padding: '0.25rem 0.5rem', fontSize: '0.725rem' }}
-                    >
-                      <Video size={12} />
-                      <span>Join Call</span>
-                    </a>
-                  )}
-
-                  {!f.client_is_lead && (
-                    <button
-                      className="btn btn-lead btn-sm"
-                      onClick={() => triggerLeadPromotion(f.client_id)}
-                      title="Promote client to Lead"
-                      style={{ padding: '0.25rem 0.5rem', fontSize: '0.725rem' }}
-                    >
-                      <Sparkles size={11} />
-                      <span>Convert to Lead</span>
-                    </button>
-                  )}
-
-                  {isPending ? (
-                    <button
-                      className="btn btn-primary btn-sm"
-                      onClick={() => onOpenCompleteModal(f)}
-                      style={{ padding: '0.25rem 0.55rem', fontSize: '0.725rem' }}
-                    >
-                      <CheckCircle2 size={12} />
-                      <span>Complete</span>
-                    </button>
-                  ) : (
-                    <div style={{ display: 'flex', alignItems: 'center', gap: '0.3rem', color: 'var(--lead-color)', fontSize: '0.75rem', fontWeight: 600 }}>
-                      <Check size={14} />
-                      <span>Completed</span>
-                    </div>
-                  )}
-
-                  <button
-                    className="btn btn-danger btn-sm"
-                    onClick={() => onDeleteFollowup(f.id)}
-                    title="Delete record"
-                    style={{ padding: '0.25rem 0.45rem' }}
-                  >
-                    <Trash2 size={12} />
-                  </button>
-                </div>
+                {/* Status (read-only) */}
+                <span style={{
+                  fontSize: '0.72rem',
+                  fontWeight: 700,
+                  padding: '0.2rem 0.6rem',
+                  borderRadius: '999px',
+                  color: status.color,
+                  backgroundColor: status.bg,
+                  whiteSpace: 'nowrap'
+                }}>
+                  {status.text}
+                </span>
               </div>
             );
           })}

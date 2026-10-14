@@ -1,6 +1,6 @@
 import React, { useState } from 'react';
 import { 
-  Sparkles, 
+  Target, 
   Lock, 
   User, 
   Eye, 
@@ -90,14 +90,14 @@ export default function LoginPage({
             width: '36px',
             height: '36px',
             borderRadius: 'var(--radius-md)',
-            background: 'linear-gradient(135deg, var(--primary) 0%, #1D4ED8 100%)',
+            background: 'linear-gradient(135deg, var(--primary) 0%, var(--primary) 100%)',
             display: 'flex',
             alignItems: 'center',
             justifyContent: 'center',
             color: 'white',
             boxShadow: 'var(--shadow-sm)'
           }}>
-            <Sparkles size={18} />
+            <Target size={18} />
           </div>
           <div>
             <div style={{ display: 'flex', alignItems: 'center', gap: '0.45rem' }}>
@@ -151,7 +151,7 @@ export default function LoginPage({
               style={{ width: '34px', height: '34px' }}
               aria-label="Toggle color theme"
             >
-              {theme === 'dark' ? <Sun size={15} color="#FBBF24" /> : <Moon size={15} color="var(--text-secondary)" />}
+              {theme === 'dark' ? <Sun size={15} color="var(--warning-strong)" /> : <Moon size={15} color="var(--text-secondary)" />}
             </button>
           )}
         </div>
@@ -372,7 +372,7 @@ export default function LoginPage({
                   alignItems: 'center',
                   justifyContent: 'center',
                   gap: '0.5rem',
-                  background: 'linear-gradient(135deg, var(--primary) 0%, #1D4ED8 100%)',
+                  background: 'linear-gradient(135deg, var(--primary) 0%, var(--primary) 100%)',
                   boxShadow: 'var(--shadow-sm)'
                 }}
               >

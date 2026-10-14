@@ -14,13 +14,11 @@ import CompleteFollowupModal from './components/CompleteFollowupModal';
 import ExportModal from './components/ExportModal';
 import ImportExcelModal from './components/ImportExcelModal';
 import DbControlModal from './components/DbControlModal';
-import AccountModal from './components/AccountModal';
 
 // Pages
 import DashboardPage from './pages/DashboardPage';
 import ClientsPage from './pages/ClientsPage';
 import LeadsPage from './pages/LeadsPage';
-import AccountsPage from './pages/AccountsPage';
 import FollowUpsPage from './pages/FollowUpsPage';
 import LogsPage from './pages/LogsPage';
 import LoginPage from './pages/LoginPage';
@@ -37,14 +35,6 @@ export default function App() {
     }
   });
   const [clients, setClients] = useState([]);
-  const [accounts, setAccounts] = useState(() => {
-    try {
-      const saved = localStorage.getItem('cached_accounts_count');
-      return saved ? new Array(parseInt(saved, 10)).fill({}) : [];
-    } catch {
-      return [];
-    }
-  });
   const [followups, setFollowups] = useState([]);
   const [todayFollowups, setTodayFollowups] = useState([]);
   const [upcomingMeetups, setUpcomingMeetups] = useState([]);
@@ -76,17 +66,12 @@ export default function App() {
   const [isClientModalOpen, setIsClientModalOpen] = useState(false);
   const [editingClient, setEditingClient] = useState(null);
   const [isLeadModalMode, setIsLeadModalMode] = useState(false);
-  const [isAccountModalOpen, setIsAccountModalOpen] = useState(false);
-  const [editingAccount, setEditingAccount] = useState(null);
-  const [prefilledClientForAccount, setPrefilledClientForAccount] = useState(null);
   const [isFollowupModalOpen, setIsFollowupModalOpen] = useState(false);
   const [preselectedClientId, setPreselectedClientId] = useState('');
   const [isCompleteModalOpen, setIsCompleteModalOpen] = useState(false);
   const [activeFollowupToComplete, setActiveFollowupToComplete] = useState(null);
   const [isExportModalOpen, setIsExportModalOpen] = useState(false);
-  const [exportModalType, setExportModalType] = useState('clients');
   const [isImportModalOpen, setIsImportModalOpen] = useState(false);
-  const [importModalMode, setImportModalMode] = useState('clients');
   const [isDbModalOpen, setIsDbModalOpen] = useState(false);
 
   // Load all app data
@@ -105,9 +90,8 @@ export default function App() {
 
     // 2. Fetch full lists with Promise.allSettled so no single slow query blocks other data
     try {
-      const [clsRes, accsRes, flwsRes, tFlwsRes, uFlwsRes, notifsRes] = await Promise.allSettled([
+      const [clsRes, flwsRes, tFlwsRes, uFlwsRes, notifsRes] = await Promise.allSettled([
         api.getClients(),
-        api.getAccounts(),
         api.getFollowups(),
         api.getFollowups({ today_only: true }),
         api.getFollowups({ upcoming_only: true }),
@@ -116,10 +100,6 @@ export default function App() {
 
       if (clsRes.status === 'fulfilled' && clsRes.value) {
         setClients(clsRes.value);
-      }
-      if (accsRes.status === 'fulfilled' && accsRes.value) {
-        setAccounts(accsRes.value);
-        try { localStorage.setItem('cached_accounts_count', String(accsRes.value.length)); } catch {}
       }
       if (flwsRes.status === 'fulfilled' && flwsRes.value) {
         setFollowups(flwsRes.value);
@@ -200,6 +180,15 @@ export default function App() {
     }
   };
 
+  const handleToggleAccountConversion = async (clientId) => {
+    try {
+      const updated = await api.toggleAccountConversion(clientId);
+      setClients(prev => prev.map(c => c.id === clientId ? { ...c, account_converted_at: updated.account_converted_at } : c));
+    } catch (err) {
+      alert('Error updating account conversion: ' + err.message);
+    }
+  };
+
   const handleUpdateClientNotes = async (clientId, notes) => {
     try {
       await api.updateClient(clientId, { notes });
@@ -209,31 +198,25 @@ export default function App() {
     }
   };
 
-  // Account actions
-  const handleSaveAccount = async (formData, accountId) => {
-    if (accountId) {
-      await api.updateAccount(accountId, formData);
-    } else {
-      await api.createAccount(formData);
-    }
-    notificationService.send({
-      title: "Corporate Account Saved",
-      body: `${formData.project_name || formData.account_title || 'Project'} has been recorded.`
-    });
-    await loadData();
+  // Dated note history actions
+  const updateClientNoteEntries = (clientId, updater) => {
+    setClients(prev => prev.map(c => c.id === clientId ? { ...c, note_entries: updater(c.note_entries || []) } : c));
   };
 
-  const handleDeleteAccount = async (accountId) => {
-    if (window.confirm('Are you sure you want to delete this project account record?')) {
-      await api.deleteAccount(accountId);
-      await loadData();
-    }
+  const handleAddClientNote = async (clientId, content) => {
+    const note = await api.addClientNote(clientId, content);
+    updateClientNoteEntries(clientId, entries => [note, ...entries]);
   };
 
-  const handleConvertToAccount = (leadOrClient) => {
-    setPrefilledClientForAccount(leadOrClient);
-    setEditingAccount(null);
-    setIsAccountModalOpen(true);
+  const handleEditClientNote = async (clientId, noteId, content) => {
+    const note = await api.updateClientNote(clientId, noteId, content);
+    updateClientNoteEntries(clientId, entries => entries.map(n => n.id === noteId ? note : n));
+  };
+
+  const handleDeleteClientNote = async (clientId, noteId) => {
+    if (!window.confirm('Delete this note?')) return;
+    await api.deleteClientNote(clientId, noteId);
+    updateClientNoteEntries(clientId, entries => entries.filter(n => n.id !== noteId));
   };
 
   // Follow-up actions
@@ -251,13 +234,6 @@ export default function App() {
     await loadData();
   };
 
-  const handleDeleteFollowup = async (followupId) => {
-    if (window.confirm('Delete this follow-up record?')) {
-      await api.deleteFollowup(followupId);
-      await loadData();
-    }
-  };
-
   // Notification actions
   const handleMarkNotifRead = async (id) => {
     await api.markNotificationRead(id);
@@ -273,21 +249,19 @@ export default function App() {
   const getHeaderInfo = () => {
     switch (activeTab) {
       case 'dashboard':
-        return { title: 'Dashboard', subtitle: 'Overview of follow-ups, clients, and conversion metrics' };
+        return { title: 'Dashboard', subtitle: 'Follow-ups, clients and conversion at a glance' };
       case 'clients':
-        return { title: 'Clients', subtitle: 'Steel Detailing prospective accounts and outreach pipeline' };
+        return { title: 'Clients', subtitle: 'Prospective fabricators and contractors' };
       case 'leads':
-        return { title: 'Qualified Leads', subtitle: 'Converted Steel Detailing projects and active proposals' };
-      case 'accounts':
-        return { title: 'Corporate Accounts & Projects', subtitle: 'Manage converted client accounts, multiple project detailing orders & representatives' };
+        return { title: 'Leads', subtitle: 'Clients who responded positively' };
       case 'today':
-        return { title: "Today's Agenda", subtitle: "Scheduled meetings, demos, and follow-ups due today" };
+        return { title: "Today's Agenda", subtitle: "Follow-ups due today" };
       case 'followups':
-        return { title: 'Meetups & Schedule', subtitle: 'Full calendar of upcoming and past client interactions' };
+        return { title: 'Meetups & Schedule', subtitle: 'All scheduled and past client interactions' };
       case 'logs':
-        return { title: 'Activity Logs', subtitle: 'Complete audit trail of all changes made across the CRM' };
+        return { title: 'Activity Logs', subtitle: 'History of changes made in the CRM' };
       case 'export':
-        return { title: 'Export Reports', subtitle: 'Download client and lead lists in Excel, PDF, or CSV' };
+        return { title: 'Export Reports', subtitle: 'Download client and lead lists as Excel, PDF or CSV' };
       default:
         return { title: 'ClientFlow Tracker', subtitle: '' };
     }
@@ -322,7 +296,6 @@ export default function App() {
         activeTab={activeTab}
         setActiveTab={setActiveTab}
         stats={stats}
-        accountsCount={accounts.length}
         unreadNotificationsCount={unreadCount}
         onOpenTodayModal={() => setIsTodayModalOpen(true)}
         onOpenDbModal={() => setIsDbModalOpen(true)}
@@ -394,20 +367,16 @@ export default function App() {
               onDeleteClient={handleDeleteClient}
               onPromoteClientToLead={handlePromoteToLead}
               onTogglePositive={handleTogglePositive}
-              onConvertToAccount={handleConvertToAccount}
-              onScheduleFollowupForClient={(clientId) => {
-                setPreselectedClientId(String(clientId));
-                setIsFollowupModalOpen(true);
-              }}
               onOpenExportModal={() => {
-                setExportModalType('clients');
                 setIsExportModalOpen(true);
               }}
               onOpenImportModal={() => {
-                setImportModalMode('clients');
                 setIsImportModalOpen(true);
               }}
               onUpdateNotes={handleUpdateClientNotes}
+              onAddNote={handleAddClientNote}
+              onEditNote={handleEditClientNote}
+              onDeleteNote={handleDeleteClientNote}
             />
           )}
 
@@ -426,7 +395,7 @@ export default function App() {
               }}
               onDeleteLead={handleDeleteClient}
               onTogglePositive={handleTogglePositive}
-              onConvertToAccount={handleConvertToAccount}
+              onToggleAccount={handleToggleAccountConversion}
               onScheduleFollowupForLead={(clientId) => {
                 setPreselectedClientId(String(clientId));
                 setIsFollowupModalOpen(true);
@@ -436,63 +405,21 @@ export default function App() {
                 await loadData();
               }}
               onOpenExportModal={() => {
-                setExportModalType('clients');
                 setIsExportModalOpen(true);
               }}
               onOpenImportModal={() => {
-                setImportModalMode('clients');
                 setIsImportModalOpen(true);
               }}
               onUpdateNotes={handleUpdateClientNotes}
-            />
-          )}
-
-          {activeTab === 'accounts' && (
-            <AccountsPage
-              accounts={accounts}
-              clients={clients}
-              onOpenNewAccount={(pref) => {
-                setEditingAccount(null);
-                setPrefilledClientForAccount(pref && pref.company ? {
-                  company: pref.company,
-                  name: pref.client_representative || '',
-                  email: pref.rep_email || '',
-                  phone: pref.rep_phone || '',
-                  client_id: pref.client_id || null
-                } : null);
-                setIsAccountModalOpen(true);
-              }}
-              onEditAccount={(acc) => {
-                setEditingAccount(acc);
-                setPrefilledClientForAccount(null);
-                setIsAccountModalOpen(true);
-              }}
-              onDeleteAccount={handleDeleteAccount}
-              onConvertToAccount={handleConvertToAccount}
-              onOpenExportModal={() => {
-                setExportModalType('accounts');
-                setIsExportModalOpen(true);
-              }}
-              onOpenImportModal={() => {
-                setImportModalMode('accounts');
-                setIsImportModalOpen(true);
-              }}
+              onAddNote={handleAddClientNote}
+              onEditNote={handleEditClientNote}
+              onDeleteNote={handleDeleteClientNote}
             />
           )}
 
           {(activeTab === 'followups' || activeTab === 'today') && (
             <FollowUpsPage
               followups={activeTab === 'today' ? todayFollowups : followups}
-              onOpenNewFollowup={() => {
-                setPreselectedClientId('');
-                setIsFollowupModalOpen(true);
-              }}
-              onOpenCompleteModal={(f) => {
-                setActiveFollowupToComplete(f);
-                setIsCompleteModalOpen(true);
-              }}
-              onDeleteFollowup={handleDeleteFollowup}
-              onPromoteClientToLead={handlePromoteToLead}
               onOpenExportModal={() => setIsExportModalOpen(true)}
             />
           )}
@@ -528,6 +455,7 @@ export default function App() {
           setActiveTab={setActiveTab}
           todayCount={stats?.today_followups_count || 0}
           leadsCount={stats?.total_leads || 0}
+          onOpenDbModal={() => setIsDbModalOpen(true)}
         />
       </div>
 
@@ -584,27 +512,12 @@ export default function App() {
         isOpen={isExportModalOpen}
         onClose={() => setIsExportModalOpen(false)}
         stats={stats}
-        defaultType={exportModalType}
       />
 
       <ImportExcelModal
         isOpen={isImportModalOpen}
         onClose={() => setIsImportModalOpen(false)}
-        mode={importModalMode}
         onImportSuccess={() => loadData()}
-      />
-
-      <AccountModal
-        isOpen={isAccountModalOpen}
-        onClose={() => {
-          setIsAccountModalOpen(false);
-          setEditingAccount(null);
-          setPrefilledClientForAccount(null);
-        }}
-        account={editingAccount}
-        prefilledClient={prefilledClientForAccount}
-        clients={clients}
-        onSave={handleSaveAccount}
       />
 
       <DbControlModal

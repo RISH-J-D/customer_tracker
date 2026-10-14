@@ -5,18 +5,16 @@ import {
   CalendarCheck, 
   Calendar, 
   FileSpreadsheet, 
-  Sparkles, 
+  Target, 
   TrendingUp,
   Database,
-  ScrollText,
-  Building2
+  ScrollText
 } from 'lucide-react';
 
 export default function Sidebar({ 
   activeTab, 
   setActiveTab, 
   stats, 
-  accountsCount = 0,
   onOpenTodayModal,
   onOpenDbModal,
   onOpenLogin,
@@ -37,15 +35,8 @@ export default function Sidebar({
     { 
       id: 'leads', 
       label: 'Leads', 
-      icon: Sparkles,
+      icon: Target,
       badge: stats?.total_leads ? `${stats.total_leads}` : null,
-      badgeColor: 'lead'
-    },
-    { 
-      id: 'accounts', 
-      label: 'Accounts', 
-      icon: Building2,
-      badge: accountsCount > 0 ? `${accountsCount}` : null,
       badgeColor: 'lead'
     },
     { 
@@ -68,9 +59,7 @@ export default function Sidebar({
     <aside className="sidebar">
       {/* Brand Header */}
       <div className="sidebar-logo">
-        <div className="sidebar-logo-icon">
-          <Sparkles size={16} />
-        </div>
+        <div className="sidebar-logo-icon">CF</div>
         <div>
           <div className="sidebar-logo-text">ClientFlow</div>
           <div className="sidebar-logo-sub">Steel Detailing CRM</div>
@@ -126,7 +115,7 @@ export default function Sidebar({
             width: '7px',
             height: '7px',
             borderRadius: '50%',
-            backgroundColor: isPostgres ? 'var(--lead-action)' : '#F59E0B'
+            backgroundColor: isPostgres ? 'var(--lead-action)' : 'var(--warning-strong)'
           }}></span>
         </div>
         <div style={{ fontSize: '0.68rem', color: 'var(--text-muted)' }}>
@@ -154,8 +143,8 @@ export default function Sidebar({
             height: '28px',
             borderRadius: '50%',
             background: currentUsername === 'admin' 
-              ? 'linear-gradient(135deg, #10B981, #059669)' 
-              : 'linear-gradient(135deg, #4F46E5, #7C3AED)',
+              ? 'linear-gradient(135deg, var(--lead-action), var(--lead-action))' 
+              : 'var(--avatar-bg)',
             color: 'white',
             display: 'flex',
             alignItems: 'center',
@@ -186,7 +175,7 @@ export default function Sidebar({
           width: '6px',
           height: '6px',
           borderRadius: '50%',
-          backgroundColor: '#10B981'
+          backgroundColor: 'var(--lead-action)'
         }} title="Active Session"></span>
       </div>
     </aside>

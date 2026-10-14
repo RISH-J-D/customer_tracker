@@ -63,7 +63,7 @@ export default function DbControlModal({ isOpen, onClose, dbInfo }) {
                 width: '10px',
                 height: '10px',
                 borderRadius: '50%',
-                backgroundColor: isPostgres ? 'var(--lead-action)' : '#F59E0B'
+                backgroundColor: isPostgres ? 'var(--lead-action)' : 'var(--warning-strong)'
               }}></div>
               <div>
                 <div style={{ fontWeight: 600, fontSize: '0.85rem', color: 'var(--text-primary)' }}>
@@ -80,7 +80,7 @@ export default function DbControlModal({ isOpen, onClose, dbInfo }) {
               padding: '0.2rem 0.5rem',
               borderRadius: 'var(--radius-full)',
               backgroundColor: isPostgres ? 'var(--lead-action)' : 'var(--border-subtle)',
-              color: isPostgres ? '#FFFFFF' : 'var(--text-secondary)'
+              color: isPostgres ? 'var(--bg-surface)' : 'var(--text-secondary)'
             }}>
               {isPostgres ? 'Postgres Active' : 'Ready to Switch'}
             </span>

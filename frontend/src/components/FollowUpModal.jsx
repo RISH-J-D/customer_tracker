@@ -87,7 +87,7 @@ export default function FollowUpModal({
               width: '32px',
               height: '32px',
               borderRadius: 'var(--radius-md)',
-              backgroundColor: '#EFF6FF',
+              backgroundColor: 'var(--primary-subtle)',
               color: 'var(--primary)',
               display: 'flex',
               alignItems: 'center',
