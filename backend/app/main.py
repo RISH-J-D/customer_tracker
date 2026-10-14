@@ -93,14 +93,18 @@ def database_status():
 
 # Static files & React SPA serving for Hugging Face Spaces & single-container deployment
 from fastapi.staticfiles import StaticFiles
-from fastapi.responses import FileResponse
+from fastapi.responses import FileResponse, JSONResponse
 
+BACKEND_DIR = os.path.dirname(os.path.dirname(os.path.abspath(__file__)))
+REPO_DIR = os.path.dirname(BACKEND_DIR)
+
+# STATIC_DIR (set by the Dockerfile) wins; otherwise use backend/frontend_dist, which the
+# "Build frontend for Render" workflow keeps current, then a local frontend/dist build.
 STATIC_DIR = os.getenv("STATIC_DIR", "")
 if not STATIC_DIR or not os.path.isdir(STATIC_DIR):
     for candidate in [
-        os.path.join(os.path.dirname(os.path.dirname(os.path.dirname(os.path.abspath(__file__)))), "frontend_dist"),
-        os.path.join(os.path.dirname(os.path.dirname(os.path.abspath(__file__))), "frontend_dist"),
-        os.path.join(os.path.dirname(os.path.dirname(os.path.dirname(os.path.abspath(__file__)))), "frontend", "dist")
+        os.path.join(BACKEND_DIR, "frontend_dist"),
+        os.path.join(REPO_DIR, "frontend", "dist")
     ]:
         if candidate and os.path.isdir(candidate):
             STATIC_DIR = candidate
@@ -114,7 +118,7 @@ if STATIC_DIR and os.path.exists(os.path.join(STATIC_DIR, "index.html")):
     @app.get("/{full_path:path}")
     async def serve_spa(full_path: str):
         if full_path.startswith("api/") or full_path in ["docs", "redoc", "openapi.json"]:
-            return {"detail": "Not Found"}
+            return JSONResponse(status_code=404, content={"detail": "Not Found"})
         target = os.path.join(STATIC_DIR, full_path)
         if full_path and os.path.exists(target) and os.path.isfile(target):
             return FileResponse(target)

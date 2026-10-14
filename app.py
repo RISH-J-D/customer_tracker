@@ -35,7 +35,7 @@ with gr.Blocks(title="Customer Tracker & Accounts") as demo:
 demo.app.mount("/api", fastapi_app)
 
 # 4. Mount React frontend SPA onto demo.app
-STATIC_DIR = os.path.join(os.path.dirname(os.path.abspath(__file__)), "frontend_dist")
+STATIC_DIR = os.path.join(os.path.dirname(os.path.abspath(__file__)), "backend", "frontend_dist")
 if os.path.isdir(STATIC_DIR):
     assets_dir = os.path.join(STATIC_DIR, "assets")
     if os.path.isdir(assets_dir):
