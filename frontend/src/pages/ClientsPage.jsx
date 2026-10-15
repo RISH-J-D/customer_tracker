@@ -1,37 +1,57 @@
 import React, { useState, useMemo, useEffect } from 'react';
-import { 
-  Users, 
-  Search, 
-  Plus, 
-  Target, 
-  ThumbsUp, 
-  Mail, 
-  Phone, 
-  MapPin,
-  Building, 
-  Trash2, 
-  Edit3, 
-  Table as TableIcon, 
-  LayoutGrid, 
+import {
+  Users,
+  Search,
+  Plus,
+  Building,
+  Trash2,
+  Edit3,
   UploadCloud,
-  ChevronLeft,
-  ChevronRight
+  Handshake,
+  Star,
+  Clock
 } from 'lucide-react';
 
 import ExportDropdown from '../components/ExportDropdown';
 import NotesCell from '../components/NotesCell';
-import { splitPhoneNumbers } from '../components/phoneUtils';
+import NextFollowUpCell from '../components/NextFollowUpCell';
+import FollowUpLogModal from '../components/FollowUpLogModal';
+import Pagination from '../components/Pagination';
+import ViewModeToggle from '../components/ViewModeToggle';
+import { ContactBlock } from '../components/ContactLinks';
+import { AddressFilters, AddressLine, useAddressFilter, formatAddress } from '../components/AddressFilters';
+import { parseServerUtc } from '../components/calendarUtils';
 
 // Imported rows without a named contact were saved as "<Company> Contact"
 const getRepresentativeName = (c) => (c.name && c.name !== `${c.company} Contact` ? c.name : null);
+
+// A pending follow-up that is due today or already overdue
+const endOfToday = () => { const d = new Date(); d.setHours(23, 59, 59, 999); return d; };
+const hasDueFollowup = (c) => (c.followups || []).some(f => f.status === 'Pending' && parseServerUtc(f.scheduled_at) <= endOfToday());
+
+function RepresentativeBlock({ client }) {
+  const repName = getRepresentativeName(client);
+  return (
+    <div style={{ display: 'flex', flexDirection: 'column', gap: '0.25rem' }}>
+      {(repName || client.position) && (
+        <div>
+          {repName && <div style={{ fontWeight: 600, color: 'var(--text-primary)', fontSize: '0.8rem' }}>{repName}</div>}
+          {client.position && <div style={{ fontSize: '0.72rem', color: 'var(--text-muted)' }}>{client.position}</div>}
+        </div>
+      )}
+      <ContactBlock email={client.email} phone={client.phone} emailLabel="representative's email" phoneLabel="representative's number" />
+    </div>
+  );
+}
 
 export default function ClientsPage({
   clients,
   onOpenNewClient,
   onEditClient,
   onDeleteClient,
-  onPromoteClientToLead,
-  onTogglePositive,
+  onConvertToAccount,
+  onToggleProspect,
+  onLogFollowup,
   onOpenExportModal,
   onOpenImportModal,
   onUpdateNotes,
@@ -39,116 +59,73 @@ export default function ClientsPage({
   onEditNote,
   onDeleteNote
 }) {
-  const [activeFilter, setActiveFilter] = useState('all'); // all, positive
+  const [activeFilter, setActiveFilter] = useState('all'); // all, prospects, due
   const [searchQuery, setSearchQuery] = useState('');
   const [viewMode, setViewMode] = useState('table'); // 'table' or 'grid'
   const [page, setPage] = useState(1);
   const [pageSize, setPageSize] = useState(25);
+  const [followUpClient, setFollowUpClient] = useState(null);
+
+  // Leads and converted accounts have their own tabs
+  const clientList = useMemo(() => clients.filter(c => !c.is_lead && !c.account_converted_at), [clients]);
+  const address = useAddressFilter(clientList);
 
   useEffect(() => {
     setPage(1);
-  }, [searchQuery, activeFilter, viewMode]);
+  }, [searchQuery, activeFilter, viewMode, address.country, address.state, address.city]);
 
-  // Only non-converted clients/prospects appear on the Clients page
-  const clientProspects = clients.filter(c => !c.is_lead);
+  const prospectCount = clientList.filter(c => c.prospect_marked_at).length;
+  const dueCount = clientList.filter(hasDueFollowup).length;
 
-  const filteredClients = useMemo(() => {
-    return clientProspects.filter(c => {
-      // Filters
-      if (activeFilter === 'positive' && !c.positive_approach) return false;
+  const filteredClients = clientList.filter(c => {
+    if (activeFilter === 'prospects' && !c.prospect_marked_at) return false;
+    if (activeFilter === 'due' && !hasDueFollowup(c)) return false;
+    if (!address.matches(c)) return false;
 
-      // Search query
-      if (searchQuery.trim()) {
-        const q = searchQuery.toLowerCase();
-        const matchName = c.name?.toLowerCase().includes(q);
-        const matchComp = c.company?.toLowerCase().includes(q);
-        const matchEmail = c.email?.toLowerCase().includes(q);
-        const matchPhone = c.phone?.toLowerCase().includes(q);
-        const matchNotes = c.notes?.toLowerCase().includes(q) || (c.note_entries || []).some(n => n.content?.toLowerCase().includes(q));
-        if (!matchName && !matchComp && !matchEmail && !matchPhone && !matchNotes) return false;
-      }
+    if (searchQuery.trim()) {
+      const q = searchQuery.toLowerCase();
+      const fields = [c.name, c.company, c.email, c.phone, c.company_email, c.company_phone, c.notes, formatAddress(c)];
+      const matchField = fields.some(v => v?.toLowerCase().includes(q));
+      const matchNotes = (c.note_entries || []).some(n => n.content?.toLowerCase().includes(q));
+      if (!matchField && !matchNotes) return false;
+    }
+    return true;
+  });
 
-      return true;
-    });
-  }, [clientProspects, activeFilter, searchQuery]);
+  const paginatedClients = filteredClients.slice((page - 1) * pageSize, page * pageSize);
 
-  const totalPages = Math.ceil(filteredClients.length / pageSize) || 1;
-  const paginatedClients = useMemo(() => {
-    return filteredClients.slice((page - 1) * pageSize, page * pageSize);
-  }, [filteredClients, page, pageSize]);
-
-  const handlePromote = (clientId, e) => {
-    if (e) e.stopPropagation();
-    onPromoteClientToLead(clientId);
+  const convertToAccount = (c) => {
+    if (window.confirm(`Convert ${c.company || c.name} to an account? It will move to the Accounts tab.`)) {
+      onConvertToAccount(c.id);
+    }
   };
 
-  const handleTogglePositive = (clientId, e) => {
-    if (e) e.stopPropagation();
-    onTogglePositive(clientId);
-  };
+  const prospectButtonProps = (c) => ({
+    onClick: () => onToggleProspect(c.id),
+    title: c.prospect_marked_at ? 'Prospect — click to remove the highlight' : 'Mark as prospect (highlights the row)',
+    'aria-pressed': Boolean(c.prospect_marked_at)
+  });
+
+  const notesCell = (c) => (
+    <NotesCell
+      client={c}
+      onAddNote={onAddNote}
+      onEditNote={onEditNote}
+      onDeleteNote={onDeleteNote}
+      onUpdateNotes={onUpdateNotes}
+    />
+  );
 
   return (
     <div>
       {/* Page Header */}
       <div style={{ display: 'flex', alignItems: 'flex-start', justifyContent: 'flex-end', flexWrap: 'wrap', gap: '1rem', marginBottom: '1.25rem' }}>
-        
         <div style={{ display: 'flex', alignItems: 'center', gap: '0.5rem', flexWrap: 'wrap' }}>
-          {/* Table vs Grid Switcher */}
-          <div style={{
-            display: 'flex',
-            backgroundColor: 'var(--bg-subtle)',
-            border: '1px solid var(--border-subtle)',
-            borderRadius: 'var(--radius-md)',
-            padding: '2px',
-          }}>
-            <button
-              onClick={() => setViewMode('table')}
-              style={{
-                border: 'none',
-                background: viewMode === 'table' ? 'var(--bg-surface)' : 'transparent',
-                color: viewMode === 'table' ? 'var(--text-primary)' : 'var(--text-muted)',
-                padding: '0.3rem 0.55rem',
-                borderRadius: 'var(--radius-sm)',
-                cursor: 'pointer',
-                display: 'flex',
-                alignItems: 'center',
-                gap: '0.3rem',
-                fontSize: '0.75rem',
-                fontWeight: viewMode === 'table' ? 600 : 500,
-                boxShadow: viewMode === 'table' ? 'var(--shadow-xs)' : 'none'
-              }}
-              title="Table view"
-            >
-              <TableIcon size={14} />
-              <span>Table</span>
-            </button>
-            <button
-              onClick={() => setViewMode('grid')}
-              style={{
-                border: 'none',
-                background: viewMode === 'grid' ? 'var(--bg-surface)' : 'transparent',
-                color: viewMode === 'grid' ? 'var(--text-primary)' : 'var(--text-muted)',
-                padding: '0.3rem 0.55rem',
-                borderRadius: 'var(--radius-sm)',
-                cursor: 'pointer',
-                display: 'flex',
-                alignItems: 'center',
-                gap: '0.3rem',
-                fontSize: '0.75rem',
-                fontWeight: viewMode === 'grid' ? 600 : 500,
-                boxShadow: viewMode === 'grid' ? 'var(--shadow-xs)' : 'none'
-              }}
-              title="Cards grid view"
-            >
-              <LayoutGrid size={14} />
-              <span>Cards</span>
-            </button>
-          </div>
+          <ViewModeToggle viewMode={viewMode} onChange={setViewMode} />
 
-          {/* Import Excel Button for Clients */}
           {onOpenImportModal && (
-            <button 
-              className="btn btn-secondary" 
+            <button
+              className="btn btn-secondary"
               onClick={onOpenImportModal}
               title="Import clients from Excel (.xlsx) or CSV"
             >
@@ -167,31 +144,36 @@ export default function ClientsPage({
       </div>
 
       {/* Filter and Search Bar */}
-      <div className="card" style={{ padding: '0.65rem 0.85rem', marginBottom: '1.25rem' }}>
+      <div className="card" style={{ padding: '0.65rem 0.85rem', marginBottom: '1.25rem', display: 'flex', flexDirection: 'column', gap: '0.6rem' }}>
         <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', flexWrap: 'wrap', gap: '0.75rem' }}>
-          {/* Segmented Filter Pills */}
           <div className="segmented-control">
             <button
               className={`segmented-btn ${activeFilter === 'all' ? 'active' : ''}`}
               onClick={() => setActiveFilter('all')}
             >
-              All Clients ({clientProspects.length})
+              All Clients ({clientList.length})
             </button>
             <button
-              className={`segmented-btn ${activeFilter === 'positive' ? 'active' : ''}`}
-              onClick={() => setActiveFilter('positive')}
+              className={`segmented-btn ${activeFilter === 'prospects' ? 'active' : ''}`}
+              onClick={() => setActiveFilter('prospects')}
             >
-              <ThumbsUp size={12} color="var(--warning-strong)" />
-              <span>Positive ({clientProspects.filter(c => c.positive_approach).length})</span>
+              <Star size={12} color="var(--prospect-row-accent)" />
+              <span>Prospects ({prospectCount})</span>
+            </button>
+            <button
+              className={`segmented-btn ${activeFilter === 'due' ? 'active' : ''}`}
+              onClick={() => setActiveFilter('due')}
+            >
+              <Clock size={12} color="var(--danger-btn)" />
+              <span>Follow-up due ({dueCount})</span>
             </button>
           </div>
 
-          {/* Search Input (No Industry selection required) */}
           <div className="search-box" style={{ position: 'relative', width: '100%', maxWidth: '280px' }}>
             <Search size={14} color="var(--text-muted)" style={{ position: 'absolute', left: '9px', top: '9px' }} />
             <input
               type="text"
-              placeholder="Search clients..."
+              placeholder="Search clients, contacts, notes..."
               className="form-input"
               style={{ paddingLeft: '2rem', height: '32px', fontSize: '0.785rem' }}
               value={searchQuery}
@@ -199,31 +181,34 @@ export default function ClientsPage({
             />
           </div>
         </div>
+        <AddressFilters filter={address} />
       </div>
 
       {filteredClients.length === 0 ? (
         <div className="card" style={{ textAlign: 'center', padding: '3rem 1.5rem', color: 'var(--text-muted)' }}>
           <Users size={36} style={{ margin: '0 auto 0.75rem auto', opacity: 0.3 }} />
           <h3 style={{ fontSize: '1rem', fontWeight: 600, color: 'var(--text-primary)', marginBottom: '0.25rem' }}>
-            {clientProspects.length === 0 ? 'All Prospects Converted to Leads!' : 'No Clients Found'}
+            No Clients Found
           </h3>
           <p style={{ fontSize: '0.8rem', maxWidth: '380px', margin: '0 auto 1.25rem auto' }}>
-            {clientProspects.length === 0 
-              ? 'Great work! All your clients have been converted into active leads on the Leads page. Add new prospects or import an Excel spreadsheet.'
-              : 'No prospective clients match the current search filters.'}
+            {clientList.length === 0
+              ? 'Add a client or import an Excel spreadsheet to get started.'
+              : 'No clients match the current search or filters.'}
           </p>
-          <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'center', gap: '0.65rem' }}>
-            {onOpenImportModal && (
-              <button className="btn btn-secondary" onClick={onOpenImportModal}>
-                <UploadCloud size={14} />
-                <span>Import from Excel</span>
+          {clientList.length === 0 && (
+            <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'center', gap: '0.65rem' }}>
+              {onOpenImportModal && (
+                <button className="btn btn-secondary" onClick={onOpenImportModal}>
+                  <UploadCloud size={14} />
+                  <span>Import from Excel</span>
+                </button>
+              )}
+              <button className="btn btn-primary" onClick={onOpenNewClient}>
+                <Plus size={14} />
+                <span>Add Client</span>
               </button>
-            )}
-            <button className="btn btn-primary" onClick={onOpenNewClient}>
-              <Plus size={14} />
-              <span>Add Client</span>
-            </button>
-          </div>
+            </div>
+          )}
         </div>
       ) : viewMode === 'table' ? (
         /* TABLE LIST VIEW */
@@ -231,25 +216,23 @@ export default function ClientsPage({
           <table className="custom-table">
             <thead>
               <tr>
-                <th style={{ width: '20%' }}>Fabricator / Company</th>
-                <th style={{ width: '15%' }}>Client Representative</th>
-                <th style={{ width: '14%' }}>Email</th>
-                <th style={{ width: '11%' }}>Mobile</th>
-                <th style={{ width: '13%' }}>Address</th>
+                <th style={{ width: '18%' }}>Company</th>
+                <th style={{ width: '15%' }}>Company Contact</th>
+                <th style={{ width: '17%' }}>Representative</th>
+                <th style={{ width: '17%' }}>Follow-up</th>
                 <th style={{ width: '26%' }}>Notes</th>
-                <th style={{ width: '1%' }}>Convert / Action</th>
+                <th style={{ width: '1%' }}>Actions</th>
               </tr>
             </thead>
             <tbody>
               {paginatedClients.map((c) => {
                 const companyName = c.company || c.name;
                 const initials = companyName ? companyName.split(' ').map(n => n[0]).join('').slice(0, 2).toUpperCase() : 'CL';
-                const repName = getRepresentativeName(c);
                 return (
-                  <tr key={c.id}>
-                    {/* Client & Company */}
+                  <tr key={c.id} className={c.prospect_marked_at ? 'row-prospect' : undefined}>
+                    {/* Company & Address */}
                     <td className="td-name">
-                      <div style={{ display: 'flex', alignItems: 'center', gap: '0.65rem' }}>
+                      <div style={{ display: 'flex', alignItems: 'flex-start', gap: '0.65rem' }}>
                         <div style={{
                           width: '32px',
                           height: '32px',
@@ -266,96 +249,48 @@ export default function ClientsPage({
                         }}>
                           {initials}
                         </div>
-                        <div style={{ fontWeight: 600, color: 'var(--text-primary)', fontSize: '0.85rem' }}>
-                          {companyName}
+                        <div>
+                          <div style={{ fontWeight: 600, color: 'var(--text-primary)', fontSize: '0.85rem', display: 'flex', alignItems: 'center', gap: '0.3rem' }}>
+                            <span>{companyName}</span>
+                            {c.prospect_marked_at && <Star size={12} fill="var(--prospect-row-accent)" color="var(--prospect-row-accent)" />}
+                          </div>
+                          <AddressLine client={c} />
                         </div>
                       </div>
                     </td>
 
-                    {/* Client Representative */}
+                    <td className="td-email" data-label="Company">
+                      <ContactBlock email={c.company_email} phone={c.company_phone} emailLabel="company email" phoneLabel="company number" />
+                    </td>
+
                     <td className="td-rep" data-label="Representative">
-                      <div style={{ fontSize: '0.8rem' }}>
-                        {repName ? (
-                          <>
-                            <div style={{ fontWeight: 600, color: 'var(--text-primary)' }}>{repName}</div>
-                            {c.position && (
-                              <div style={{ fontSize: '0.72rem', color: 'var(--text-muted)', marginTop: '0.1rem' }}>{c.position}</div>
-                            )}
-                          </>
-                        ) : (
-                          <span style={{ color: 'var(--text-muted)' }}>{c.position || '-'}</span>
-                        )}
-                      </div>
+                      <RepresentativeBlock client={c} />
                     </td>
 
-                    {/* Email */}
-                    <td className="td-email" data-label="Email">
-                      <div style={{ fontSize: '0.75rem', color: 'var(--text-secondary)' }}>
-                        {c.email ? (
-                          <a href={`mailto:${c.email}`} style={{ color: 'inherit', textDecoration: 'none', display: 'flex', alignItems: 'flex-start', gap: '0.3rem' }} title={c.email}>
-                            <Mail size={11} color="var(--text-placeholder)" style={{ flexShrink: 0, marginTop: '0.15rem' }} />
-                            <span style={{ wordBreak: 'break-all', minWidth: 0 }}>{c.email}</span>
-                          </a>
-                        ) : (
-                          <span style={{ color: 'var(--text-muted)' }}>-</span>
-                        )}
-                      </div>
+                    <td className="td-stack" data-label="Follow-up">
+                      <NextFollowUpCell client={c} onFollowedUp={setFollowUpClient} />
                     </td>
 
-                    {/* Mobile */}
-                    <td className="td-mobile" data-label="Mobile">
-                      <div style={{ fontSize: '0.75rem', color: 'var(--text-secondary)' }}>
-                        {c.phone ? (
-                          <a href={`tel:${c.phone}`} style={{ color: 'inherit', textDecoration: 'none', display: 'flex', alignItems: 'flex-start', gap: '0.3rem' }}>
-                            <Phone size={11} color="var(--text-placeholder)" style={{ marginTop: '0.15rem', flexShrink: 0 }} />
-                            <span style={{ display: 'flex', flexDirection: 'column', minWidth: 0 }}>
-                              {splitPhoneNumbers(c.phone).map((num, i) => (
-                                <span key={i}>{num}</span>
-                              ))}
-                            </span>
-                          </a>
-                        ) : (
-                          <span style={{ color: 'var(--text-muted)' }}>-</span>
-                        )}
-                      </div>
-                    </td>
-
-                    {/* Address */}
-                    <td className="td-address" data-label="Address">
-                      <div style={{ display: 'flex', alignItems: 'flex-start', gap: '0.3rem', fontSize: '0.75rem', color: 'var(--text-secondary)' }}>
-                        {(c.city || c.state || c.country) ? (
-                          <>
-                            <MapPin size={11} color="var(--text-placeholder)" style={{ marginTop: '0.15rem', flexShrink: 0 }} />
-                            <span>{[c.city, c.state, c.country].filter(Boolean).join(', ')}</span>
-                          </>
-                        ) : (
-                          <span style={{ color: 'var(--text-muted)' }}>-</span>
-                        )}
-                      </div>
-                    </td>
-
-                    {/* Notes (calendar grouped) */}
                     <td className="td-stack" data-label="Notes">
-                      <NotesCell
-                        client={c}
-                        onAddNote={onAddNote}
-                        onEditNote={onEditNote}
-                        onDeleteNote={onDeleteNote}
-                        onUpdateNotes={onUpdateNotes}
-                      />
+                      {notesCell(c)}
                     </td>
 
-                    {/* Pipeline Action & Row Buttons */}
                     <td className="td-actions" data-label="Actions">
                       <div className="row-actions">
-                        {/* 1-Click Convert to Lead */}
                         <button
                           className="btn btn-lead btn-sm row-action-wide"
-                          onClick={(e) => handlePromote(c.id, e)}
-                          title="Convert this client to Lead (moves to Leads page)"
+                          onClick={() => convertToAccount(c)}
+                          title="Convert this client to an account (moves to the Accounts tab)"
                         >
-                          <Target size={13} />
-                          <span>To Lead</span>
+                          <Handshake size={13} />
+                          <span>To Account</span>
+                        </button>
+
+                        <button
+                          className={`btn btn-secondary btn-sm row-action-btn btn-prospect-toggle${c.prospect_marked_at ? ' is-prospect' : ''}`}
+                          {...prospectButtonProps(c)}
+                        >
+                          <Star size={15} />
                         </button>
 
                         <button
@@ -387,119 +322,48 @@ export default function ClientsPage({
           {paginatedClients.map((c) => (
             <div
               key={c.id}
-              className="card"
-              style={{
-                display: 'flex',
-                flexDirection: 'column',
-                border: '1px solid var(--border-subtle)',
-                backgroundColor: 'var(--bg-surface)'
-              }}
+              className={`card${c.prospect_marked_at ? ' card-prospect' : ''}`}
+              style={{ display: 'flex', flexDirection: 'column', gap: '0.65rem', border: '1px solid var(--border-subtle)' }}
             >
-              <div style={{ display: 'flex', alignItems: 'flex-start', justifyContent: 'space-between', marginBottom: '0.65rem' }}>
-                <div>
-                  <h3 style={{ fontSize: '0.95rem', fontWeight: 700, color: 'var(--text-primary)' }}>
-                    {c.company || c.name}
-                  </h3>
-                  {getRepresentativeName(c) && (
-                    <div style={{ display: 'flex', alignItems: 'center', gap: '0.35rem', color: 'var(--text-secondary)', fontSize: '0.785rem', marginTop: '0.1rem' }}>
-                      <Users size={12} />
-                      <span>{getRepresentativeName(c)}</span>
-                    </div>
-                  )}
+              <div>
+                <h3 style={{ fontSize: '0.95rem', fontWeight: 700, color: 'var(--text-primary)', display: 'flex', alignItems: 'center', gap: '0.35rem' }}>
+                  <Building size={14} color="var(--text-muted)" />
+                  <span>{c.company || c.name}</span>
+                  {c.prospect_marked_at && <Star size={13} fill="var(--prospect-row-accent)" color="var(--prospect-row-accent)" />}
+                </h3>
+                <AddressLine client={c} size={12} />
+                <div style={{ marginTop: '0.35rem' }}>
+                  <ContactBlock email={c.company_email} phone={c.company_phone} emailLabel="company email" phoneLabel="company number" />
                 </div>
-
-                <span className="badge-status badge-prospect">
-                  {c.status}
-                </span>
               </div>
 
-              {/* Reaction bar */}
-              <div style={{
-                backgroundColor: c.positive_approach ? 'var(--positive-bg)' : 'var(--bg-subtle)',
-                border: `1px solid ${c.positive_approach ? 'var(--positive-border)' : 'var(--border-light)'}`,
-                borderRadius: 'var(--radius-sm)',
-                padding: '0.4rem 0.6rem',
-                display: 'flex',
-                alignItems: 'center',
-                justifyContent: 'space-between',
-                marginBottom: '0.65rem'
-              }}>
-                <div style={{ display: 'flex', alignItems: 'center', gap: '0.35rem' }}>
-                  <ThumbsUp size={12} color={c.positive_approach ? 'var(--warning-strong)' : 'var(--text-placeholder)'} />
-                  <span style={{ fontSize: '0.725rem', fontWeight: 500, color: c.positive_approach ? 'var(--positive-color)' : 'var(--text-muted)' }}>
-                    {c.positive_approach ? 'Positive Approach' : 'Standard Response'}
-                  </span>
-                </div>
-                <button
-                  className="btn btn-secondary btn-sm"
-                  onClick={(e) => handleTogglePositive(c.id, e)}
-                  style={{ fontSize: '0.68rem', padding: '0.15rem 0.35rem' }}
-                >
-                  {c.positive_approach ? 'Clear' : 'Mark Positive'}
+              <div style={{ paddingTop: '0.5rem', borderTop: '1px solid var(--border-light)' }}>
+                <RepresentativeBlock client={c} />
+              </div>
+
+              <div style={{ paddingTop: '0.5rem', borderTop: '1px solid var(--border-light)' }}>
+                <NextFollowUpCell client={c} onFollowedUp={setFollowUpClient} />
+              </div>
+
+              <div style={{ paddingTop: '0.5rem', borderTop: '1px solid var(--border-light)' }}>
+                {notesCell(c)}
+              </div>
+
+              <div style={{ marginTop: 'auto', display: 'flex', alignItems: 'center', gap: '0.4rem', borderTop: '1px solid var(--border-light)', paddingTop: '0.65rem' }}>
+                <button className="btn btn-lead btn-sm" onClick={() => convertToAccount(c)} style={{ flex: 1 }} title="Convert to account">
+                  <Handshake size={12} />
+                  <span>To Account</span>
                 </button>
-              </div>
-
-              {/* Contact info */}
-              <div style={{ display: 'flex', flexDirection: 'column', gap: '0.25rem', marginBottom: '0.65rem', fontSize: '0.75rem', color: 'var(--text-secondary)' }}>
-                {c.email && (
-                  <div style={{ display: 'flex', alignItems: 'center', gap: '0.35rem' }}>
-                    <Mail size={12} color="var(--text-placeholder)" />
-                    <span>{c.email}</span>
-                  </div>
-                )}
-                {c.phone && (
-                  <div style={{ display: 'flex', alignItems: 'center', gap: '0.35rem' }}>
-                    <Phone size={12} color="var(--text-placeholder)" />
-                    <span>{c.phone}</span>
-                  </div>
-                )}
-                {c.position && (
-                  <div style={{ display: 'flex', alignItems: 'center', gap: '0.35rem', color: 'var(--text-secondary)' }}>
-                    <Building size={12} color="var(--text-placeholder)" />
-                    <span>{c.position}</span>
-                  </div>
-                )}
-                {(c.city || c.state || c.country) && (
-                  <div style={{ display: 'flex', alignItems: 'center', gap: '0.35rem', color: 'var(--text-muted)', fontSize: '0.72rem' }}>
-                    <span><MapPin size={11} style={{ verticalAlign: '-1px', marginRight: '3px' }} />{[c.city, c.state, c.country].filter(Boolean).join(', ')}</span>
-                  </div>
-                )}
-                <div style={{ marginTop: '0.4rem', paddingTop: '0.4rem', borderTop: '1px solid var(--border-light)' }}>
-                  <NotesCell
-                    client={c}
-                    onAddNote={onAddNote}
-                    onEditNote={onEditNote}
-                    onDeleteNote={onDeleteNote}
-                    onUpdateNotes={onUpdateNotes}
-                  />
-                </div>
-              </div>
-
-              {/* Card Footer Actions */}
-              <div style={{ marginTop: 'auto', display: 'flex', alignItems: 'center', justifyContent: 'space-between', gap: '0.4rem', borderTop: '1px solid var(--border-light)', paddingTop: '0.65rem' }}>
                 <button
-                  className="btn btn-lead btn-sm"
-                  onClick={(e) => handlePromote(c.id, e)}
-                  style={{ flex: 1 }}
-                  title="Promote to lead (moves client to Leads page)"
+                  className={`btn btn-secondary btn-sm btn-prospect-toggle${c.prospect_marked_at ? ' is-prospect' : ''}`}
+                  {...prospectButtonProps(c)}
                 >
-                  <Target size={12} />
-                  <span>Convert to Lead</span>
+                  <Star size={12} />
                 </button>
-
-                <button
-                  className="btn btn-secondary btn-sm"
-                  onClick={() => onEditClient(c)}
-                  title="Edit client"
-                >
+                <button className="btn btn-secondary btn-sm" onClick={() => onEditClient(c)} title="Edit client">
                   <Edit3 size={12} />
                 </button>
-
-                <button
-                  className="btn btn-danger btn-sm"
-                  onClick={() => onDeleteClient(c.id)}
-                  title="Delete client"
-                >
+                <button className="btn btn-danger btn-sm" onClick={() => onDeleteClient(c.id)} title="Delete client">
                   <Trash2 size={12} />
                 </button>
               </div>
@@ -508,67 +372,21 @@ export default function ClientsPage({
         </div>
       )}
 
-      {/* Pagination Controls */}
-      {filteredClients.length > 0 && (
-        <div style={{
-          display: 'flex',
-          alignItems: 'center',
-          justifyContent: 'space-between',
-          flexWrap: 'wrap',
-          gap: '0.75rem',
-          marginTop: '1.5rem',
-          padding: '0.85rem 1.15rem',
-          backgroundColor: 'var(--bg-surface)',
-          borderRadius: 'var(--radius-md)',
-          border: '1px solid var(--border-subtle)',
-          boxShadow: 'var(--shadow-xs)'
-        }}>
-          <div style={{ fontSize: '0.8rem', color: 'var(--text-secondary)' }}>
-            Showing <strong>{((page - 1) * pageSize) + 1}</strong>–<strong>{Math.min(page * pageSize, filteredClients.length)}</strong> of <strong>{filteredClients.length.toLocaleString()}</strong> clients
-          </div>
+      <Pagination
+        page={page}
+        pageSize={pageSize}
+        total={filteredClients.length}
+        noun="clients"
+        onPageChange={setPage}
+        onPageSizeChange={(size) => { setPageSize(size); setPage(1); }}
+      />
 
-          <div style={{ display: 'flex', alignItems: 'center', gap: '0.75rem', flexWrap: 'wrap' }}>
-            <div style={{ display: 'flex', alignItems: 'center', gap: '0.35rem', fontSize: '0.75rem', color: 'var(--text-muted)' }}>
-              <span>Per page:</span>
-              <select
-                value={pageSize}
-                onChange={(e) => { setPageSize(Number(e.target.value)); setPage(1); }}
-                className="form-select"
-                style={{ fontSize: '0.75rem', height: '30px', padding: '0.1rem 0.5rem' }}
-              >
-                <option value={25}>25</option>
-                <option value={50}>50</option>
-                <option value={100}>100</option>
-              </select>
-            </div>
-
-            <div style={{ display: 'flex', alignItems: 'center', gap: '0.35rem' }}>
-              <button
-                className="btn btn-secondary btn-sm"
-                disabled={page <= 1}
-                onClick={() => setPage(p => Math.max(1, p - 1))}
-                style={{ fontSize: '0.75rem', height: '30px', padding: '0 0.65rem', display: 'flex', alignItems: 'center', gap: '0.25rem' }}
-              >
-                <ChevronLeft size={13} />
-                <span>Prev</span>
-              </button>
-
-              <span style={{ fontSize: '0.75rem', fontWeight: 600, color: 'var(--text-primary)', padding: '0 0.5rem' }}>
-                Page {page} of {totalPages}
-              </span>
-
-              <button
-                className="btn btn-secondary btn-sm"
-                disabled={page >= totalPages}
-                onClick={() => setPage(p => Math.min(totalPages, p + 1))}
-                style={{ fontSize: '0.75rem', height: '30px', padding: '0 0.65rem', display: 'flex', alignItems: 'center', gap: '0.25rem' }}
-              >
-                <span>Next</span>
-                <ChevronRight size={13} />
-              </button>
-            </div>
-          </div>
-        </div>
+      {followUpClient && (
+        <FollowUpLogModal
+          client={followUpClient}
+          onClose={() => setFollowUpClient(null)}
+          onSave={onLogFollowup}
+        />
       )}
     </div>
   );

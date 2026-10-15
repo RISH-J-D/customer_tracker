@@ -19,6 +19,7 @@ import DbControlModal from './components/DbControlModal';
 import DashboardPage from './pages/DashboardPage';
 import ClientsPage from './pages/ClientsPage';
 import LeadsPage from './pages/LeadsPage';
+import AccountsPage from './pages/AccountsPage';
 import FollowUpsPage from './pages/FollowUpsPage';
 import LogsPage from './pages/LogsPage';
 import LoginPage from './pages/LoginPage';
@@ -171,22 +172,70 @@ export default function App() {
     }
   };
 
-  const handleTogglePositive = async (clientId) => {
-    try {
-      await api.togglePositive(clientId);
-      await loadData();
-    } catch (err) {
-      alert('Error toggling positive status: ' + err.message);
+  // Refresh the counts and follow-up lists without reloading every client
+  const refreshStatsAndFollowups = useCallback(async () => {
+    const [st, flws, tFlws, uFlws] = await Promise.all([
+      api.getDashboardStats(),
+      api.getFollowups(),
+      api.getFollowups({ today_only: true }),
+      api.getFollowups({ upcoming_only: true })
+    ]).catch(() => []);
+    if (st) {
+      setStats(st);
+      try { localStorage.setItem('cached_stats', JSON.stringify(st)); } catch {}
     }
+    if (flws) setFollowups(flws);
+    if (tFlws) setTodayFollowups(tFlws);
+    if (uFlws) setUpcomingMeetups(uFlws);
+  }, []);
+
+  const MARK_FIELDS = ['account_converted_at', 'marked_negative_at', 'prospect_marked_at'];
+  const applyMarks = (clientId, updated) => {
+    const marks = Object.fromEntries(MARK_FIELDS.map(f => [f, updated[f]]));
+    setClients(prev => prev.map(c => c.id === clientId ? { ...c, ...marks } : c));
+    refreshStatsAndFollowups();
   };
 
   const handleToggleAccountConversion = async (clientId) => {
     try {
-      const updated = await api.toggleAccountConversion(clientId);
-      setClients(prev => prev.map(c => c.id === clientId ? { ...c, account_converted_at: updated.account_converted_at } : c));
+      applyMarks(clientId, await api.toggleAccountConversion(clientId));
     } catch (err) {
       alert('Error updating account conversion: ' + err.message);
     }
+  };
+
+  const handleToggleNegative = async (clientId) => {
+    try {
+      applyMarks(clientId, await api.toggleNegative(clientId));
+    } catch (err) {
+      alert('Error updating negative mark: ' + err.message);
+    }
+  };
+
+  const handleToggleProspect = async (clientId) => {
+    try {
+      applyMarks(clientId, await api.toggleProspect(clientId));
+    } catch (err) {
+      alert('Error updating prospect flag: ' + err.message);
+    }
+  };
+
+  // Leads move on to Clients (Clients then convert to Accounts)
+  const handleMoveLeadToClient = async (clientId) => {
+    try {
+      await api.updateClient(clientId, { is_lead: false, status: 'Prospect' });
+      setClients(prev => prev.map(c => c.id === clientId ? { ...c, is_lead: false, status: 'Prospect' } : c));
+      refreshStatsAndFollowups();
+    } catch (err) {
+      alert('Error moving lead to clients: ' + err.message);
+    }
+  };
+
+  // "Followed up": saves today's note, closes pending follow-ups, schedules the next one
+  const handleLogFollowup = async (clientId, entry) => {
+    const updated = await api.logFollowup(clientId, entry);
+    setClients(prev => prev.map(c => c.id === clientId ? updated : c));
+    refreshStatsAndFollowups();
   };
 
   const handleUpdateClientNotes = async (clientId, notes) => {
@@ -254,6 +303,8 @@ export default function App() {
         return { title: 'Clients', subtitle: 'Prospective fabricators and contractors' };
       case 'leads':
         return { title: 'Leads', subtitle: 'Clients who responded positively' };
+      case 'accounts':
+        return { title: 'Accounts', subtitle: 'Clients converted to accounts' };
       case 'today':
         return { title: "Today's Agenda", subtitle: "Follow-ups due today" };
       case 'followups':
@@ -343,10 +394,8 @@ export default function App() {
                 setActiveFollowupToComplete(f);
                 setIsCompleteModalOpen(true);
               }}
-              onPromoteClientToLead={handlePromoteToLead}
-              onSelectClient={() => {
-                setActiveTab('clients');
-              }}
+              clients={clients}
+              onConvertToAccount={handleToggleAccountConversion}
               setActiveTab={setActiveTab}
             />
           )}
@@ -365,8 +414,9 @@ export default function App() {
                 setIsClientModalOpen(true);
               }}
               onDeleteClient={handleDeleteClient}
-              onPromoteClientToLead={handlePromoteToLead}
-              onTogglePositive={handleTogglePositive}
+              onConvertToAccount={handleToggleAccountConversion}
+              onToggleProspect={handleToggleProspect}
+              onLogFollowup={handleLogFollowup}
               onOpenExportModal={() => {
                 setIsExportModalOpen(true);
               }}
@@ -394,16 +444,8 @@ export default function App() {
                 setIsClientModalOpen(true);
               }}
               onDeleteLead={handleDeleteClient}
-              onTogglePositive={handleTogglePositive}
-              onToggleAccount={handleToggleAccountConversion}
-              onScheduleFollowupForLead={(clientId) => {
-                setPreselectedClientId(String(clientId));
-                setIsFollowupModalOpen(true);
-              }}
-              onRevertToClient={async (clientId) => {
-                await api.updateClient(clientId, { is_lead: false, status: 'Prospect' });
-                await loadData();
-              }}
+              onToggleNegative={handleToggleNegative}
+              onMoveToClient={handleMoveLeadToClient}
               onOpenExportModal={() => {
                 setIsExportModalOpen(true);
               }}
@@ -414,6 +456,13 @@ export default function App() {
               onAddNote={handleAddClientNote}
               onEditNote={handleEditClientNote}
               onDeleteNote={handleDeleteClientNote}
+            />
+          )}
+
+          {activeTab === 'accounts' && (
+            <AccountsPage
+              clients={clients}
+              onUndoConversion={handleToggleAccountConversion}
             />
           )}
 

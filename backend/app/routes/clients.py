@@ -2,10 +2,10 @@ from fastapi import APIRouter, Depends, HTTPException, Query, Header
 from sqlalchemy.orm import Session, selectinload
 from sqlalchemy import or_
 from typing import List, Optional
-from datetime import datetime
+from datetime import datetime, timezone
 from ..database import get_db
 from ..models import Client, ClientNote, FollowUp, NotificationItem
-from ..schemas import ClientCreate, ClientUpdate, ClientResponse, ClientWithDetails, ClientNoteCreate, ClientNoteResponse
+from ..schemas import ClientCreate, ClientUpdate, ClientResponse, ClientWithDetails, ClientNoteCreate, ClientNoteResponse, FollowUpLog
 from ..activity_logger import log_activity
 
 router = APIRouter(prefix="/api/clients", tags=["Clients"])
@@ -37,6 +37,8 @@ def get_clients(
                 Client.company.ilike(search_fmt),
                 Client.email.ilike(search_fmt),
                 Client.phone.ilike(search_fmt),
+                Client.company_email.ilike(search_fmt),
+                Client.company_phone.ilike(search_fmt),
                 Client.notes.ilike(search_fmt),
                 Client.note_entries.any(ClientNote.content.ilike(search_fmt))
             )
@@ -44,15 +46,13 @@ def get_clients(
 
     clients = query.order_by(Client.updated_at.desc()).all()
     
-    # Enrich with counts
-    result = []
-    for client in clients:
-        c_dict = ClientWithDetails.model_validate(client)
-        c_dict.total_followups = len(client.followups)
-        c_dict.pending_followups = sum(1 for f in client.followups if f.status == "Pending")
-        result.append(c_dict)
+    return [_with_details(client) for client in clients]
 
-    return result
+def _with_details(client: Client) -> ClientWithDetails:
+    c_dict = ClientWithDetails.model_validate(client)
+    c_dict.total_followups = len(client.followups)
+    c_dict.pending_followups = sum(1 for f in client.followups if f.status == "Pending")
+    return c_dict
 
 @router.post("", response_model=ClientResponse)
 def create_client(
@@ -366,6 +366,8 @@ def toggle_account_conversion(
 
     was_converted = client.account_converted_at is not None
     client.account_converted_at = None if was_converted else datetime.utcnow()
+    if not was_converted:
+        client.marked_negative_at = None  # an account can't also be marked negative
     client.updated_at = datetime.utcnow()
     db.commit()
     db.refresh(client)
@@ -378,6 +380,133 @@ def toggle_account_conversion(
         entity_name=f"{client.name} ({client.company or 'Steel Detailing'})",
         description=f"{'Reverted account conversion for' if was_converted else 'Converted to account:'} '{client.name}'",
         changes={"account_converted": {"old": was_converted, "new": not was_converted}},
+        user_name=x_user_name,
+        user_username=x_user_username
+    )
+
+    return client
+
+@router.patch("/{client_id}/toggle-prospect", response_model=ClientResponse)
+def toggle_prospect(
+    client_id: int,
+    x_user_name: Optional[str] = Header(None),
+    x_user_username: Optional[str] = Header(None),
+    db: Session = Depends(get_db)
+):
+    """Flag a client as a hot prospect (row highlighted on the Clients page), or undo that"""
+    client = db.query(Client).filter(Client.id == client_id).first()
+    if not client:
+        raise HTTPException(status_code=404, detail="Client not found")
+
+    was_prospect = client.prospect_marked_at is not None
+    client.prospect_marked_at = None if was_prospect else datetime.utcnow()
+    client.updated_at = datetime.utcnow()
+    db.commit()
+    db.refresh(client)
+
+    log_activity(
+        db=db,
+        action="UPDATE_CLIENT",
+        entity_type="Lead" if client.is_lead else "Client",
+        entity_id=client.id,
+        entity_name=f"{client.name} ({client.company or 'Steel Detailing'})",
+        description=f"{'Removed prospect flag from' if was_prospect else 'Marked as prospect:'} '{client.name}'",
+        changes={"prospect": {"old": was_prospect, "new": not was_prospect}},
+        user_name=x_user_name,
+        user_username=x_user_username
+    )
+
+    return client
+
+@router.post("/{client_id}/log-followup", response_model=ClientWithDetails)
+def log_followup(
+    client_id: int,
+    log_in: FollowUpLog,
+    x_user_name: Optional[str] = Header(None),
+    x_user_username: Optional[str] = Header(None),
+    db: Session = Depends(get_db)
+):
+    """'I followed up': save today's conversation as a dated note, close the pending
+    follow-ups, and optionally schedule the next one"""
+    client = db.query(Client).options(selectinload(Client.followups), selectinload(Client.note_entries)).filter(Client.id == client_id).first()
+    if not client:
+        raise HTTPException(status_code=404, detail="Client not found")
+
+    now = datetime.utcnow()
+    note = (log_in.note or "").strip()
+    if note:
+        db.add(ClientNote(client_id=client.id, content=note, author=x_user_name))
+
+    completed = 0
+    for f in client.followups:
+        if f.status == "Pending":
+            f.status = "Completed"
+            f.updated_at = now
+            if note:
+                f.notes = f"{f.notes or ''}\n[Completed Outcome]: {note}".strip()
+            completed += 1
+
+    next_at = log_in.next_followup_at
+    if next_at is not None and next_at.tzinfo is not None:
+        next_at = next_at.astimezone(timezone.utc).replace(tzinfo=None)  # stored as naive UTC
+    if next_at is not None:
+        db.add(FollowUp(
+            client_id=client.id,
+            title=f"Follow-up with {client.name}",
+            type="Call",
+            scheduled_at=next_at,
+            priority="Medium",
+            status="Pending"
+        ))
+
+    client.updated_at = now
+    db.commit()
+    db.expire(client)
+    client = db.query(Client).options(selectinload(Client.followups), selectinload(Client.note_entries)).filter(Client.id == client_id).first()
+
+    next_text = f"next follow-up {next_at.strftime('%Y-%m-%d')}" if next_at else "no next follow-up"
+    log_activity(
+        db=db,
+        action="COMPLETE_FOLLOWUP",
+        entity_type="Lead" if client.is_lead else "Client",
+        entity_id=client.id,
+        entity_name=f"{client.name} ({client.company or 'Steel Detailing'})",
+        description=f"Followed up with {client.name}; {next_text}",
+        changes={"note": note or None, "completed_followups": completed, "next_followup_at": str(next_at) if next_at else None},
+        user_name=x_user_name,
+        user_username=x_user_username
+    )
+
+    return _with_details(client)
+
+@router.patch("/{client_id}/toggle-negative", response_model=ClientResponse)
+def toggle_negative(
+    client_id: int,
+    x_user_name: Optional[str] = Header(None),
+    x_user_username: Optional[str] = Header(None),
+    db: Session = Depends(get_db)
+):
+    """Mark a lead as not feasible / not contactable / negative (row turns red), or undo that"""
+    client = db.query(Client).filter(Client.id == client_id).first()
+    if not client:
+        raise HTTPException(status_code=404, detail="Client not found")
+
+    was_negative = client.marked_negative_at is not None
+    client.marked_negative_at = None if was_negative else datetime.utcnow()
+    if not was_negative:
+        client.account_converted_at = None  # a negative lead can't also be an account
+    client.updated_at = datetime.utcnow()
+    db.commit()
+    db.refresh(client)
+
+    log_activity(
+        db=db,
+        action="UPDATE_CLIENT",
+        entity_type="Lead" if client.is_lead else "Client",
+        entity_id=client.id,
+        entity_name=f"{client.name} ({client.company or 'Steel Detailing'})",
+        description=f"{'Cleared negative mark for' if was_negative else 'Marked as not feasible / negative:'} '{client.name}'",
+        changes={"marked_negative": {"old": was_negative, "new": not was_negative}},
         user_name=x_user_name,
         user_username=x_user_username
     )

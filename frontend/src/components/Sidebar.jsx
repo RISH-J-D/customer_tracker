@@ -8,7 +8,8 @@ import {
   Target, 
   TrendingUp,
   Database,
-  ScrollText
+  ScrollText,
+  Handshake
 } from 'lucide-react';
 
 export default function Sidebar({ 
@@ -27,17 +28,23 @@ export default function Sidebar({
   const navItems = [
     { id: 'dashboard', label: 'Dashboard', icon: LayoutDashboard },
     { 
-      id: 'clients', 
-      label: 'Clients', 
-      icon: Users,
-      badge: stats ? `${Math.max(0, (stats.total_clients || 0) - (stats.total_leads || 0))}` : null
-    },
-    { 
       id: 'leads', 
       label: 'Leads', 
       icon: Target,
       badge: stats?.total_leads ? `${stats.total_leads}` : null,
       badgeColor: 'lead'
+    },
+    { 
+      id: 'clients', 
+      label: 'Clients', 
+      icon: Users,
+      badge: stats ? `${stats.total_clients || 0}` : null
+    },
+    {
+      id: 'accounts',
+      label: 'Accounts',
+      icon: Handshake,
+      badge: stats?.total_accounts ? `${stats.total_accounts}` : null
     },
     { 
       id: 'today', 

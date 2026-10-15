@@ -11,7 +11,7 @@ echo "=========================================================="
 
 # 1. Start Python FastAPI backend
 echo "▶ Starting Backend API on http://127.0.0.1:8000 ..."
-backend/venv/bin/uvicorn app.main:app --app-dir backend --host 0.0.0.0 --port 8000 &
+backend/venv/bin/uvicorn app.main:app --app-dir backend --host 0.0.0.0 --port 8000 --reload --reload-dir backend/app &
 BACKEND_PID=$!
 
 # 2. Start React Frontend

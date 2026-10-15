@@ -9,10 +9,45 @@ import {
   ArrowRight, 
   CheckCircle2, 
   ExternalLink,
-  ThumbsUp,
-  Calendar,
-  MapPin
+  MapPin,
+  Handshake,
+  Star,
+  AlertTriangle
 } from 'lucide-react';
+
+// Status chip / "To Account" button for the client behind a follow-up
+function ClientStageAction({ client, isLead, onConvertToAccount }) {
+  if (client?.account_converted_at) {
+    return (
+      <span className="badge-status badge-lead" style={{ fontSize: '0.68rem' }}>
+        <Handshake size={10} />
+        <span>Account</span>
+      </span>
+    );
+  }
+  if (isLead) {
+    return (
+      <span className="badge-status badge-lead" style={{ fontSize: '0.68rem' }}>
+        <Target size={10} />
+        <span>Lead</span>
+      </span>
+    );
+  }
+  if (!client) return null;
+  return (
+    <button
+      className="btn btn-lead btn-sm"
+      onClick={() => {
+        if (window.confirm(`Convert ${client.company || client.name} to an account?`)) onConvertToAccount(client.id);
+      }}
+      title="Convert to account"
+      style={{ fontSize: '0.7rem', padding: '0.15rem 0.45rem' }}
+    >
+      <Handshake size={11} />
+      <span>To Account</span>
+    </button>
+  );
+}
 
 export default function DashboardPage({
   stats,
@@ -22,13 +57,18 @@ export default function DashboardPage({
   onOpenNewClient,
   onOpenNewFollowup,
   onOpenCompleteModal,
-  onPromoteClientToLead,
-  onSelectClient,
+  clients = [],
+  onConvertToAccount,
   setActiveTab
 }) {
-  const triggerLeadPromotion = (clientId) => {
-    onPromoteClientToLead(clientId);
-  };
+  const clientById = new Map(clients.map(c => [c.id, c]));
+  const goTo = (tab) => ({
+    role: 'button',
+    tabIndex: 0,
+    style: { cursor: 'pointer' },
+    onClick: () => setActiveTab(tab),
+    onKeyDown: (e) => { if (e.key === 'Enter') setActiveTab(tab); }
+  });
 
   return (
     <div>
@@ -56,38 +96,52 @@ export default function DashboardPage({
         </div>
       )}
 
-      {/* KPI Stats Grid */}
+      {/* KPI Stats Grid — click a card to open that tab */}
       <div className="stats-grid">
-        <div className="card stat-card">
+        <div className="card stat-card" {...goTo('leads')} title="Open Leads">
           <div className="stat-header">
-            <span className="stat-label">Total Clients</span>
-            <div className="stat-icon">
-              <Users size={15} />
-            </div>
-          </div>
-          <div className="stat-value">{stats?.total_clients || 0}</div>
-          <div className="stat-footer">
-            <span>{stats?.clients_with_positive_approach || 0} marked positive</span>
-          </div>
-        </div>
-
-        <div className="card stat-card">
-          <div className="stat-header">
-            <span className="stat-label">Active Leads</span>
+            <span className="stat-label">Leads</span>
             <div className="stat-icon">
               <Target size={15} />
             </div>
           </div>
           <div className="stat-value">{stats?.total_leads || 0}</div>
           <div className="stat-footer">
-            <TrendingUp size={13} color="var(--lead-action)" />
-            <span>{stats?.conversion_rate || 0}% conversion rate</span>
+            <span>Imported and qualified leads</span>
           </div>
         </div>
 
-        <div className="card stat-card">
+        <div className="card stat-card" {...goTo('clients')} title="Open Clients">
           <div className="stat-header">
-            <span className="stat-label">Due Today</span>
+            <span className="stat-label">Clients</span>
+            <div className="stat-icon">
+              <Users size={15} />
+            </div>
+          </div>
+          <div className="stat-value">{stats?.total_clients || 0}</div>
+          <div className="stat-footer">
+            <Star size={13} color="var(--prospect-row-accent)" />
+            <span>{stats?.total_prospects || 0} marked prospect</span>
+          </div>
+        </div>
+
+        <div className="card stat-card" {...goTo('accounts')} title="Open Accounts">
+          <div className="stat-header">
+            <span className="stat-label">Accounts</span>
+            <div className="stat-icon">
+              <Handshake size={15} />
+            </div>
+          </div>
+          <div className="stat-value">{stats?.total_accounts || 0}</div>
+          <div className="stat-footer">
+            <TrendingUp size={13} color="var(--lead-action)" />
+            <span>{stats?.conversion_rate || 0}% converted to accounts</span>
+          </div>
+        </div>
+
+        <div className="card stat-card" {...goTo('today')} title="Open Today's Agenda">
+          <div className="stat-header">
+            <span className="stat-label">Follow-ups Due Today</span>
             <div className="stat-icon">
               <CalendarCheck size={15} />
             </div>
@@ -96,20 +150,14 @@ export default function DashboardPage({
             {stats?.today_followups_count || 0}
           </div>
           <div className="stat-footer">
-            <span>{stats?.high_priority_count || 0} high priority pending</span>
-          </div>
-        </div>
-
-        <div className="card stat-card">
-          <div className="stat-header">
-            <span className="stat-label">Upcoming Meetups</span>
-            <div className="stat-icon">
-              <Video size={15} />
-            </div>
-          </div>
-          <div className="stat-value">{stats?.upcoming_meetups_count || 0}</div>
-          <div className="stat-footer">
-            <span>Scheduled meetings and calls</span>
+            {stats?.overdue_followups_count > 0 ? (
+              <>
+                <AlertTriangle size={13} color="var(--warning-strong)" />
+                <span style={{ color: 'var(--warning-strong)', fontWeight: 600 }}>{stats.overdue_followups_count} overdue</span>
+              </>
+            ) : (
+              <span>Nothing overdue</span>
+            )}
           </div>
         </div>
       </div>
@@ -173,24 +221,11 @@ export default function DashboardPage({
                         </div>
                       </div>
 
-                      {/* Convert to Lead button */}
-                      {!f.client_is_lead && isPending && (
-                        <button
-                          className="btn btn-lead btn-sm"
-                          onClick={() => triggerLeadPromotion(f.client_id)}
-                          title="Convert to Lead"
-                          style={{ fontSize: '0.7rem', padding: '0.15rem 0.45rem' }}
-                        >
-                          <Target size={11} />
-                          <span>Convert to Lead</span>
-                        </button>
-                      )}
-                      {f.client_is_lead && (
-                        <span className="badge-status badge-lead" style={{ fontSize: '0.68rem' }}>
-                          <Target size={10} />
-                          <span>Lead</span>
-                        </span>
-                      )}
+                      <ClientStageAction
+                        client={clientById.get(f.client_id)}
+                        isLead={f.client_is_lead}
+                        onConvertToAccount={onConvertToAccount}
+                      />
                     </div>
 
                     <div style={{ fontSize: '0.78rem', color: 'var(--text-muted)', marginBottom: '0.5rem' }}>
@@ -299,20 +334,11 @@ export default function DashboardPage({
                       <span className={`badge-status badge-${f.priority.toLowerCase()}`}>
                         {f.priority}
                       </span>
-                      {f.client_is_lead ? (
-                        <span className="badge-status badge-lead" style={{ fontSize: '0.65rem' }}>
-                          Lead
-                        </span>
-                      ) : (
-                        <button
-                          className="btn btn-secondary btn-sm"
-                          onClick={() => triggerLeadPromotion(f.client_id)}
-                          style={{ fontSize: '0.65rem', padding: '0.15rem 0.35rem' }}
-                        >
-                          <Target size={10} color="var(--lead-action)" />
-                          <span>Make Lead</span>
-                        </button>
-                      )}
+                      <ClientStageAction
+                        client={clientById.get(f.client_id)}
+                        isLead={f.client_is_lead}
+                        onConvertToAccount={onConvertToAccount}
+                      />
                     </div>
                   </div>
                 );

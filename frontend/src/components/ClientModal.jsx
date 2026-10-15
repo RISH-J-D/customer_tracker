@@ -25,6 +25,8 @@ export default function ClientModal({
     position: '',
     email: '',
     phone: '',
+    company_email: '',
+    company_phone: '',
     city: '',
     state: '',
     country: '',
@@ -48,6 +50,8 @@ export default function ClientModal({
         position: client.position || '',
         email: client.email || '',
         phone: client.phone || '',
+        company_email: client.company_email || '',
+        company_phone: client.company_phone || '',
         city: client.city || '',
         state: client.state || '',
         country: client.country || '',
@@ -67,6 +71,8 @@ export default function ClientModal({
         position: '',
         email: '',
         phone: '',
+        company_email: '',
+        company_phone: '',
         city: '',
         state: '',
         country: '',
@@ -192,7 +198,31 @@ export default function ClientModal({
 
             <div style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fit, minmax(220px, 1fr))', gap: '0.85rem' }}>
               <div className="form-group">
-                <label className="form-label">Email Address</label>
+                <label className="form-label">Company Email</label>
+                <input
+                  type="email"
+                  placeholder="info@company.com"
+                  className="form-input"
+                  value={formData.company_email}
+                  onChange={(e) => setFormData({ ...formData, company_email: e.target.value })}
+                />
+              </div>
+
+              <div className="form-group">
+                <label className="form-label">Company Phone</label>
+                <input
+                  type="text"
+                  placeholder="Main office number"
+                  className="form-input"
+                  value={formData.company_phone}
+                  onChange={(e) => setFormData({ ...formData, company_phone: e.target.value })}
+                />
+              </div>
+            </div>
+
+            <div style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fit, minmax(220px, 1fr))', gap: '0.85rem' }}>
+              <div className="form-group">
+                <label className="form-label">Representative Email</label>
                 <input
                   type="email"
                   placeholder="alexander@company.com"
@@ -203,7 +233,7 @@ export default function ClientModal({
               </div>
 
               <div className="form-group">
-                <label className="form-label">Phone Number</label>
+                <label className="form-label">Representative Phone</label>
                 <input
                   type="text"
                   placeholder="+1 (555) 234-8901"

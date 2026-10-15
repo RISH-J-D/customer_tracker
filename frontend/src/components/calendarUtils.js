@@ -27,6 +27,15 @@ export const groupByDay = (items, getDate) => {
   return groups;
 };
 
+// The client's notes from the most recent day anything was written (the last conversation)
+export const lastConversation = (client) => {
+  const entries = (client.note_entries || [])
+    .map(n => ({ ...n, date: parseServerUtc(n.created_at) }))
+    .filter(n => n.date)
+    .sort((a, b) => b.date - a.date);
+  return groupByDay(entries, n => n.date)[0] || null;
+};
+
 export const relativeDayLabel = (d) => {
   const today = new Date();
   const diffDays = Math.round(

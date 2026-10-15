@@ -169,6 +169,34 @@ export const api = {
     return res.json();
   },
 
+  async toggleProspect(id) {
+    const res = await fetch(`${API_BASE}/clients/${id}/toggle-prospect`, {
+      method: 'PATCH',
+      headers: getAuthHeaders()
+    });
+    if (!res.ok) throw new Error('Failed to update prospect flag');
+    return res.json();
+  },
+
+  async logFollowup(id, { note, nextFollowupAt }) {
+    const res = await fetch(`${API_BASE}/clients/${id}/log-followup`, {
+      method: 'POST',
+      headers: getAuthHeaders({ 'Content-Type': 'application/json' }),
+      body: JSON.stringify({ note: note || null, next_followup_at: nextFollowupAt || null })
+    });
+    if (!res.ok) throw new Error('Failed to save follow-up');
+    return res.json();
+  },
+
+  async toggleNegative(id) {
+    const res = await fetch(`${API_BASE}/clients/${id}/toggle-negative`, {
+      method: 'PATCH',
+      headers: getAuthHeaders()
+    });
+    if (!res.ok) throw new Error('Failed to update negative mark');
+    return res.json();
+  },
+
   async togglePositive(id) {
     const res = await fetch(`${API_BASE}/clients/${id}/toggle-positive`, {
       method: 'PATCH',

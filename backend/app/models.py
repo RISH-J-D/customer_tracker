@@ -10,13 +10,17 @@ class Client(Base):
     name = Column(String(255), nullable=False, index=True)
     company = Column(String(255), nullable=True, index=True)
     email = Column(String(255), nullable=True)
-    phone = Column(String(255), nullable=True)
+    phone = Column(String(255), nullable=True)  # representative's phone
+    company_email = Column(String(255), nullable=True)
+    company_phone = Column(String(255), nullable=True)
     category = Column(String(50), default="Steel Detailing")
     status = Column(String(50), default="Prospect", index=True)
     is_lead = Column(Boolean, default=False, index=True)
     positive_approach = Column(Boolean, default=False, index=True)
     lead_converted_at = Column(DateTime, nullable=True)
     account_converted_at = Column(DateTime, nullable=True)  # set when a lead is converted to an account
+    marked_negative_at = Column(DateTime, nullable=True)  # set when a lead is not feasible / not contactable / negative
+    prospect_marked_at = Column(DateTime, nullable=True)  # set when a client is flagged as a hot prospect
     deal_value = Column(Float, default=0.0)
     position = Column(Text, nullable=True)
     city = Column(Text, nullable=True)

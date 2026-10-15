@@ -19,6 +19,16 @@ def migrate_client_columns():
                 "UPDATE clients SET account_converted_at = COALESCE(lead_converted_at, created_at) "
                 "WHERE is_lead = TRUE AND status IN ('Accepted', 'Active')"
             ))
+    added_later = {
+        "marked_negative_at": "TIMESTAMP",
+        "prospect_marked_at": "TIMESTAMP",
+        "company_email": "VARCHAR(255)",
+        "company_phone": "VARCHAR(255)",
+    }
+    for column, sql_type in added_later.items():
+        if column not in existing:
+            with engine.begin() as conn:
+                conn.execute(text(f"ALTER TABLE clients ADD COLUMN {column} {sql_type}"))
 
 IMPORT_NOTE_FIELD = re.compile(r"^(Position|Location|Original CRM Status):")
 

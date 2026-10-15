@@ -55,6 +55,8 @@ class ClientBase(BaseModel):
     company: Optional[str] = None
     email: Optional[str] = None
     phone: Optional[str] = None
+    company_email: Optional[str] = None
+    company_phone: Optional[str] = None
     category: str = "Steel Detailing"
     status: str = "Prospect"
     is_lead: bool = False
@@ -74,6 +76,8 @@ class ClientUpdate(BaseModel):
     company: Optional[str] = None
     email: Optional[str] = None
     phone: Optional[str] = None
+    company_email: Optional[str] = None
+    company_phone: Optional[str] = None
     category: Optional[str] = None
     status: Optional[str] = None
     is_lead: Optional[bool] = None
@@ -89,6 +93,8 @@ class ClientResponse(ClientBase):
     id: int
     lead_converted_at: Optional[datetime] = None
     account_converted_at: Optional[datetime] = None
+    marked_negative_at: Optional[datetime] = None
+    prospect_marked_at: Optional[datetime] = None
     created_at: datetime
     updated_at: datetime
     model_config = ConfigDict(from_attributes=True)
@@ -97,6 +103,11 @@ class FollowUpWithClientInfo(FollowUpResponse):
     client_name: Optional[str] = None
     client_company: Optional[str] = None
     client_is_lead: Optional[bool] = False
+
+class FollowUpLog(BaseModel):
+    """'I followed up': what was discussed today, and when to follow up next"""
+    note: Optional[str] = None
+    next_followup_at: Optional[datetime] = None
 
 class ClientWithDetails(ClientResponse):
     followups: List[FollowUpResponse] = []
@@ -121,6 +132,9 @@ class NotificationResponse(BaseModel):
 class DashboardStats(BaseModel):
     total_clients: int
     total_leads: int
+    total_accounts: int = 0
+    total_prospects: int = 0
+    overdue_followups_count: int = 0
     conversion_rate: float
     today_followups_count: int
     upcoming_meetups_count: int

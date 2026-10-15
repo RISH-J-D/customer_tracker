@@ -44,6 +44,12 @@
   --account-row-bg: #E9F5EE;
   --account-row-hover: #DDEFE5;
   --account-row-accent: #2E8B5C;
+  --negative-row-bg: #FCECEC;
+  --negative-row-hover: #F9DFDF;
+  --negative-row-accent: #C93C3C;
+  --prospect-row-bg: #FDF6E3;
+  --prospect-row-hover: #FAEFD2;
+  --prospect-row-accent: #D69E2E;
 
   /* Warning (overdue, positive response, medium priority) */
   --positive-color: #8A5A0B;
@@ -114,6 +120,12 @@
   --account-row-bg: rgba(64, 168, 116, 0.10);
   --account-row-hover: rgba(64, 168, 116, 0.16);
   --account-row-accent: #4DB283;
+  --negative-row-bg: rgba(220, 76, 76, 0.12);
+  --negative-row-hover: rgba(220, 76, 76, 0.18);
+  --negative-row-accent: #E06262;
+  --prospect-row-bg: rgba(214, 160, 60, 0.12);
+  --prospect-row-hover: rgba(214, 160, 60, 0.18);
+  --prospect-row-accent: #E0B050;
 
   --positive-color: #E0B460;
   --positive-bg: rgba(214, 160, 60, 0.12);
@@ -717,7 +729,28 @@ h1, h2, h3, h4 {
 }
 
 .card.card-account-converted {
+  background-color: var(--account-row-bg);
   box-shadow: inset 4px 0 0 var(--account-row-accent);
+}
+
+/* Lead marked not feasible / not contactable / negative: whole row turns red */
+.custom-table tbody tr.row-negative,
+.custom-table tbody tr.row-negative td {
+  background-color: var(--negative-row-bg);
+}
+
+.custom-table tbody tr.row-negative:hover,
+.custom-table tbody tr.row-negative:hover td {
+  background-color: var(--negative-row-hover);
+}
+
+.custom-table tbody tr.row-negative td:first-child {
+  box-shadow: inset 4px 0 0 var(--negative-row-accent);
+}
+
+.card.card-negative {
+  background-color: var(--negative-row-bg);
+  box-shadow: inset 4px 0 0 var(--negative-row-accent);
 }
 
 /* Row action buttons: larger icons in a compact 3-column grid (wraps to 2 rows) */
@@ -742,6 +775,159 @@ h1, h2, h3, h4 {
   height: 32px;
   justify-content: center;
   font-size: 0.75rem;
+}
+
+/* Client flagged as a prospect: row turns amber */
+.custom-table tbody tr.row-prospect,
+.custom-table tbody tr.row-prospect td {
+  background-color: var(--prospect-row-bg);
+}
+
+.custom-table tbody tr.row-prospect:hover,
+.custom-table tbody tr.row-prospect:hover td {
+  background-color: var(--prospect-row-hover);
+}
+
+.custom-table tbody tr.row-prospect td:first-child {
+  box-shadow: inset 4px 0 0 var(--prospect-row-accent);
+}
+
+.card.card-prospect {
+  background-color: var(--prospect-row-bg);
+  box-shadow: inset 4px 0 0 var(--prospect-row-accent);
+}
+
+.btn-prospect-toggle.is-prospect,
+.btn-prospect-toggle.is-prospect:hover {
+  background-color: var(--prospect-row-accent);
+  color: #fff;
+  border-color: var(--prospect-row-accent);
+}
+
+/* Follow-up column: last conversation + next date */
+.followup-last-talk {
+  background-color: var(--bg-subtle);
+  border: 1px solid var(--border-subtle);
+  border-radius: var(--radius-sm);
+  padding: 0.3rem 0.45rem;
+}
+
+.followup-last-talk-text {
+  font-size: 0.72rem;
+  line-height: 1.35;
+  color: var(--text-primary);
+  margin-top: 0.1rem;
+  word-break: break-word;
+  display: -webkit-box;
+  -webkit-line-clamp: 3;
+  -webkit-box-orient: vertical;
+  overflow: hidden;
+}
+
+.followup-overdue-tag {
+  display: inline-block;
+  margin-left: 0.35rem;
+  padding: 0 0.3rem;
+  border-radius: 3px;
+  font-size: 0.6rem;
+  font-weight: 700;
+  text-transform: uppercase;
+  color: #fff;
+  background-color: var(--warning-strong);
+  vertical-align: 1px;
+}
+
+/* "Followed up" dialog: next follow-up quick picks */
+.followup-picks {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 0.35rem;
+}
+
+.followup-pick {
+  display: inline-flex;
+  align-items: center;
+  gap: 0.3rem;
+  height: 30px;
+  padding: 0 0.7rem;
+  border: 1px solid var(--border-subtle);
+  border-radius: 999px;
+  background: var(--bg-surface);
+  color: var(--text-secondary);
+  font-size: 0.76rem;
+  font-weight: 500;
+  cursor: pointer;
+  transition: all 0.15s ease;
+}
+
+.followup-pick:hover {
+  border-color: var(--primary);
+  color: var(--text-primary);
+}
+
+.followup-pick.active {
+  background-color: var(--primary);
+  border-color: var(--primary);
+  color: #fff;
+  font-weight: 600;
+}
+
+/* Negative toggle turns solid red once marked */
+.btn-negative-toggle.is-negative,
+.btn-negative-toggle.is-negative:hover {
+  background-color: var(--negative-row-accent);
+  color: #fff;
+  border-color: var(--negative-row-accent);
+}
+
+/* Email / phone with a one-click copy button */
+.copyable {
+  display: inline-flex;
+  align-items: flex-start;
+  gap: 0.3rem;
+  max-width: 100%;
+}
+
+.copy-btn {
+  flex-shrink: 0;
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  width: 20px;
+  height: 20px;
+  padding: 0;
+  border: 1px solid var(--border-subtle);
+  border-radius: var(--radius-sm);
+  background: var(--bg-surface);
+  color: var(--text-muted);
+  cursor: pointer;
+  transition: all 0.15s ease;
+}
+
+.copy-btn:hover {
+  color: var(--text-primary);
+  border-color: var(--text-muted);
+}
+
+.copy-btn.is-copied {
+  color: #fff;
+  background-color: var(--account-row-accent);
+  border-color: var(--account-row-accent);
+}
+
+/* Country / state / city filters on the Leads page */
+.address-filters {
+  display: flex;
+  align-items: center;
+  gap: 0.4rem;
+  flex-wrap: wrap;
+}
+
+.address-filters .form-select {
+  width: 150px;
+  height: 32px;
+  font-size: 0.775rem;
+  padding: 0.1rem 1.6rem 0.1rem 0.55rem;
 }
 
 /* Account toggle turns solid green once converted */
@@ -1117,6 +1303,18 @@ h1, h2, h3, h4 {
   .table-mobile-cards .custom-table tbody tr.row-account-converted:hover td.td-actions {
     background-color: var(--account-row-hover);
   }
+
+  .table-mobile-cards .custom-table tbody tr.row-prospect td.td-actions {
+    background-color: var(--prospect-row-bg);
+  }
+
+  .table-mobile-cards .custom-table tbody tr.row-negative td.td-actions {
+    background-color: var(--negative-row-bg);
+  }
+
+  .table-mobile-cards .custom-table tbody tr.row-negative:hover td.td-actions {
+    background-color: var(--negative-row-hover);
+  }
 }
 
 /* ==========================================================================
@@ -1236,6 +1434,39 @@ h1, h2, h3, h4 {
     box-shadow: none;
   }
 
+  /* Prospect cards stay amber */
+  .table-mobile-cards .custom-table tbody tr.row-prospect {
+    border-color: var(--prospect-row-accent);
+    box-shadow: inset 4px 0 0 var(--prospect-row-accent);
+  }
+
+  .table-mobile-cards .custom-table tbody tr.row-prospect td:first-child {
+    box-shadow: none;
+  }
+
+  /* Negative cards stay red */
+  .table-mobile-cards .custom-table tbody tr.row-negative {
+    border-color: var(--negative-row-accent);
+    box-shadow: inset 4px 0 0 var(--negative-row-accent);
+  }
+
+  .table-mobile-cards .custom-table tbody tr.row-negative td:first-child {
+    box-shadow: none;
+  }
+
+  .address-filters {
+    width: 100%;
+  }
+
+  .address-filters > svg {
+    display: none;
+  }
+
+  .address-filters .form-select {
+    width: auto;
+    flex: 1 1 100%;
+  }
+
   .search-box {
     max-width: none !important;
   }
@@ -1248,193 +1479,5 @@ h1, h2, h3, h4 {
 
   .today-reminder-banner .btn {
     justify-content: center;
-  }
-}
-
-/* ==========================================================================
-   Lead follow-up calendar (month view modal)
-   ========================================================================== */
-.lead-calendar-modal {
-  max-width: 760px;
-}
-
-.lead-open-calendar {
-  cursor: pointer;
-  border-radius: var(--radius-md);
-}
-
-.lead-open-calendar:hover .lead-name-text {
-  color: var(--primary);
-  text-decoration: underline;
-}
-
-.lead-open-calendar:focus-visible {
-  outline: 2px solid var(--primary);
-  outline-offset: 2px;
-}
-
-.lead-cal-grid {
-  display: grid;
-  grid-template-columns: repeat(7, minmax(0, 1fr));
-  border: 1px solid var(--border-subtle);
-  border-radius: var(--radius-md);
-  overflow: hidden;
-}
-
-.lead-cal-weekday {
-  font-size: 0.66rem;
-  font-weight: 700;
-  text-transform: uppercase;
-  letter-spacing: 0.03em;
-  color: var(--text-muted);
-  text-align: center;
-  padding: 0.4rem 0;
-  background-color: var(--table-header-bg);
-  border-bottom: 1px solid var(--border-subtle);
-}
-
-.lead-cal-cell {
-  min-height: 74px;
-  padding: 0.3rem;
-  display: flex;
-  flex-direction: column;
-  align-items: stretch;
-  gap: 2px;
-  background: var(--bg-surface);
-  border: none;
-  border-right: 1px solid var(--border-light);
-  border-bottom: 1px solid var(--border-light);
-  text-align: left;
-  cursor: pointer;
-  font: inherit;
-  color: inherit;
-  min-width: 0;
-}
-
-.lead-cal-cell:nth-child(7n) {
-  border-right: none;
-}
-
-.lead-cal-cell.is-blank {
-  background: var(--bg-subtle);
-  cursor: default;
-}
-
-.lead-cal-cell:not(.is-blank):hover {
-  background: var(--bg-hover);
-}
-
-.lead-cal-cell.is-selected {
-  box-shadow: inset 0 0 0 2px var(--primary);
-}
-
-.lead-cal-daynum {
-  font-size: 0.72rem;
-  font-weight: 600;
-  color: var(--text-secondary);
-  width: 22px;
-  height: 22px;
-  display: flex;
-  align-items: center;
-  justify-content: center;
-  border-radius: 999px;
-}
-
-.lead-cal-cell.is-today .lead-cal-daynum {
-  background: var(--primary);
-  color: #fff;
-}
-
-.lead-cal-chip {
-  display: block;
-  font-size: 0.62rem;
-  font-weight: 600;
-  padding: 1px 4px;
-  border-radius: 3px;
-  overflow: hidden;
-  min-width: 0;
-}
-
-.lead-cal-chip-text {
-  display: block;
-  white-space: nowrap;
-  overflow: hidden;
-  text-overflow: ellipsis;
-}
-
-.lead-cal-more {
-  font-size: 0.6rem;
-  color: var(--text-muted);
-  font-weight: 600;
-}
-
-.lead-cal-dots {
-  display: none;
-  gap: 2px;
-  justify-content: center;
-}
-
-.lead-cal-dot {
-  width: 7px;
-  height: 7px;
-  border-radius: 999px;
-  display: inline-block;
-  flex-shrink: 0;
-}
-
-/* Follow-up state colours (chip, dot, detail card, status pill) */
-.lead-cal-chip.state-pending { background: var(--primary-subtle); color: var(--primary); }
-.lead-cal-chip.state-today { background: var(--danger-bg); color: var(--danger-color); }
-.lead-cal-chip.state-overdue { background: var(--positive-bg); color: var(--positive-color); }
-.lead-cal-chip.state-completed { background: var(--lead-bg); color: var(--lead-color); }
-.lead-cal-chip.state-other { background: var(--bg-subtle); color: var(--text-muted); }
-
-.lead-cal-dot.state-pending { background: var(--primary); }
-.lead-cal-dot.state-today { background: var(--danger-btn); }
-.lead-cal-dot.state-overdue { background: var(--warning-strong); }
-.lead-cal-dot.state-completed { background: var(--lead-action); }
-.lead-cal-dot.state-other { background: var(--text-muted); }
-
-.lead-cal-detail {
-  border: 1px solid var(--border-subtle);
-  border-left-width: 4px;
-  border-radius: var(--radius-md);
-  padding: 0.55rem 0.7rem;
-  background: var(--bg-surface);
-}
-
-.lead-cal-detail.state-pending { border-left-color: var(--primary); }
-.lead-cal-detail.state-today { border-left-color: var(--danger-btn); }
-.lead-cal-detail.state-overdue { border-left-color: var(--warning-strong); }
-.lead-cal-detail.state-completed { border-left-color: var(--lead-action); }
-.lead-cal-detail.state-other { border-left-color: var(--text-muted); }
-
-.lead-cal-status {
-  font-size: 0.64rem;
-  font-weight: 700;
-  padding: 0.05rem 0.4rem;
-  border-radius: 999px;
-}
-
-.lead-cal-status.state-pending { background: var(--primary-subtle); color: var(--primary); }
-.lead-cal-status.state-today { background: var(--danger-bg); color: var(--danger-color); }
-.lead-cal-status.state-overdue { background: var(--positive-bg); color: var(--positive-color); }
-.lead-cal-status.state-completed { background: var(--lead-bg); color: var(--lead-color); }
-.lead-cal-status.state-other { background: var(--bg-subtle); color: var(--text-muted); }
-
-@media (max-width: 640px) {
-  .lead-cal-cell {
-    min-height: 46px;
-    align-items: center;
-    padding: 0.25rem 0.1rem;
-  }
-
-  .lead-cal-chip,
-  .lead-cal-more {
-    display: none;
-  }
-
-  .lead-cal-dots {
-    display: flex;
   }
 }

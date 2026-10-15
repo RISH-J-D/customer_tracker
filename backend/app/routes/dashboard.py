@@ -11,13 +11,20 @@ router = APIRouter(prefix="/api/dashboard", tags=["Dashboard"])
 
 @router.get("/stats", response_model=DashboardStats)
 def get_dashboard_stats(db: Session = Depends(get_db)):
-    total_clients = db.query(Client).count()
+    # Clients tab = everyone who is neither a lead nor converted to an account
+    total_clients = db.query(Client).filter(Client.is_lead == False, Client.account_converted_at.is_(None)).count()
     total_leads = db.query(Client).filter(Client.is_lead == True).count()
+    total_accounts = db.query(Client).filter(Client.account_converted_at.isnot(None)).count()
+    total_prospects = db.query(Client).filter(
+        Client.is_lead == False, Client.account_converted_at.is_(None), Client.prospect_marked_at.isnot(None)
+    ).count()
     positive_clients = db.query(Client).filter(Client.positive_approach == True).count()
 
+    # Share of all records that became accounts
     conversion_rate = 0.0
-    if total_clients > 0:
-        conversion_rate = round((total_leads / total_clients) * 100, 1)
+    all_records = db.query(Client).count()
+    if all_records > 0:
+        conversion_rate = round((total_accounts / all_records) * 100, 1)
 
     now = datetime.utcnow()
     start_of_day = datetime.combine(now.date(), time.min)
@@ -27,6 +34,11 @@ def get_dashboard_stats(db: Session = Depends(get_db)):
         FollowUp.scheduled_at >= start_of_day,
         FollowUp.scheduled_at <= end_of_day,
         FollowUp.status != "Cancelled"
+    ).count()
+
+    overdue_followups = db.query(FollowUp).filter(
+        FollowUp.scheduled_at < start_of_day,
+        FollowUp.status == "Pending"
     ).count()
 
     upcoming_meetups = db.query(FollowUp).filter(
@@ -45,6 +57,9 @@ def get_dashboard_stats(db: Session = Depends(get_db)):
     return DashboardStats(
         total_clients=total_clients,
         total_leads=total_leads,
+        total_accounts=total_accounts,
+        total_prospects=total_prospects,
+        overdue_followups_count=overdue_followups,
         conversion_rate=conversion_rate,
         today_followups_count=today_followups,
         upcoming_meetups_count=upcoming_meetups,
