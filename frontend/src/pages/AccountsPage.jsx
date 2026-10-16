@@ -46,7 +46,7 @@ export default function AccountsPage({ clients, onUndoConversion }) {
   };
 
   return (
-    <div>
+    <div className="table-page">
       <div className="card" style={{ padding: '0.65rem 0.85rem', marginBottom: '1.25rem' }}>
         <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', flexWrap: 'wrap', gap: '0.75rem' }}>
           <AddressFilters filter={address} />

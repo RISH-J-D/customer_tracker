@@ -4,7 +4,8 @@ from fastapi.middleware.cors import CORSMiddleware
 from contextlib import asynccontextmanager
 from sqlalchemy import inspect, text
 from .database import engine, Base, SessionLocal
-from .seed_data import seed_initial_data, seed_users_and_logs
+from .seed_data import seed_users
+from .import_client_details import ensure_client_details_imported
 from .routes import clients, followups, dashboard, notifications, export, auth, logs
 
 def migrate_client_columns():
@@ -57,11 +58,10 @@ async def lifespan(app: FastAPI):
     Base.metadata.create_all(bind=engine)
     migrate_client_columns()
     strip_import_generated_notes()
-    # Seed initial test clients, follow-up reminders, and users
     db = SessionLocal()
     try:
-        seed_initial_data(db)
-        seed_users_and_logs(db)
+        seed_users(db)
+        ensure_client_details_imported(db)
     finally:
         db.close()
     yield

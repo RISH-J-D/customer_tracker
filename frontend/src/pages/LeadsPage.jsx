@@ -15,12 +15,17 @@ import ExportDropdown from '../components/ExportDropdown';
 import NotesCell from '../components/NotesCell';
 import Pagination from '../components/Pagination';
 import ViewModeToggle from '../components/ViewModeToggle';
+import RepresentativeModal from '../components/RepresentativeModal';
 import { EmailLink, PhoneLinks } from '../components/ContactLinks';
 import { AddressFilters, AddressLine, useAddressFilter, formatAddress } from '../components/AddressFilters';
 
 // Green = converted to account, red = not feasible / not contactable / negative
 const rowMarkClass = (c, prefix) =>
   c.account_converted_at ? `${prefix}-account-converted` : c.marked_negative_at ? `${prefix}-negative` : '';
+
+// Most imported leads only have the company's email / phone, not a representative's
+const leadEmail = (c) => c.email || c.company_email;
+const leadPhone = (c) => c.phone || c.company_phone;
 
 const dash = <span style={{ color: 'var(--text-muted)' }}>-</span>;
 
@@ -55,7 +60,7 @@ export default function LeadsPage({
 
     if (searchQuery.trim()) {
       const q = searchQuery.toLowerCase();
-      const fields = [c.name, c.company, c.email, c.phone, c.notes, formatAddress(c)];
+      const fields = [c.name, c.company, c.email, c.phone, c.company_email, c.company_phone, c.notes, formatAddress(c)];
       const matchField = fields.some(v => v?.toLowerCase().includes(q));
       const matchNotes = (c.note_entries || []).some(n => n.content?.toLowerCase().includes(q));
       if (!matchField && !matchNotes) return false;
@@ -66,9 +71,8 @@ export default function LeadsPage({
 
   const paginatedLeads = filteredLeads.slice((page - 1) * pageSize, page * pageSize);
 
-  const moveToClient = (c) => {
-    if (window.confirm(`Move ${c.company || c.name} to Clients?`)) onMoveToClient(c.id);
-  };
+  const [movingLead, setMovingLead] = useState(null);
+  const moveToClient = (c) => setMovingLead(c);
 
   const negativeToggleProps = (c) => ({
     onClick: () => onToggleNegative(c.id),
@@ -90,7 +94,7 @@ export default function LeadsPage({
   );
 
   return (
-    <div>
+    <div className="table-page">
       {/* Page Header */}
       <div style={{ display: 'flex', alignItems: 'flex-start', justifyContent: 'flex-end', flexWrap: 'wrap', gap: '1rem', marginBottom: '1.25rem' }}>
         <div style={{ display: 'flex', alignItems: 'center', gap: '0.5rem', flexWrap: 'wrap' }}>
@@ -188,7 +192,7 @@ export default function LeadsPage({
               <tr>
                 <th style={{ width: '24%' }}>Lead & Company</th>
                 <th style={{ width: '20%' }}>Email</th>
-                <th style={{ width: '14%' }}>Mobile</th>
+                <th style={{ width: '14%' }}>Phone</th>
                 <th style={{ width: '32%' }}>Latest note</th>
                 <th style={{ width: '1%' }}>Actions</th>
               </tr>
@@ -232,13 +236,13 @@ export default function LeadsPage({
 
                     <td className="td-email" data-label="Email">
                       <div style={{ fontSize: '0.75rem', color: 'var(--text-secondary)' }}>
-                        {c.email ? <EmailLink email={c.email} /> : dash}
+                        {leadEmail(c) ? <EmailLink email={leadEmail(c)} /> : dash}
                       </div>
                     </td>
 
-                    <td className="td-mobile" data-label="Mobile">
+                    <td className="td-mobile" data-label="Phone">
                       <div style={{ fontSize: '0.75rem', color: 'var(--text-secondary)' }}>
-                        {c.phone ? <PhoneLinks phone={c.phone} label="mobile number" /> : dash}
+                        {leadPhone(c) ? <PhoneLinks phone={leadPhone(c)} label="phone number" /> : dash}
                       </div>
                     </td>
 
@@ -290,7 +294,7 @@ export default function LeadsPage({
         </div>
       ) : (
         /* CARDS GRID VIEW */
-        <div style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fill, minmax(320px, 1fr))', gap: '1rem' }}>
+        <div className="table-scroll" style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fill, minmax(320px, 1fr))', gap: '1rem' }}>
           {paginatedLeads.map((c) => (
             <div
               key={c.id}
@@ -327,8 +331,8 @@ export default function LeadsPage({
                     <span>{c.position}</span>
                   </div>
                 )}
-                <EmailLink email={c.email} />
-                <PhoneLinks phone={c.phone} label="mobile number" />
+                <EmailLink email={leadEmail(c)} />
+                <PhoneLinks phone={leadPhone(c)} label="phone number" />
                 <div style={{ marginTop: '0.4rem', paddingTop: '0.4rem', borderTop: '1px solid var(--border-light)' }}>
                   {notesCell(c)}
                 </div>
@@ -382,6 +386,12 @@ export default function LeadsPage({
         noun="leads"
         onPageChange={setPage}
         onPageSizeChange={(size) => { setPageSize(size); setPage(1); }}
+      />
+
+      <RepresentativeModal
+        lead={movingLead}
+        onClose={() => setMovingLead(null)}
+        onConfirm={onMoveToClient}
       />
     </div>
   );

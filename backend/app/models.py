@@ -135,3 +135,11 @@ class Account(Base):
     client = relationship("Client", back_populates="accounts")
 
 
+
+class AppMeta(Base):
+    """Key/value flags for one-time data operations (e.g. which data import has been applied)."""
+    __tablename__ = "app_meta"
+
+    key = Column(String(100), primary_key=True)
+    value = Column(Text, nullable=True)
+    updated_at = Column(DateTime, default=datetime.utcnow, onupdate=datetime.utcnow)

@@ -118,7 +118,7 @@ export default function ClientsPage({
   );
 
   return (
-    <div>
+    <div className="table-page">
       {/* Page Header */}
       <div style={{ display: 'flex', alignItems: 'flex-start', justifyContent: 'flex-end', flexWrap: 'wrap', gap: '1rem', marginBottom: '1.25rem' }}>
         <div style={{ display: 'flex', alignItems: 'center', gap: '0.5rem', flexWrap: 'wrap' }}>
@@ -304,7 +304,7 @@ export default function ClientsPage({
         </div>
       ) : (
         /* CARDS GRID VIEW */
-        <div style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fill, minmax(320px, 1fr))', gap: '1rem' }}>
+        <div className="table-scroll" style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fill, minmax(320px, 1fr))', gap: '1rem' }}>
           {paginatedClients.map((c) => (
             <div
               key={c.id}

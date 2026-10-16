@@ -1963,3 +1963,62 @@ h1, h2, h3, h4 {
   .fu-cell,
   .note-cell { min-width: 0; }
 }
+
+/* ==========================================================================
+   Desktop: sidebar and navbar stay put; on Leads / Contacts / Accounts only the
+   table (or card grid) scrolls. .app-container's overflow-x made it the sticky
+   containing block, so the sidebar used to scroll away with the page.
+   ========================================================================== */
+@media (min-width: 769px) {
+  .app-container {
+    height: 100vh;
+    height: 100dvh;
+    overflow: hidden;
+  }
+
+  .main-wrapper {
+    height: 100%;
+    overflow-y: auto;
+    padding-bottom: 0;
+  }
+
+  .sidebar {
+    height: 100%;
+    overflow-y: auto;
+  }
+
+  .main-wrapper:has(.table-page) .page-content {
+    flex: 1;
+    min-height: 0;
+    display: flex;
+    flex-direction: column;
+  }
+
+  .table-page {
+    flex: 1;
+    min-height: 0;
+    display: flex;
+    flex-direction: column;
+  }
+
+  .table-page > .table-responsive,
+  .table-page > .table-scroll {
+    flex: 1 1 auto;
+    min-height: 240px;
+    overflow: auto;
+  }
+
+  .table-page > .table-scroll {
+    align-content: start;
+    padding: 2px;
+  }
+
+  .table-page .custom-table thead th,
+  .table-page .custom-table thead th:last-child {
+    position: sticky;
+    top: 0;
+    z-index: 3;
+    background-color: var(--table-header-bg);
+    box-shadow: inset 0 -1px 0 var(--border-subtle);
+  }
+}

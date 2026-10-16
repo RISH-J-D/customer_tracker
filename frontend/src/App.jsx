@@ -222,14 +222,12 @@ export default function App() {
   };
 
   // Leads move on to Clients (Clients then convert to Accounts)
-  const handleMoveLeadToClient = async (clientId) => {
-    try {
-      await api.updateClient(clientId, { is_lead: false, status: 'Prospect' });
-      setClients(prev => prev.map(c => c.id === clientId ? { ...c, is_lead: false, status: 'Prospect' } : c));
-      refreshStatsAndFollowups();
-    } catch (err) {
-      alert('Error moving lead to contacts: ' + err.message);
-    }
+  // Leads arrive as companies; the representative details are entered when they move to Contacts
+  const handleMoveLeadToClient = async (clientId, representative) => {
+    const changes = { ...representative, is_lead: false, status: 'Prospect' };
+    await api.updateClient(clientId, changes);
+    setClients(prev => prev.map(c => c.id === clientId ? { ...c, ...changes } : c));
+    refreshStatsAndFollowups();
   };
 
   // "Followed up": saves today's note, closes pending follow-ups, schedules the next one

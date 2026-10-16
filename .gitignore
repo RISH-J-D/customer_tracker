@@ -51,3 +51,7 @@ logs/
 .vscode/*
 !.vscode/extensions.json
 *.sw?
+
+# Client contact data - loaded straight into the database, never committed
+Client_Details.xlsx
+backend/app/data/
