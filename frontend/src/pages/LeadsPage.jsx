@@ -85,6 +85,7 @@ export default function LeadsPage({
       onEditNote={onEditNote}
       onDeleteNote={onDeleteNote}
       onUpdateNotes={onUpdateNotes}
+      compact
     />
   );
 
@@ -125,7 +126,7 @@ export default function LeadsPage({
             {leadList.length}
           </div>
           <div style={{ fontSize: '0.72rem', color: 'var(--text-muted)', marginTop: '0.15rem' }}>
-            Move a lead to Clients once you start working it
+            Move a lead to Contacts once you start working it
           </div>
         </div>
       </div>
@@ -185,10 +186,10 @@ export default function LeadsPage({
           <table className="custom-table">
             <thead>
               <tr>
-                <th style={{ width: '22%' }}>Lead & Fabricator / Client</th>
-                <th style={{ width: '16%' }}>Email</th>
-                <th style={{ width: '12%' }}>Mobile</th>
-                <th style={{ width: '40%' }}>Notes</th>
+                <th style={{ width: '24%' }}>Lead & Company</th>
+                <th style={{ width: '20%' }}>Email</th>
+                <th style={{ width: '14%' }}>Mobile</th>
+                <th style={{ width: '32%' }}>Latest note</th>
                 <th style={{ width: '1%' }}>Actions</th>
               </tr>
             </thead>
@@ -250,10 +251,10 @@ export default function LeadsPage({
                         <button
                           className="btn btn-primary btn-sm row-action-wide"
                           onClick={() => moveToClient(c)}
-                          title="Move this lead to the Clients tab"
+                          title="Move this lead to the Contacts tab"
                         >
                           <Users size={13} />
-                          <span>To Client</span>
+                          <span>To Contact</span>
                         </button>
                         {onToggleNegative && (
                           <button
@@ -338,11 +339,11 @@ export default function LeadsPage({
                 <button
                   className="btn btn-primary btn-sm"
                   onClick={() => moveToClient(c)}
-                  title="Move this lead to the Clients tab"
+                  title="Move this lead to the Contacts tab"
                   style={{ flex: 1 }}
                 >
                   <Users size={12} />
-                  <span>To Client</span>
+                  <span>To Contact</span>
                 </button>
                 {onToggleNegative && (
                   <button

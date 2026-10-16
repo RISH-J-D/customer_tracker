@@ -48,7 +48,7 @@ export default function FollowUpModal({
   const handleSubmit = async (e) => {
     e.preventDefault();
     if (!formData.client_id) {
-      alert('Please select a client');
+      alert('Please select a contact');
       return;
     }
     if (!formData.title.trim()) {
@@ -110,14 +110,14 @@ export default function FollowUpModal({
         <form onSubmit={handleSubmit}>
           <div className="modal-body">
             <div className="form-group">
-              <label className="form-label">Client *</label>
+              <label className="form-label">Contact *</label>
               <select
                 className="form-select"
                 required
                 value={formData.client_id}
                 onChange={(e) => setFormData({ ...formData, client_id: e.target.value })}
               >
-                <option value="">Select a client to follow up...</option>
+                <option value="">Select a contact to follow up...</option>
                 {clients.map((c) => (
                   <option key={c.id} value={c.id}>
                     {c.name} {c.company ? `(${c.company})` : ''} {c.is_lead ? '★ LEAD' : ''}
@@ -152,7 +152,7 @@ export default function FollowUpModal({
                       loc = 'Google Meet';
                       link = 'https://meet.google.com/new';
                     } else if (t === 'In-Person') {
-                      loc = 'Client Office / Coffee';
+                      loc = 'Contact Office / Coffee';
                       link = '';
                     } else if (t === 'Call') {
                       loc = 'Phone Call';

@@ -50,6 +50,7 @@ class FollowUp(Base):
     location = Column(String(200), nullable=True)
     meeting_link = Column(String(255), nullable=True)
     reminder_sent = Column(Boolean, default=False)
+    completed_at = Column(DateTime, nullable=True)  # when the follow-up was actually done
     created_at = Column(DateTime, default=datetime.utcnow)
     updated_at = Column(DateTime, default=datetime.utcnow, onupdate=datetime.utcnow)
 

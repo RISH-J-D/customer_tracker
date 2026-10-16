@@ -32,6 +32,7 @@ class FollowUpResponse(FollowUpBase):
     id: int
     client_id: int
     reminder_sent: bool
+    completed_at: Optional[datetime] = None
     created_at: datetime
     updated_at: datetime
     model_config = ConfigDict(from_attributes=True)

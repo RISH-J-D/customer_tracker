@@ -111,9 +111,9 @@ export default function DashboardPage({
           </div>
         </div>
 
-        <div className="card stat-card" {...goTo('clients')} title="Open Clients">
+        <div className="card stat-card" {...goTo('clients')} title="Open Contacts">
           <div className="stat-header">
-            <span className="stat-label">Clients</span>
+            <span className="stat-label">Contacts</span>
             <div className="stat-icon">
               <Users size={15} />
             </div>
@@ -170,7 +170,7 @@ export default function DashboardPage({
             <div>
               <h3 style={{ fontSize: '0.95rem', fontWeight: 700, color: 'var(--text-primary)' }}>Today's Follow-up Schedule</h3>
               <p style={{ fontSize: '0.75rem', color: 'var(--text-muted)' }}>
-                Client meetups and calls scheduled for today
+                Contact meetups and calls scheduled for today
               </p>
             </div>
             <button 
@@ -229,7 +229,7 @@ export default function DashboardPage({
                     </div>
 
                     <div style={{ fontSize: '0.78rem', color: 'var(--text-muted)', marginBottom: '0.5rem' }}>
-                      Client: <span style={{ color: 'var(--text-primary)', fontWeight: 500 }}>{f.client_name}</span>
+                      Contact: <span style={{ color: 'var(--text-primary)', fontWeight: 500 }}>{f.client_name}</span>
                       {f.client_company ? ` (${f.client_company})` : ''}
                     </div>
 
@@ -279,12 +279,12 @@ export default function DashboardPage({
             <div>
               <h3 style={{ fontSize: '0.95rem', fontWeight: 700, color: 'var(--text-primary)' }}>Upcoming Meetups & Demos</h3>
               <p style={{ fontSize: '0.75rem', color: 'var(--text-muted)' }}>
-                Scheduled client meetings for the coming days
+                Scheduled contact meetings for the coming days
               </p>
             </div>
             <button 
               className="btn btn-secondary btn-sm"
-              onClick={() => setActiveTab('followups')}
+              onClick={() => setActiveTab('today')}
             >
               View All
             </button>
@@ -326,7 +326,7 @@ export default function DashboardPage({
                         {f.title}
                       </div>
                       <div style={{ fontSize: '0.75rem', color: 'var(--text-muted)' }}>
-                        Client: {f.client_name} {f.client_company ? `(${f.client_company})` : ''}
+                        Contact: {f.client_name} {f.client_company ? `(${f.client_company})` : ''}
                       </div>
                     </div>
 

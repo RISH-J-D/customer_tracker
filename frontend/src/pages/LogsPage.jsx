@@ -290,13 +290,13 @@ export default function LogsPage() {
                 style={{ fontSize: '0.8rem', height: '36px', padding: '0.25rem 0.65rem' }}
               >
                 <option value="all">All Actions</option>
-                <option value="CREATE_CLIENT">Client Created</option>
-                <option value="UPDATE_CLIENT">Client Updated</option>
+                <option value="CREATE_CLIENT">Contact Created</option>
+                <option value="UPDATE_CLIENT">Contact Updated</option>
                 <option value="CONVERT_LEAD">Lead Converted</option>
                 <option value="SCHEDULE_FOLLOWUP">Meetup Scheduled</option>
                 <option value="COMPLETE_FOLLOWUP">Follow-up Completed</option>
                 <option value="IMPORT_EXCEL">Excel Imported</option>
-                <option value="DELETE_CLIENT">Client Deleted</option>
+                <option value="DELETE_CLIENT">Contact Deleted</option>
                 <option value="LOGIN">User Login</option>
               </select>
             </div>
@@ -319,7 +319,7 @@ export default function LogsPage() {
           <p style={{ fontSize: '0.8rem', color: 'var(--text-muted)' }}>
             {search || selectedUser !== 'all' || selectedAction !== 'all'
               ? 'Try resetting the filters or search query.'
-              : 'All updates to clients, leads, and follow-ups will appear here automatically.'}
+              : 'All updates to contacts, leads, and follow-ups will appear here automatically.'}
           </p>
         </div>
       ) : (

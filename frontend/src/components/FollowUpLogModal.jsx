@@ -1,6 +1,7 @@
 import React, { useState } from 'react';
 import { X, CheckCircle2, CalendarDays } from 'lucide-react';
 import { lastConversation, relativeDayLabel, sectionLabelStyle } from './calendarUtils';
+import { numberedHistory, ordinal, splitFollowupNotes, longDayLabel } from './followupHistory';
 
 const QUICK_PICKS = [
   { id: '1', label: 'Tomorrow', days: 1 },
@@ -30,6 +31,8 @@ export default function FollowUpLogModal({ client, onClose, onSave }) {
   const [saving, setSaving] = useState(false);
 
   const last = lastConversation(client);
+  const history = numberedHistory(client.followups).reverse().slice(0, 3);
+  const nextNumber = (history[0]?.number || 0) + 1;
   const quick = QUICK_PICKS.find(q => q.id === pick);
   const nextDate = pick === 'none' ? null : quick ? toInputDate(addDays(quick.days)) : customDate;
 
@@ -56,7 +59,7 @@ export default function FollowUpLogModal({ client, onClose, onSave }) {
               Followed up with {client.company || client.name}
             </h3>
             <p style={{ fontSize: '0.75rem', color: 'var(--text-muted)' }}>
-              Save what you talked about and pick the next follow-up date
+              This is your <strong style={{ color: 'var(--primary)' }}>{ordinal(nextNumber)} follow-up</strong> — save what you talked about and pick the next date
             </p>
           </div>
           <button className="btn btn-secondary btn-icon" onClick={onClose} style={{ width: '28px', height: '28px', flexShrink: 0 }}>
@@ -65,7 +68,30 @@ export default function FollowUpLogModal({ client, onClose, onSave }) {
         </div>
 
         <div className="modal-body" style={{ display: 'flex', flexDirection: 'column', gap: '1rem' }}>
-          {last && (
+          {history.length > 0 ? (
+            <div>
+              <div style={{ ...sectionLabelStyle, marginBottom: '0.35rem' }}>Previous follow-ups</div>
+              <ol className="fu-list">
+                {history.map(f => {
+                  const { plan, outcome } = splitFollowupNotes(f.notes);
+                  const text = outcome || plan;
+                  return (
+                    <li key={f.id} className="fu-item" style={{ padding: '0.5rem 0.7rem', gap: '0.6rem' }}>
+                      <div className="fu-num" style={{ minWidth: '28px', height: '28px', fontSize: '0.7rem' }}>#{f.number}</div>
+                      <div className="fu-body">
+                        <div className="fu-meta" style={{ marginTop: 0 }}>
+                          <strong style={{ color: 'var(--text-primary)' }}>{longDayLabel(f.doneAt)}</strong>
+                          <span>·</span>
+                          <span>{relativeDayLabel(f.doneAt)}</span>
+                        </div>
+                        {text && <p className="fu-note" style={{ marginTop: '0.2rem', fontSize: '0.76rem' }}>{text}</p>}
+                      </div>
+                    </li>
+                  );
+                })}
+              </ol>
+            </div>
+          ) : last && (
             <div style={{ backgroundColor: 'var(--bg-subtle)', border: '1px solid var(--border-subtle)', borderRadius: 'var(--radius-md)', padding: '0.6rem 0.75rem' }}>
               <div style={{ ...sectionLabelStyle, marginBottom: '0.3rem' }}>
                 Last conversation — {relativeDayLabel(last.date)}

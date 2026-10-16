@@ -56,7 +56,7 @@ export default function TodayReminderModal({
             <div style={{ textAlign: 'center', padding: '2.5rem 1rem', color: 'var(--text-muted)' }}>
               <CalendarCheck size={36} style={{ margin: '0 auto 0.75rem auto', opacity: 0.3 }} />
               <h4 style={{ color: 'var(--text-primary)', marginBottom: '0.2rem', fontSize: '0.9rem' }}>No Follow-ups Due Today</h4>
-              <p style={{ fontSize: '0.785rem' }}>All client follow-ups for today are up to date.</p>
+              <p style={{ fontSize: '0.785rem' }}>All contact follow-ups for today are up to date.</p>
             </div>
           ) : (
             <div style={{ display: 'flex', flexDirection: 'column', gap: '0.75rem' }}>
@@ -121,7 +121,7 @@ export default function TodayReminderModal({
                       marginBottom: '0.6rem'
                     }}>
                       <div style={{ fontSize: '0.785rem' }}>
-                        <span style={{ color: 'var(--text-muted)' }}>Client: </span>
+                        <span style={{ color: 'var(--text-muted)' }}>Contact: </span>
                         <strong style={{ color: 'var(--text-primary)' }}>{f.client_name}</strong>
                         {f.client_company && (
                           <span style={{ color: 'var(--text-muted)' }}> • {f.client_company}</span>
@@ -135,7 +135,7 @@ export default function TodayReminderModal({
                         }}
                         style={{ fontSize: '0.68rem', padding: '0.15rem 0.4rem' }}
                       >
-                        View Client <ArrowRight size={10} />
+                        View Contact <ArrowRight size={10} />
                       </button>
                     </div>
 

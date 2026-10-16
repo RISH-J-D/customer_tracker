@@ -113,6 +113,7 @@ export default function ClientsPage({
       onEditNote={onEditNote}
       onDeleteNote={onDeleteNote}
       onUpdateNotes={onUpdateNotes}
+      compact
     />
   );
 
@@ -127,7 +128,7 @@ export default function ClientsPage({
             <button
               className="btn btn-secondary"
               onClick={onOpenImportModal}
-              title="Import clients from Excel (.xlsx) or CSV"
+              title="Import contacts from Excel (.xlsx) or CSV"
             >
               <UploadCloud size={14} />
               <span>Import Excel</span>
@@ -138,7 +139,7 @@ export default function ClientsPage({
 
           <button className="btn btn-primary" onClick={onOpenNewClient}>
             <Plus size={15} />
-            <span>Add Client</span>
+            <span>Add Contact</span>
           </button>
         </div>
       </div>
@@ -151,7 +152,7 @@ export default function ClientsPage({
               className={`segmented-btn ${activeFilter === 'all' ? 'active' : ''}`}
               onClick={() => setActiveFilter('all')}
             >
-              All Clients ({clientList.length})
+              All Contacts ({clientList.length})
             </button>
             <button
               className={`segmented-btn ${activeFilter === 'prospects' ? 'active' : ''}`}
@@ -173,7 +174,7 @@ export default function ClientsPage({
             <Search size={14} color="var(--text-muted)" style={{ position: 'absolute', left: '9px', top: '9px' }} />
             <input
               type="text"
-              placeholder="Search clients, contacts, notes..."
+              placeholder="Search contacts, companies, notes..."
               className="form-input"
               style={{ paddingLeft: '2rem', height: '32px', fontSize: '0.785rem' }}
               value={searchQuery}
@@ -188,12 +189,12 @@ export default function ClientsPage({
         <div className="card" style={{ textAlign: 'center', padding: '3rem 1.5rem', color: 'var(--text-muted)' }}>
           <Users size={36} style={{ margin: '0 auto 0.75rem auto', opacity: 0.3 }} />
           <h3 style={{ fontSize: '1rem', fontWeight: 600, color: 'var(--text-primary)', marginBottom: '0.25rem' }}>
-            No Clients Found
+            No Contacts Found
           </h3>
           <p style={{ fontSize: '0.8rem', maxWidth: '380px', margin: '0 auto 1.25rem auto' }}>
             {clientList.length === 0
-              ? 'Add a client or import an Excel spreadsheet to get started.'
-              : 'No clients match the current search or filters.'}
+              ? 'Add a contact or import an Excel spreadsheet to get started.'
+              : 'No contacts match the current search or filters.'}
           </p>
           {clientList.length === 0 && (
             <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'center', gap: '0.65rem' }}>
@@ -205,7 +206,7 @@ export default function ClientsPage({
               )}
               <button className="btn btn-primary" onClick={onOpenNewClient}>
                 <Plus size={14} />
-                <span>Add Client</span>
+                <span>Add Contact</span>
               </button>
             </div>
           )}
@@ -213,54 +214,39 @@ export default function ClientsPage({
       ) : viewMode === 'table' ? (
         /* TABLE LIST VIEW */
         <div className="table-responsive table-mobile-cards">
-          <table className="custom-table">
+          <table className="custom-table table-contacts">
             <thead>
               <tr>
-                <th style={{ width: '18%' }}>Company</th>
-                <th style={{ width: '15%' }}>Company Contact</th>
-                <th style={{ width: '17%' }}>Representative</th>
+                <th style={{ width: '25%' }}>Company</th>
+                <th style={{ width: '25%' }}>Representative</th>
                 <th style={{ width: '17%' }}>Follow-up</th>
-                <th style={{ width: '26%' }}>Notes</th>
+                <th style={{ width: '32%' }}>Latest note</th>
                 <th style={{ width: '1%' }}>Actions</th>
               </tr>
             </thead>
             <tbody>
               {paginatedClients.map((c) => {
                 const companyName = c.company || c.name;
-                const initials = companyName ? companyName.split(' ').map(n => n[0]).join('').slice(0, 2).toUpperCase() : 'CL';
+                const initials = companyName ? companyName.split(' ').map(n => n[0]).join('').slice(0, 2).toUpperCase() : 'CO';
                 return (
                   <tr key={c.id} className={c.prospect_marked_at ? 'row-prospect' : undefined}>
-                    {/* Company & Address */}
+                    {/* Company, address and company contact details */}
                     <td className="td-name">
-                      <div style={{ display: 'flex', alignItems: 'flex-start', gap: '0.65rem' }}>
-                        <div style={{
-                          width: '32px',
-                          height: '32px',
-                          borderRadius: 'var(--radius-md)',
-                          backgroundColor: 'var(--bg-subtle)',
-                          color: 'var(--text-secondary)',
-                          border: '1px solid var(--border-subtle)',
-                          display: 'flex',
-                          alignItems: 'center',
-                          justifyContent: 'center',
-                          fontWeight: 600,
-                          fontSize: '0.785rem',
-                          flexShrink: 0
-                        }}>
-                          {initials}
-                        </div>
-                        <div>
-                          <div style={{ fontWeight: 600, color: 'var(--text-primary)', fontSize: '0.85rem', display: 'flex', alignItems: 'center', gap: '0.3rem' }}>
+                      <div className="cell-company">
+                        <div className="cell-avatar">{initials}</div>
+                        <div style={{ minWidth: 0 }}>
+                          <div className="cell-title">
                             <span>{companyName}</span>
                             {c.prospect_marked_at && <Star size={12} fill="var(--prospect-row-accent)" color="var(--prospect-row-accent)" />}
                           </div>
                           <AddressLine client={c} />
+                          {(c.company_email || c.company_phone) && (
+                            <div style={{ marginTop: '0.35rem' }}>
+                              <ContactBlock email={c.company_email} phone={c.company_phone} emailLabel="company email" phoneLabel="company number" />
+                            </div>
+                          )}
                         </div>
                       </div>
-                    </td>
-
-                    <td className="td-email" data-label="Company">
-                      <ContactBlock email={c.company_email} phone={c.company_phone} emailLabel="company email" phoneLabel="company number" />
                     </td>
 
                     <td className="td-rep" data-label="Representative">
@@ -280,7 +266,7 @@ export default function ClientsPage({
                         <button
                           className="btn btn-lead btn-sm row-action-wide"
                           onClick={() => convertToAccount(c)}
-                          title="Convert this client to an account (moves to the Accounts tab)"
+                          title="Convert this contact to an account (moves to the Accounts tab)"
                         >
                           <Handshake size={13} />
                           <span>To Account</span>
@@ -290,23 +276,23 @@ export default function ClientsPage({
                           className={`btn btn-secondary btn-sm row-action-btn btn-prospect-toggle${c.prospect_marked_at ? ' is-prospect' : ''}`}
                           {...prospectButtonProps(c)}
                         >
-                          <Star size={15} />
+                          <Star size={14} />
                         </button>
 
                         <button
                           className="btn btn-secondary btn-sm row-action-btn"
                           onClick={() => onEditClient(c)}
-                          title="Edit client"
+                          title="Edit contact"
                         >
-                          <Edit3 size={15} />
+                          <Edit3 size={14} />
                         </button>
 
                         <button
                           className="btn btn-danger btn-sm row-action-btn"
                           onClick={() => onDeleteClient(c.id)}
-                          title="Delete client"
+                          title="Delete contact"
                         >
-                          <Trash2 size={15} />
+                          <Trash2 size={14} />
                         </button>
                       </div>
                     </td>
@@ -360,10 +346,10 @@ export default function ClientsPage({
                 >
                   <Star size={12} />
                 </button>
-                <button className="btn btn-secondary btn-sm" onClick={() => onEditClient(c)} title="Edit client">
+                <button className="btn btn-secondary btn-sm" onClick={() => onEditClient(c)} title="Edit contact">
                   <Edit3 size={12} />
                 </button>
-                <button className="btn btn-danger btn-sm" onClick={() => onDeleteClient(c.id)} title="Delete client">
+                <button className="btn btn-danger btn-sm" onClick={() => onDeleteClient(c.id)} title="Delete contact">
                   <Trash2 size={12} />
                 </button>
               </div>
@@ -376,7 +362,7 @@ export default function ClientsPage({
         page={page}
         pageSize={pageSize}
         total={filteredClients.length}
-        noun="clients"
+        noun="contacts"
         onPageChange={setPage}
         onPageSizeChange={(size) => { setPageSize(size); setPage(1); }}
       />

@@ -3,7 +3,7 @@ import {
   LayoutDashboard, 
   Users, 
   CalendarCheck, 
-  Calendar, 
+  History,
   FileSpreadsheet, 
   Target, 
   TrendingUp,
@@ -36,7 +36,7 @@ export default function Sidebar({
     },
     { 
       id: 'clients', 
-      label: 'Clients', 
+      label: 'Contacts', 
       icon: Users,
       badge: stats ? `${stats.total_clients || 0}` : null
     },
@@ -53,7 +53,7 @@ export default function Sidebar({
       badge: stats?.today_followups_count > 0 ? `${stats.today_followups_count}` : null,
       badgeColor: 'alert'
     },
-    { id: 'followups', label: 'Meetups & Schedule', icon: Calendar },
+    { id: 'followups', label: 'Follow-up History', icon: History },
     { id: 'logs', label: 'Activity Logs', icon: ScrollText },
     { id: 'export', label: 'Export Reports', icon: FileSpreadsheet },
   ];

@@ -4,6 +4,7 @@ import {
   parseServerUtc,
   groupByDay,
   formatTime,
+  relativeDayLabel,
   linkButtonStyle,
   sectionLabelStyle
 } from './calendarUtils';
@@ -79,10 +80,12 @@ function NoteEditor({ initialValue = '', placeholder, onSave, onCancel }) {
   );
 }
 
-export default function NotesCell({ client, onAddNote, onEditNote, onDeleteNote, onUpdateNotes }) {
+// `compact` shows only the latest note until "All notes" is opened
+export default function NotesCell({ client, onAddNote, onEditNote, onDeleteNote, onUpdateNotes, compact = false }) {
   const [isAdding, setIsAdding] = useState(false);
   const [editingId, setEditingId] = useState(null);
   const [showAll, setShowAll] = useState(false);
+  const [expanded, setExpanded] = useState(false);
 
   // Dated note entries, plus the client's original free-text note (dated when the client was added).
   const entries = (client.note_entries || []).map(n => ({ ...n, date: parseServerUtc(n.created_at) }));
@@ -168,6 +171,52 @@ export default function NotesCell({ client, onAddNote, onEditNote, onDeleteNote,
     );
   };
 
+  const addEditor = isAdding && (
+    <NoteEditor
+      placeholder="Type a note... (Ctrl+Enter to save)"
+      onSave={async (content) => {
+        await onAddNote(client.id, content);
+        setIsAdding(false);
+      }}
+      onCancel={() => setIsAdding(false)}
+    />
+  );
+
+  if (compact && !expanded) {
+    const latest = entries[0];
+    return (
+      <div className="note-cell">
+        {addEditor}
+        {latest ? (
+          <>
+            <div className="note-cell-meta">
+              {latest.date ? relativeDayLabel(latest.date) : 'Note'}
+              {latest.author && ` · ${latest.author}`}
+            </div>
+            <div className="note-cell-text" title={latest.content}>{latest.content}</div>
+          </>
+        ) : !isAdding && (
+          <span className="note-cell-empty">No notes yet</span>
+        )}
+        {!isAdding && (
+          <div className="note-cell-links">
+            {canAdd && (
+              <button type="button" style={linkButtonStyle} onClick={() => setIsAdding(true)} title="Add a dated note">
+                <Plus size={11} />
+                <span>Add note</span>
+              </button>
+            )}
+            {entries.length > 0 && (
+              <button type="button" style={{ ...linkButtonStyle, color: 'var(--text-muted)' }} onClick={() => setExpanded(true)}>
+                {entries.length > 1 ? `All ${entries.length} notes` : 'Edit'}
+              </button>
+            )}
+          </div>
+        )}
+      </div>
+    );
+  }
+
   return (
     <div style={{ display: 'flex', flexDirection: 'column', gap: '0.4rem', minWidth: '160px' }}>
       <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', gap: '0.35rem' }}>
@@ -180,16 +229,7 @@ export default function NotesCell({ client, onAddNote, onEditNote, onDeleteNote,
         )}
       </div>
 
-      {isAdding && (
-        <NoteEditor
-          placeholder="Type a note... (Ctrl+Enter to save)"
-          onSave={async (content) => {
-            await onAddNote(client.id, content);
-            setIsAdding(false);
-          }}
-          onCancel={() => setIsAdding(false)}
-        />
-      )}
+      {addEditor}
 
       {entries.length === 0 && !isAdding && (
         <span style={{ fontSize: '0.7rem', color: 'var(--text-muted)', fontStyle: 'italic' }}>No notes recorded</span>
@@ -204,6 +244,12 @@ export default function NotesCell({ client, onAddNote, onEditNote, onDeleteNote,
       {days.length > VISIBLE_DAYS && (
         <button type="button" style={linkButtonStyle} onClick={() => setShowAll(v => !v)}>
           {showAll ? 'Show less' : `+${days.length - VISIBLE_DAYS} more days`}
+        </button>
+      )}
+
+      {compact && (
+        <button type="button" style={{ ...linkButtonStyle, color: 'var(--text-muted)' }} onClick={() => { setExpanded(false); setShowAll(false); }}>
+          Collapse
         </button>
       )}
     </div>

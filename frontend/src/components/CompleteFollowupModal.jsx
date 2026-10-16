@@ -106,10 +106,10 @@ export default function CompleteFollowupModal({
                 <ThumbsUp size={16} color={isPositive ? 'var(--warning-strong)' : 'var(--text-placeholder)'} />
                 <div>
                   <div style={{ fontSize: '0.815rem', fontWeight: 600, color: isPositive ? 'var(--positive-color)' : 'var(--text-primary)' }}>
-                    Positive Approach from Client
+                    Positive Approach from Contact
                   </div>
                   <div style={{ fontSize: '0.72rem', color: 'var(--text-muted)' }}>
-                    Client expressed clear interest, requested pricing, or confirmed next steps
+                    Contact expressed clear interest, requested pricing, or confirmed next steps
                   </div>
                 </div>
               </div>
@@ -136,7 +136,7 @@ export default function CompleteFollowupModal({
                   <Target size={16} color="var(--lead-action)" />
                   <div>
                     <div style={{ fontSize: '0.815rem', fontWeight: 600, color: 'var(--lead-color)' }}>
-                      Convert Client to Qualified Lead?
+                      Convert Contact to Qualified Lead?
                     </div>
                     <div style={{ fontSize: '0.72rem', color: 'var(--lead-color)' }}>
                       Promote {followup.client_name} to active high-priority Lead

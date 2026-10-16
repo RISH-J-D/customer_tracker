@@ -43,10 +43,10 @@ export default function ExportModal({
             </div>
             <div>
               <h3 style={{ fontSize: '1.05rem', fontWeight: 700, color: 'var(--text-primary)' }}>
-                Export Client Reports
+                Export Contact Reports
               </h3>
               <p style={{ fontSize: '0.75rem', color: 'var(--text-muted)' }}>
-                Download client dataset, pipeline leads, and meetup logs in standard formats
+                Download contact dataset, pipeline leads, and meetup logs in standard formats
               </p>
             </div>
           </div>

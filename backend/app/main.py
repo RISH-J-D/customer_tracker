@@ -30,6 +30,13 @@ def migrate_client_columns():
             with engine.begin() as conn:
                 conn.execute(text(f"ALTER TABLE clients ADD COLUMN {column} {sql_type}"))
 
+    followup_columns = {c["name"] for c in inspect(engine).get_columns("followups")}
+    if "completed_at" not in followup_columns:
+        with engine.begin() as conn:
+            conn.execute(text("ALTER TABLE followups ADD COLUMN completed_at TIMESTAMP"))
+            # Best available record of when older follow-ups were completed
+            conn.execute(text("UPDATE followups SET completed_at = updated_at WHERE status = 'Completed'"))
+
 IMPORT_NOTE_FIELD = re.compile(r"^(Position|Location|Original CRM Status):")
 
 def strip_import_generated_notes():

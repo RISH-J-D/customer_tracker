@@ -111,7 +111,7 @@ export default function ClientModal({
       }, client?.id);
       onClose();
     } catch (err) {
-      alert('Error saving client: ' + err.message);
+      alert('Error saving contact: ' + err.message);
     } finally {
       setSubmitting(false);
     }
@@ -139,7 +139,7 @@ export default function ClientModal({
             </div>
             <div>
               <h3 style={{ fontSize: '1.05rem', fontWeight: 700, color: 'var(--text-primary)' }}>
-                {client ? 'Edit Client Profile' : 'Add New Client'}
+                {client ? 'Edit Contact' : 'Add New Contact'}
               </h3>
               <p style={{ fontSize: '0.75rem', color: 'var(--text-muted)' }}>
                 Track contacts, meetups, and pipeline conversion
@@ -364,7 +364,7 @@ export default function ClientModal({
               Cancel
             </button>
             <button type="submit" className="btn btn-primary" disabled={submitting}>
-              {submitting ? 'Saving...' : client ? 'Update Client' : 'Add Client'}
+              {submitting ? 'Saving...' : client ? 'Update Contact' : 'Add Contact'}
             </button>
           </div>
         </form>

@@ -5,13 +5,20 @@ import { splitPhoneNumbers } from './phoneUtils';
 
 const linkStyle = { color: 'inherit', textDecoration: 'none', display: 'flex', alignItems: 'flex-start', gap: '0.3rem', minWidth: 0 };
 
+// Long addresses may wrap only after the "@", never mid-word
+function EmailText({ email }) {
+  const at = email.indexOf('@');
+  if (at < 0) return <span className="contact-text">{email}</span>;
+  return <span className="contact-text">{email.slice(0, at + 1)}<wbr />{email.slice(at + 1)}</span>;
+}
+
 export function EmailLink({ email, label = 'email' }) {
   if (!email) return null;
   return (
     <span className="copyable">
       <a href={`mailto:${email}`} style={linkStyle} title={email}>
         <Mail size={11} color="var(--text-placeholder)" style={{ flexShrink: 0, marginTop: '0.15rem' }} />
-        <span style={{ wordBreak: 'break-all', minWidth: 0 }}>{email}</span>
+        <EmailText email={email} />
       </a>
       <CopyButton text={email} label={label} />
     </span>
@@ -26,7 +33,7 @@ export function PhoneLinks({ phone, label = 'phone number' }) {
         <span key={i} className="copyable">
           <a href={`tel:${num}`} style={linkStyle}>
             <Phone size={11} color="var(--text-placeholder)" style={{ marginTop: '0.15rem', flexShrink: 0 }} />
-            <span>{num}</span>
+            <span style={{ whiteSpace: 'nowrap' }}>{num}</span>
           </a>
           <CopyButton text={num} label={label} />
         </span>

@@ -1,11 +1,9 @@
 import React from 'react';
-import { CheckCircle2 } from 'lucide-react';
-import { parseServerUtc, relativeDayLabel, sectionLabelStyle, lastConversation } from './calendarUtils';
-import { CalendarTile } from './CalendarDay';
+import { CheckCircle2, CalendarDays } from 'lucide-react';
+import { parseServerUtc, relativeDayLabel } from './calendarUtils';
+import { numberedHistory, ordinal, startOfDay } from './followupHistory';
 
-const startOfDay = (d) => new Date(d.getFullYear(), d.getMonth(), d.getDate());
-
-// Next pending follow-up, the last conversation's notes, and a "Followed up" button
+// Next pending follow-up, how many have been done, and a "Followed up" button
 export default function NextFollowUpCell({ client, onFollowedUp }) {
   const next = (client.followups || [])
     .filter(f => f.status === 'Pending')
@@ -13,47 +11,33 @@ export default function NextFollowUpCell({ client, onFollowedUp }) {
     .filter(f => f.date)
     .sort((a, b) => a.date - b.date)[0];
 
-  const today = startOfDay(new Date());
-  const tone = !next ? null
-    : startOfDay(next.date) < today ? 'overdue'
-    : startOfDay(next.date).getTime() === today.getTime() ? 'today'
-    : 'primary';
+  const today = startOfDay(new Date()).getTime();
+  const tone = !next ? 'none'
+    : startOfDay(next.date).getTime() < today ? 'overdue'
+    : startOfDay(next.date).getTime() === today ? 'today'
+    : 'upcoming';
 
-  const last = lastConversation(client);
+  const history = numberedHistory(client.followups);
+  const lastDone = history[history.length - 1];
 
   return (
-    <div style={{ display: 'flex', flexDirection: 'column', gap: '0.45rem', minWidth: '170px' }}>
-      <div>
-        <div style={sectionLabelStyle}>Next follow-up</div>
-        {next ? (
-          <div style={{ display: 'flex', alignItems: 'center', gap: '0.45rem', marginTop: '0.25rem' }}>
-            <CalendarTile date={next.date} tone={tone} />
-            <div style={{ fontSize: '0.78rem', fontWeight: 600, color: tone === 'primary' ? 'var(--text-primary)' : tone === 'today' ? 'var(--danger-btn)' : 'var(--warning-strong)' }}>
-              {relativeDayLabel(next.date)}
-              {tone === 'overdue' && <span className="followup-overdue-tag">Overdue</span>}
-            </div>
-          </div>
-        ) : (
-          <div style={{ fontSize: '0.72rem', color: 'var(--text-muted)', fontStyle: 'italic', marginTop: '0.15rem' }}>Not scheduled</div>
-        )}
+    <div className="fu-cell">
+      <div className={`fu-cell-next is-${tone}`}>
+        <CalendarDays size={13} />
+        <span>{next ? relativeDayLabel(next.date) : 'Not scheduled'}</span>
+        {tone === 'overdue' && <span className="followup-overdue-tag">Overdue</span>}
       </div>
-
-      {last && (
-        <div className="followup-last-talk">
-          <div style={sectionLabelStyle}>Last talked — {relativeDayLabel(last.date)}</div>
-          {last.items.map(n => (
-            <div key={n.id} className="followup-last-talk-text" title={n.content}>{n.content}</div>
-          ))}
-        </div>
-      )}
-
+      <div className="fu-cell-sub">
+        {lastDone
+          ? `${history.length} done · last ${relativeDayLabel(lastDone.doneAt).toLowerCase()}`
+          : 'No follow-ups yet'}
+      </div>
       {onFollowedUp && (
         <button
           type="button"
-          className="btn btn-primary btn-sm"
-          style={{ alignSelf: 'flex-start' }}
+          className="btn btn-sm btn-soft"
           onClick={() => onFollowedUp(client)}
-          title="Log today's conversation and pick the next follow-up date"
+          title={`Log your ${ordinal(history.length + 1)} follow-up and pick the next date`}
         >
           <CheckCircle2 size={13} />
           <span>Followed up</span>

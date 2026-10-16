@@ -437,14 +437,25 @@ def log_followup(
     if note:
         db.add(ClientNote(client_id=client.id, content=note, author=x_user_name))
 
-    completed = 0
-    for f in client.followups:
-        if f.status == "Pending":
-            f.status = "Completed"
-            f.updated_at = now
-            if note:
-                f.notes = f"{f.notes or ''}\n[Completed Outcome]: {note}".strip()
-            completed += 1
+    # Each "Followed up" is one entry in the follow-up history: the earliest pending
+    # follow-up is marked done (or a new entry is recorded when nothing was scheduled),
+    # and any other pending ones are superseded by the next date picked here
+    pending = sorted((f for f in client.followups if f.status == "Pending"), key=lambda f: f.scheduled_at)
+    if pending:
+        done = pending[0]
+        if note:
+            done.notes = f"{done.notes or ''}\n[Completed Outcome]: {note}".strip()
+    else:
+        done = FollowUp(client_id=client.id, title=f"Follow-up with {client.name}", type="Call",
+                        scheduled_at=now, priority="Medium", notes=note or None)
+        db.add(done)
+    done.status = "Completed"
+    done.completed_at = now
+    done.updated_at = now
+    for f in pending[1:]:
+        f.status = "Rescheduled"
+        f.updated_at = now
+    completed = 1
 
     next_at = log_in.next_followup_at
     if next_at is not None and next_at.tzinfo is not None:

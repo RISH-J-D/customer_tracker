@@ -180,6 +180,7 @@ def complete_followup(
         raise HTTPException(status_code=404, detail="Follow-up not found")
 
     followup.status = "Completed"
+    followup.completed_at = datetime.utcnow()
     followup.is_positive_result = is_positive
     if notes:
         existing = followup.notes or ""

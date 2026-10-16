@@ -39,7 +39,7 @@ export default function AccountsPage({ clients, onUndoConversion }) {
   const paginated = filtered.slice((page - 1) * pageSize, page * pageSize);
 
   const undo = (c) => {
-    const destination = c.is_lead ? 'Leads' : 'Clients';
+    const destination = c.is_lead ? 'Leads' : 'Contacts';
     if (window.confirm(`Undo the account conversion for ${c.company || c.name}? It will move back to ${destination}.`)) {
       onUndoConversion(c.id);
     }
@@ -72,7 +72,7 @@ export default function AccountsPage({ clients, onUndoConversion }) {
           </h3>
           <p style={{ fontSize: '0.8rem', maxWidth: '420px', margin: '0 auto' }}>
             {accounts.length === 0
-              ? <>Click <strong>To Account</strong> on the Clients page to convert a client. It will appear here.</>
+              ? <>Click <strong>To Account</strong> on the Contacts page to convert a contact. It will appear here.</>
               : 'No accounts match the current search or filters.'}
           </p>
         </div>
@@ -122,7 +122,7 @@ export default function AccountsPage({ clients, onUndoConversion }) {
                       <button
                         className="btn btn-secondary btn-sm"
                         onClick={() => undo(c)}
-                        title={`Undo conversion — move back to ${c.is_lead ? 'Leads' : 'Clients'}`}
+                        title={`Undo conversion — move back to ${c.is_lead ? 'Leads' : 'Contacts'}`}
                         style={{ whiteSpace: 'nowrap', fontSize: '0.7rem' }}
                       >
                         <Undo2 size={12} />

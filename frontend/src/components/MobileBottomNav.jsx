@@ -1,5 +1,5 @@
 import React, { useState } from 'react';
-import { LayoutDashboard, Users, Target, Handshake, CalendarCheck, Calendar, MoreHorizontal, ScrollText, FileSpreadsheet, Database } from 'lucide-react';
+import { LayoutDashboard, Users, Target, Handshake, CalendarCheck, History, MoreHorizontal, ScrollText, FileSpreadsheet, Database } from 'lucide-react';
 
 export default function MobileBottomNav({ activeTab, setActiveTab, todayCount, leadsCount, onOpenDbModal }) {
   const [isMoreOpen, setIsMoreOpen] = useState(false);
@@ -7,14 +7,14 @@ export default function MobileBottomNav({ activeTab, setActiveTab, todayCount, l
   const tabs = [
     { id: 'dashboard', label: 'Home', icon: LayoutDashboard },
     { id: 'leads', label: 'Leads', icon: Target, badge: leadsCount },
-    { id: 'clients', label: 'Clients', icon: Users },
+    { id: 'clients', label: 'Contacts', icon: Users },
     { id: 'accounts', label: 'Accounts', icon: Handshake },
-    { id: 'today', label: 'Today', icon: CalendarCheck, badge: todayCount },
+    { id: 'today', label: 'Agenda', icon: CalendarCheck, badge: todayCount },
   ];
 
   // Pages that don't fit in the bottom bar
   const moreItems = [
-    { id: 'followups', label: 'Meetups & Schedule', icon: Calendar },
+    { id: 'followups', label: 'Follow-up History', icon: History },
     { id: 'logs', label: 'Activity Logs', icon: ScrollText },
     { id: 'export', label: 'Export Reports', icon: FileSpreadsheet },
   ];

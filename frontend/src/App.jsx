@@ -21,6 +21,7 @@ import ClientsPage from './pages/ClientsPage';
 import LeadsPage from './pages/LeadsPage';
 import AccountsPage from './pages/AccountsPage';
 import FollowUpsPage from './pages/FollowUpsPage';
+import AgendaPage from './pages/AgendaPage';
 import LogsPage from './pages/LogsPage';
 import LoginPage from './pages/LoginPage';
 
@@ -227,7 +228,7 @@ export default function App() {
       setClients(prev => prev.map(c => c.id === clientId ? { ...c, is_lead: false, status: 'Prospect' } : c));
       refreshStatsAndFollowups();
     } catch (err) {
-      alert('Error moving lead to clients: ' + err.message);
+      alert('Error moving lead to contacts: ' + err.message);
     }
   };
 
@@ -298,21 +299,21 @@ export default function App() {
   const getHeaderInfo = () => {
     switch (activeTab) {
       case 'dashboard':
-        return { title: 'Dashboard', subtitle: 'Follow-ups, clients and conversion at a glance' };
+        return { title: 'Dashboard', subtitle: 'Follow-ups, contacts and conversion at a glance' };
       case 'clients':
-        return { title: 'Clients', subtitle: 'Prospective fabricators and contractors' };
+        return { title: 'Contacts', subtitle: 'Prospective fabricators and contractors' };
       case 'leads':
-        return { title: 'Leads', subtitle: 'Clients who responded positively' };
+        return { title: 'Leads', subtitle: 'Contacts who responded positively' };
       case 'accounts':
-        return { title: 'Accounts', subtitle: 'Clients converted to accounts' };
+        return { title: 'Accounts', subtitle: 'Contacts converted to accounts' };
       case 'today':
-        return { title: "Today's Agenda", subtitle: "Follow-ups due today" };
+        return { title: "Today's Agenda", subtitle: 'Every follow-up from today onward' };
       case 'followups':
-        return { title: 'Meetups & Schedule', subtitle: 'All scheduled and past client interactions' };
+        return { title: 'Follow-up History', subtitle: 'Every follow-up you have done, numbered per contact' };
       case 'logs':
         return { title: 'Activity Logs', subtitle: 'History of changes made in the CRM' };
       case 'export':
-        return { title: 'Export Reports', subtitle: 'Download client and lead lists as Excel, PDF or CSV' };
+        return { title: 'Export Reports', subtitle: 'Download contact and lead lists as Excel, PDF or CSV' };
       default:
         return { title: 'ClientFlow Tracker', subtitle: '' };
     }
@@ -466,9 +467,17 @@ export default function App() {
             />
           )}
 
-          {(activeTab === 'followups' || activeTab === 'today') && (
+          {activeTab === 'today' && (
+            <AgendaPage
+              followups={followups}
+              clients={clients}
+              onLogFollowup={handleLogFollowup}
+            />
+          )}
+
+          {activeTab === 'followups' && (
             <FollowUpsPage
-              followups={activeTab === 'today' ? todayFollowups : followups}
+              followups={followups}
               onOpenExportModal={() => setIsExportModalOpen(true)}
             />
           )}

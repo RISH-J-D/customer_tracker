@@ -121,7 +121,7 @@ export default function ImportExcelModal({
             </div>
             <div>
               <h3 style={{ fontSize: '1.05rem', fontWeight: 700, color: 'var(--text-primary)' }}>
-                Import Clients from Excel
+                Import Contacts from Excel
               </h3>
               <p style={{ fontSize: '0.75rem', color: 'var(--text-muted)' }}>
                 Upload an Excel or CSV file to populate the client and leads table
@@ -297,7 +297,7 @@ export default function ImportExcelModal({
         <div className="modal-footer">
           {importResult ? (
             <button className="btn btn-primary" onClick={handleClose}>
-              Done & View Clients Table
+              Done & View Contacts Table
             </button>
           ) : (
             <>
