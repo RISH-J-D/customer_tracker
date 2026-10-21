@@ -1,14 +1,19 @@
+# One-click Blueprint: dashboard.render.com/blueprint/new?repo=https://github.com/RISH-J-D/customer_tracker
+# The frontend runs on Vercel (frontend/vercel.json proxies /api here); Render also serves
+# the prebuilt backend/frontend_dist as a fallback.
 services:
   - type: web
     name: customer-tracker-api
     runtime: python
+    plan: free
     rootDir: backend
     buildCommand: pip install --upgrade pip && pip install -r requirements.txt
     startCommand: uvicorn app.main:app --host 0.0.0.0 --port $PORT
+    healthCheckPath: /api/health
     envVars:
       - key: PYTHON_VERSION
-        value: 3.11.0
+        value: 3.12.8
       - key: DATABASE_URL
-        sync: false
+        sync: false # Neon connection string, entered when the Blueprint is created
       - key: CORS_ORIGINS
         value: "*"
