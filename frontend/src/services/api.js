@@ -5,7 +5,7 @@ const API_BASE = RAW_API_URL ? `${RAW_API_URL.replace(/\/+$/, '')}/api` : '/api'
 function getAuthHeaders(existingHeaders = {}) {
   const headers = { ...existingHeaders };
   try {
-    const userStr = localStorage.getItem('currentUser');
+    const userStr = sessionStorage.getItem('currentUser');
     if (userStr) {
       const user = JSON.parse(userStr);
       if (user.name) headers['X-User-Name'] = user.name;
@@ -31,7 +31,7 @@ export const api = {
     }
     const data = await res.json();
     if (data.user) {
-      localStorage.setItem('currentUser', JSON.stringify(data.user));
+      sessionStorage.setItem('currentUser', JSON.stringify(data.user));
     }
     return data;
   },

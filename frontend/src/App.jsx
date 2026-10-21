@@ -28,10 +28,12 @@ import LoginPage from './pages/LoginPage';
 export default function App() {
   const [activeTab, setActiveTab] = useState('dashboard');
   const [theme, setTheme] = useState(() => localStorage.getItem('theme') || 'light');
-  // Signed-in user, remembered across reloads; null shows the login page
+  // Signed-in user for this tab only (sessionStorage): a reload keeps it, a new tab or
+  // link opens the login page. null shows the login page.
   const [currentUser, setCurrentUser] = useState(() => {
     try {
-      const saved = localStorage.getItem('currentUser');
+      localStorage.removeItem('currentUser'); // drop sessions saved before per-tab login
+      const saved = sessionStorage.getItem('currentUser');
       return saved ? JSON.parse(saved) : null;
     } catch {
       return null;
@@ -328,7 +330,7 @@ export default function App() {
       <LoginPage
         onLoginSuccess={(user) => {
           if (!user) return;
-          localStorage.setItem('currentUser', JSON.stringify(user));
+          sessionStorage.setItem('currentUser', JSON.stringify(user));
           setActiveTab('dashboard');
           setShowLoginPage(false);
           setCurrentUser(user); // triggers the data load
@@ -368,7 +370,7 @@ export default function App() {
           currentUser={currentUser}
           onLogout={() => {
             // Forget the user and anything cached from their session
-            localStorage.removeItem('currentUser');
+            sessionStorage.removeItem('currentUser');
             localStorage.removeItem('cached_stats');
             setClients([]);
             setFollowups([]);
