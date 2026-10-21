@@ -1,4 +1,4 @@
-# One-click Blueprint: dashboard.render.com/blueprint/new?repo=https://github.com/RISH-J-D/customer_tracker
+# Live service (created manually, not via Blueprint): https://customer-tracker-nx2q.onrender.com
 # The frontend runs on Vercel (frontend/vercel.json proxies /api here); Render also serves
 # the prebuilt backend/frontend_dist as a fallback.
 services:
