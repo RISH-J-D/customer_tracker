@@ -313,7 +313,7 @@ export default function App() {
       case 'export':
         return { title: 'Export Reports', subtitle: 'Download contact and lead lists as Excel, PDF or CSV' };
       default:
-        return { title: 'ClientFlow Tracker', subtitle: '' };
+        return { title: 'Tendon CRM', subtitle: '' };
     }
   };
 

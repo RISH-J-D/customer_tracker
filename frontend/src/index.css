@@ -252,18 +252,10 @@ h1, h2, h3, h4 {
 }
 
 .sidebar-logo-icon {
-  width: 28px;
-  height: 28px;
-  border-radius: var(--radius-md);
-  background-color: var(--text-primary);
-  color: var(--bg-surface) !important;
-  font-size: 0.72rem;
-  font-weight: 700;
-  letter-spacing: 0.02em;
-  display: flex;
-  align-items: center;
-  justify-content: center;
-  color: white;
+  width: 34px;
+  height: 34px;
+  flex-shrink: 0;
+  object-fit: contain;
 }
 
 .sidebar-logo-text {

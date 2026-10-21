@@ -66,10 +66,10 @@ export default function Sidebar({
     <aside className="sidebar">
       {/* Brand Header */}
       <div className="sidebar-logo">
-        <div className="sidebar-logo-icon">CF</div>
+        <img className="sidebar-logo-icon" src="/tendon-mark.png" alt="" />
         <div>
-          <div className="sidebar-logo-text">ClientFlow</div>
-          <div className="sidebar-logo-sub">Steel Detailing CRM</div>
+          <div className="sidebar-logo-text">Tendon CRM</div>
+          <div className="sidebar-logo-sub">Steel Detailing &amp; Fabrication</div>
         </div>
       </div>
 

@@ -91,8 +91,8 @@ class NotificationService {
       try {
         new Notification(title, {
           body,
-          icon: '/favicon.ico',
-          badge: '/favicon.ico'
+          icon: '/tendon-mark.png',
+          badge: '/favicon-64.png'
         });
       } catch (err) {
         console.warn('Browser notification error:', err);

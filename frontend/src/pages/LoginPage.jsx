@@ -1,6 +1,5 @@
 import React, { useState } from 'react';
 import { 
-  Target, 
   Lock, 
   User, 
   Eye, 
@@ -86,23 +85,11 @@ export default function LoginPage({
       }}>
         {/* Brand Logo & Title */}
         <div style={{ display: 'flex', alignItems: 'center', gap: '0.75rem' }}>
-          <div style={{
-            width: '36px',
-            height: '36px',
-            borderRadius: 'var(--radius-md)',
-            background: 'linear-gradient(135deg, var(--primary) 0%, var(--primary) 100%)',
-            display: 'flex',
-            alignItems: 'center',
-            justifyContent: 'center',
-            color: 'white',
-            boxShadow: 'var(--shadow-sm)'
-          }}>
-            <Target size={18} />
-          </div>
+          <img src="/tendon-mark.png" alt="" style={{ width: '42px', height: '42px', objectFit: 'contain' }} />
           <div>
             <div style={{ display: 'flex', alignItems: 'center', gap: '0.45rem' }}>
               <span style={{ fontWeight: 800, fontSize: '1.05rem', color: 'var(--text-primary)', letterSpacing: '-0.02em' }}>
-                ClientFlow
+                Tendon CRM
               </span>
               <span style={{
                 fontSize: '0.65rem',
@@ -215,7 +202,7 @@ export default function LoginPage({
                 Sign In to Your Account
               </h1>
               <p style={{ fontSize: '0.825rem', color: 'var(--text-muted)', marginTop: '0.45rem', lineHeight: '1.4' }}>
-                Enter your credentials to access ClientFlow CRM
+                Enter your credentials to access Tendon CRM
               </p>
             </div>
 
