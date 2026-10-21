@@ -235,6 +235,12 @@ export default function NotesCell({ client, onAddNote, onEditNote, onDeleteNote,
                 {entries.length > 1 ? `All ${entries.length} notes` : 'Edit'}
               </button>
             )}
+            {latest && (latest.isLegacy ? onUpdateNotes : onDeleteNote) && (
+              <button type="button" style={{ ...linkButtonStyle, color: 'var(--danger-color)' }} onClick={() => deleteNote(latest)} title="Delete this note">
+                <Trash2 size={11} />
+                <span>Delete</span>
+              </button>
+            )}
           </div>
         )}
       </div>

@@ -1,6 +1,7 @@
 import React, { useMemo, useState, useEffect } from 'react';
 import { History, Search } from 'lucide-react';
 import ExportDropdown from '../components/ExportDropdown';
+import DeleteFollowupButton from '../components/DeleteFollowupButton';
 import { groupByDay, relativeDayLabel, formatTime } from '../components/calendarUtils';
 import { numberedHistory, ordinal, splitFollowupNotes, startOfDay, longDayLabel, contactNames } from '../components/followupHistory';
 
@@ -26,7 +27,7 @@ function FollowupNote({ f }) {
   return null;
 }
 
-function TimelineEntry({ f }) {
+function TimelineEntry({ f, onDelete }) {
   const { company, rep } = contactNames(f);
   return (
     <li className="fu-item">
@@ -45,11 +46,12 @@ function TimelineEntry({ f }) {
         </div>
         <FollowupNote f={f} />
       </div>
+      <DeleteFollowupButton followupId={f.id} onDelete={onDelete} />
     </li>
   );
 }
 
-function ContactHistoryCard({ entries }) {
+function ContactHistoryCard({ entries, onDelete }) {
   const [showAll, setShowAll] = useState(false);
   const latest = entries[0];
   const { company, rep } = contactNames(latest);
@@ -79,6 +81,7 @@ function ContactHistoryCard({ entries }) {
               </div>
               <FollowupNote f={f} />
             </div>
+            <DeleteFollowupButton followupId={f.id} onDelete={onDelete} />
           </li>
         ))}
       </ol>
@@ -91,7 +94,7 @@ function ContactHistoryCard({ entries }) {
   );
 }
 
-export default function FollowUpsPage({ followups, onOpenExportModal }) {
+export default function FollowUpsPage({ followups, onOpenExportModal, onDeleteFollowup }) {
   const [view, setView] = useState('timeline'); // timeline, contacts
   const [range, setRange] = useState('all');
   const [search, setSearch] = useState('');
@@ -198,7 +201,7 @@ export default function FollowUpsPage({ followups, onOpenExportModal }) {
                   <span className="fu-day-count">{g.items.length} {g.items.length === 1 ? 'follow-up' : 'follow-ups'}</span>
                 </header>
                 <ol className="fu-list">
-                  {g.items.map(f => <TimelineEntry key={f.id} f={f} />)}
+                  {g.items.map(f => <TimelineEntry key={f.id} f={f} onDelete={onDeleteFollowup} />)}
                 </ol>
               </section>
             );
@@ -213,7 +216,7 @@ export default function FollowUpsPage({ followups, onOpenExportModal }) {
         </>
       ) : (
         <div className="fu-contact-grid">
-          {byContact.map(entries => <ContactHistoryCard key={entries[0].client_id} entries={entries} />)}
+          {byContact.map(entries => <ContactHistoryCard key={entries[0].client_id} entries={entries} onDelete={onDeleteFollowup} />)}
         </div>
       )}
     </div>

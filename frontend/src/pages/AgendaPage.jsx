@@ -1,6 +1,7 @@
 import React, { useMemo, useState } from 'react';
 import { CalendarCheck, CheckCircle2 } from 'lucide-react';
 import FollowUpLogModal from '../components/FollowUpLogModal';
+import DeleteFollowupButton from '../components/DeleteFollowupButton';
 import { groupByDay, parseServerUtc, relativeDayLabel, formatTime } from '../components/calendarUtils';
 import { ordinal, splitFollowupNotes, startOfDay, longDayLabel, contactNames } from '../components/followupHistory';
 
@@ -19,7 +20,7 @@ const addDays = (d, n) => {
 // Auto-scheduled follow-ups are titled "Follow-up with <name>"; only show titles someone typed
 const customTitle = (f) => (f.title && !f.title.startsWith('Follow-up with ') ? f.title : null);
 
-function AgendaEntry({ f, client, overdue, onFollowedUp }) {
+function AgendaEntry({ f, client, overdue, onFollowedUp, onDelete }) {
   const { company, rep } = contactNames(f);
   const { plan } = splitFollowupNotes(f.notes);
   const title = customTitle(f);
@@ -53,11 +54,12 @@ function AgendaEntry({ f, client, overdue, onFollowedUp }) {
           </button>
         </div>
       )}
+      <DeleteFollowupButton followupId={f.id} onDelete={onDelete} />
     </li>
   );
 }
 
-export default function AgendaPage({ followups, clients, onLogFollowup }) {
+export default function AgendaPage({ followups, clients, onLogFollowup, onDeleteFollowup }) {
   const [range, setRange] = useState('all');
   const [logClient, setLogClient] = useState(null);
 
@@ -94,7 +96,7 @@ export default function AgendaPage({ followups, clients, onLogFollowup }) {
   const nextWeek = fromToday.filter(f => f.date < addDays(today, 7)).length;
 
   const renderEntry = (f, isOverdue = false) => (
-    <AgendaEntry key={f.id} f={f} client={clientById.get(f.client_id)} overdue={isOverdue} onFollowedUp={setLogClient} />
+    <AgendaEntry key={f.id} f={f} client={clientById.get(f.client_id)} overdue={isOverdue} onFollowedUp={setLogClient} onDelete={onDeleteFollowup} />
   );
 
   return (

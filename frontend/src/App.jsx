@@ -270,6 +270,17 @@ export default function App() {
   };
 
   // Follow-up actions
+  const handleDeleteFollowup = async (followupId) => {
+    if (!window.confirm("Delete this follow-up? This can't be undone.")) return;
+    try {
+      await api.deleteFollowup(followupId);
+      await loadData();
+    } catch (err) {
+      console.error('Failed to delete follow-up:', err);
+      alert('Could not delete the follow-up. Please try again.');
+    }
+  };
+
   const handleSaveFollowup = async (formData) => {
     await api.createFollowup(formData);
     notificationService.send({
@@ -475,12 +486,14 @@ export default function App() {
               followups={followups}
               clients={clients}
               onLogFollowup={handleLogFollowup}
+              onDeleteFollowup={handleDeleteFollowup}
             />
           )}
 
           {activeTab === 'followups' && (
             <FollowUpsPage
               followups={followups}
+              onDeleteFollowup={handleDeleteFollowup}
               onOpenExportModal={() => setIsExportModalOpen(true)}
             />
           )}

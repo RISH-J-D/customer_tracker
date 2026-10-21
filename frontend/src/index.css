@@ -1577,6 +1577,25 @@ h1, h2, h3, h4 {
 
 .fu-item + .fu-item { border-top: 1px solid var(--border-light); }
 
+.fu-delete {
+  flex-shrink: 0;
+  width: 26px;
+  height: 26px;
+  border: none;
+  border-radius: var(--radius-sm);
+  background: transparent;
+  color: var(--text-muted);
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  cursor: pointer;
+}
+
+.fu-delete:hover {
+  background-color: var(--danger-bg);
+  color: var(--danger-color);
+}
+
 .fu-num {
   flex-shrink: 0;
   min-width: 34px;
@@ -2037,16 +2056,23 @@ h1, h2, h3, h4 {
   .table-dense td.td-email,
   .table-dense td.td-mobile { white-space: nowrap; }
 
+  /* Line 1: date + note text, line 2: Add / Edit / Delete links */
   .table-dense .note-cell {
-    flex-direction: row;
+    display: grid;
+    grid-template-columns: auto minmax(0, 1fr);
     align-items: baseline;
-    gap: 0.5rem;
+    column-gap: 0.5rem;
+    row-gap: 0.1rem;
     min-width: 0;
     max-width: 380px;
   }
 
+  .table-dense .note-cell-meta { grid-column: 1; }
+  .table-dense .note-cell-empty { grid-column: 1 / -1; }
+  .table-dense .note-cell-links { grid-column: 1 / -1; }
+
   /* The inline note editor needs the full cell width */
-  .table-dense .note-cell:has(textarea) { flex-direction: column; align-items: stretch; max-width: 100%; }
+  .table-dense .note-cell:has(textarea) { display: flex; flex-direction: column; align-items: stretch; max-width: 100%; }
 
   .table-dense .note-cell-meta { white-space: nowrap; }
 
