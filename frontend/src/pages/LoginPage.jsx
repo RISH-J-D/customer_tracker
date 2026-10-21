@@ -36,7 +36,7 @@ export default function LoginPage({
   const handleFormSubmit = async (e) => {
     e.preventDefault();
     if (!username.trim()) {
-      setAuthError('Please enter your work username or email.');
+      setAuthError('Please enter your username.');
       return;
     }
     if (!password.trim()) {
@@ -247,7 +247,7 @@ export default function LoginPage({
               {/* Username Input */}
               <div className="form-group" style={{ marginBottom: '1.25rem' }}>
                 <label className="form-label" htmlFor="login-username" style={{ fontWeight: 600, fontSize: '0.78rem' }}>
-                  Username or Work Email
+                  Username
                 </label>
                 <div style={{ position: 'relative' }}>
                   <User size={16} color="var(--text-muted)" style={{ position: 'absolute', left: '12px', top: '12px', pointerEvents: 'none' }} />
@@ -256,7 +256,7 @@ export default function LoginPage({
                     type="text"
                     value={username}
                     onChange={(e) => setUsername(e.target.value)}
-                    placeholder="e.g. girish.j or admin"
+                    placeholder="Enter your username"
                     className="form-input"
                     style={{ 
                       paddingLeft: '2.4rem', 
