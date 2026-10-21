@@ -2054,7 +2054,7 @@ h1, h2, h3, h4 {
   }
 
   /* The inline note editor needs the full cell width */
-  .table-dense .note-cell:has(textarea) { flex-direction: column; align-items: stretch; }
+  .table-dense .note-cell:has(textarea) { flex-direction: column; align-items: stretch; max-width: 100%; }
 
   .table-dense .note-cell-meta { white-space: nowrap; }
 

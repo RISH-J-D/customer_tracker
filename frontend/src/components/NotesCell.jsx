@@ -79,14 +79,13 @@ function NoteEditor({ initialValue = '', initialDate = new Date(), placeholder, 
           else if (e.key === 'Escape') onCancel();
         }}
       />
-      <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'flex-end', gap: '0.35rem' }}>
+      <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'flex-end', flexWrap: 'wrap', gap: '0.35rem' }}>
         {initialDate && (
           <input
             type="date"
             className="form-input"
             title="Date of this note"
             style={{ marginRight: 'auto', width: 'auto', height: '24px', fontSize: '0.7rem', padding: '0 0.3rem' }}
-            max={toInputDate(new Date())}
             value={day}
             onChange={(e) => setDay(e.target.value)}
           />
