@@ -29,18 +29,19 @@ const getRepresentativeName = (c) => (c.name && c.name !== `${c.company} Contact
 const endOfToday = () => { const d = new Date(); d.setHours(23, 59, 59, 999); return d; };
 const hasDueFollowup = (c) => (c.followups || []).some(f => f.status === 'Pending' && parseServerUtc(f.scheduled_at) <= endOfToday());
 
+// Two lines: name · position, then phone · email
 function RepresentativeBlock({ client }) {
   const repName = getRepresentativeName(client);
   return (
-    <div style={{ display: 'flex', flexDirection: 'column', gap: '0.25rem' }}>
+    <>
       {(repName || client.position) && (
-        <div>
-          {repName && <div style={{ fontWeight: 600, color: 'var(--text-primary)', fontSize: '0.8rem' }}>{repName}</div>}
-          {client.position && <div style={{ fontSize: '0.72rem', color: 'var(--text-muted)' }}>{client.position}</div>}
+        <div className="dense-line" title={[repName, client.position].filter(Boolean).join(' · ')}>
+          {repName && <span style={{ fontWeight: 600, color: 'var(--text-primary)', fontSize: '0.8rem' }}>{repName}</span>}
+          {client.position && <span style={{ fontSize: '0.72rem', color: 'var(--text-muted)' }}>{repName ? ' · ' : ''}{client.position}</span>}
         </div>
       )}
-      <ContactBlock email={client.email} phone={client.phone} emailLabel="representative's email" phoneLabel="representative's number" />
-    </div>
+      <ContactBlock email={client.email} phone={client.phone} emailLabel="representative's email" phoneLabel="representative's number" inline />
+    </>
   );
 }
 
@@ -120,7 +121,7 @@ export default function ClientsPage({
   return (
     <div className="table-page">
       {/* Page Header */}
-      <div style={{ display: 'flex', alignItems: 'flex-start', justifyContent: 'flex-end', flexWrap: 'wrap', gap: '1rem', marginBottom: '1.25rem' }}>
+      <div style={{ display: 'flex', alignItems: 'flex-start', justifyContent: 'flex-end', flexWrap: 'wrap', gap: '1rem', marginBottom: '0.85rem' }}>
         <div style={{ display: 'flex', alignItems: 'center', gap: '0.5rem', flexWrap: 'wrap' }}>
           <ViewModeToggle viewMode={viewMode} onChange={setViewMode} />
 
@@ -145,29 +146,32 @@ export default function ClientsPage({
       </div>
 
       {/* Filter and Search Bar */}
-      <div className="card" style={{ padding: '0.65rem 0.85rem', marginBottom: '1.25rem', display: 'flex', flexDirection: 'column', gap: '0.6rem' }}>
+      <div className="card" style={{ padding: '0.55rem 0.85rem', marginBottom: '0.85rem' }}>
         <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', flexWrap: 'wrap', gap: '0.75rem' }}>
-          <div className="segmented-control">
-            <button
-              className={`segmented-btn ${activeFilter === 'all' ? 'active' : ''}`}
-              onClick={() => setActiveFilter('all')}
-            >
-              All Contacts ({clientList.length})
-            </button>
-            <button
-              className={`segmented-btn ${activeFilter === 'prospects' ? 'active' : ''}`}
-              onClick={() => setActiveFilter('prospects')}
-            >
-              <Star size={12} color="var(--prospect-row-accent)" />
-              <span>Prospects ({prospectCount})</span>
-            </button>
-            <button
-              className={`segmented-btn ${activeFilter === 'due' ? 'active' : ''}`}
-              onClick={() => setActiveFilter('due')}
-            >
-              <Clock size={12} color="var(--danger-btn)" />
-              <span>Follow-up due ({dueCount})</span>
-            </button>
+          <div style={{ display: 'flex', alignItems: 'center', gap: '0.75rem', flexWrap: 'wrap' }}>
+            <div className="segmented-control">
+              <button
+                className={`segmented-btn ${activeFilter === 'all' ? 'active' : ''}`}
+                onClick={() => setActiveFilter('all')}
+              >
+                All Contacts ({clientList.length})
+              </button>
+              <button
+                className={`segmented-btn ${activeFilter === 'prospects' ? 'active' : ''}`}
+                onClick={() => setActiveFilter('prospects')}
+              >
+                <Star size={12} color="var(--prospect-row-accent)" />
+                <span>Prospects ({prospectCount})</span>
+              </button>
+              <button
+                className={`segmented-btn ${activeFilter === 'due' ? 'active' : ''}`}
+                onClick={() => setActiveFilter('due')}
+              >
+                <Clock size={12} color="var(--danger-btn)" />
+                <span>Follow-up due ({dueCount})</span>
+              </button>
+            </div>
+              <AddressFilters filter={address} />
           </div>
 
           <div className="search-box" style={{ position: 'relative', width: '100%', maxWidth: '280px' }}>
@@ -182,7 +186,6 @@ export default function ClientsPage({
             />
           </div>
         </div>
-        <AddressFilters filter={address} />
       </div>
 
       {filteredClients.length === 0 ? (
@@ -214,39 +217,31 @@ export default function ClientsPage({
       ) : viewMode === 'table' ? (
         /* TABLE LIST VIEW */
         <div className="table-responsive table-mobile-cards">
-          <table className="custom-table table-contacts">
+          <table className="custom-table table-contacts table-dense">
             <thead>
               <tr>
-                <th style={{ width: '25%' }}>Company</th>
-                <th style={{ width: '25%' }}>Representative</th>
-                <th style={{ width: '17%' }}>Follow-up</th>
-                <th style={{ width: '32%' }}>Latest note</th>
+                <th style={{ width: '22%' }}>Company</th>
+                <th style={{ width: '22%' }}>Representative</th>
+                <th style={{ width: '18%' }}>Follow-up</th>
+                <th style={{ width: '37%' }}>Latest note</th>
                 <th style={{ width: '1%' }}>Actions</th>
               </tr>
             </thead>
             <tbody>
               {paginatedClients.map((c) => {
                 const companyName = c.company || c.name;
-                const initials = companyName ? companyName.split(' ').map(n => n[0]).join('').slice(0, 2).toUpperCase() : 'CO';
                 return (
                   <tr key={c.id} className={c.prospect_marked_at ? 'row-prospect' : undefined}>
                     {/* Company, address and company contact details */}
                     <td className="td-name">
-                      <div className="cell-company">
-                        <div className="cell-avatar">{initials}</div>
-                        <div style={{ minWidth: 0 }}>
-                          <div className="cell-title">
-                            <span>{companyName}</span>
-                            {c.prospect_marked_at && <Star size={12} fill="var(--prospect-row-accent)" color="var(--prospect-row-accent)" />}
-                          </div>
-                          <AddressLine client={c} />
-                          {(c.company_email || c.company_phone) && (
-                            <div style={{ marginTop: '0.35rem' }}>
-                              <ContactBlock email={c.company_email} phone={c.company_phone} emailLabel="company email" phoneLabel="company number" />
-                            </div>
-                          )}
-                        </div>
+                      <div className="dense-line cell-title" title={[companyName, formatAddress(c)].filter(Boolean).join(' · ')}>
+                        <span>{companyName}</span>
+                        {c.prospect_marked_at && <Star size={12} fill="var(--prospect-row-accent)" color="var(--prospect-row-accent)" />}
+                        {formatAddress(c) && <span style={{ fontWeight: 400, fontSize: '0.72rem', color: 'var(--text-muted)' }}>· {formatAddress(c)}</span>}
                       </div>
+                      {(c.company_email || c.company_phone) && (
+                        <ContactBlock email={c.company_email} phone={c.company_phone} emailLabel="company email" phoneLabel="company number" inline />
+                      )}
                     </td>
 
                     <td className="td-rep" data-label="Representative">

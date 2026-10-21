@@ -13,8 +13,8 @@ export default function Pagination({ page, pageSize, total, noun, onPageChange, 
       justifyContent: 'space-between',
       flexWrap: 'wrap',
       gap: '0.75rem',
-      marginTop: '1.5rem',
-      padding: '0.85rem 1.15rem',
+      marginTop: '0.85rem',
+      padding: '0.5rem 1rem',
       backgroundColor: 'var(--bg-surface)',
       borderRadius: 'var(--radius-md)',
       border: '1px solid var(--border-subtle)',
@@ -26,7 +26,7 @@ export default function Pagination({ page, pageSize, total, noun, onPageChange, 
 
       <div style={{ display: 'flex', alignItems: 'center', gap: '0.75rem', flexWrap: 'wrap' }}>
         <div style={{ display: 'flex', alignItems: 'center', gap: '0.35rem', fontSize: '0.75rem', color: 'var(--text-muted)' }}>
-          <span>Per page:</span>
+          <span style={{ whiteSpace: 'nowrap' }}>Per page:</span>
           <select
             value={pageSize}
             onChange={(e) => onPageSizeChange(Number(e.target.value))}

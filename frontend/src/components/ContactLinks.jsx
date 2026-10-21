@@ -25,10 +25,10 @@ export function EmailLink({ email, label = 'email' }) {
   );
 }
 
-export function PhoneLinks({ phone, label = 'phone number' }) {
+export function PhoneLinks({ phone, label = 'phone number', inline = false }) {
   if (!phone) return null;
   return (
-    <span style={{ display: 'flex', flexDirection: 'column', gap: '0.15rem', minWidth: 0 }}>
+    <span style={{ display: 'flex', flexDirection: inline ? 'row' : 'column', gap: inline ? '0.6rem' : '0.15rem', minWidth: 0 }}>
       {splitPhoneNumbers(phone).map((num, i) => (
         <span key={i} className="copyable">
           <a href={`tel:${num}`} style={linkStyle}>
@@ -42,13 +42,16 @@ export function PhoneLinks({ phone, label = 'phone number' }) {
   );
 }
 
-// Email + phone(s) stacked, or a dash when there is neither
-export function ContactBlock({ email, phone, emailLabel, phoneLabel }) {
+// Email + phone(s) stacked (or side by side when `inline`), or a dash when there is neither
+export function ContactBlock({ email, phone, emailLabel, phoneLabel, inline = false }) {
   if (!email && !phone) return <span style={{ color: 'var(--text-muted)' }}>-</span>;
   return (
-    <div style={{ display: 'flex', flexDirection: 'column', gap: '0.25rem', fontSize: '0.75rem', color: 'var(--text-secondary)' }}>
+    <div
+      className={inline ? 'contact-inline' : undefined}
+      style={{ display: 'flex', flexDirection: inline ? 'row' : 'column', flexWrap: inline ? 'wrap' : undefined, gap: inline ? '0.15rem 0.6rem' : '0.25rem', fontSize: '0.75rem', color: 'var(--text-secondary)' }}
+    >
+      <PhoneLinks phone={phone} label={phoneLabel} inline={inline} />
       <EmailLink email={email} label={emailLabel} />
-      <PhoneLinks phone={phone} label={phoneLabel} />
     </div>
   );
 }
