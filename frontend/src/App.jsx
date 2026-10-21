@@ -13,7 +13,6 @@ import FollowUpModal from './components/FollowUpModal';
 import CompleteFollowupModal from './components/CompleteFollowupModal';
 import ExportModal from './components/ExportModal';
 import ImportExcelModal from './components/ImportExcelModal';
-import DbControlModal from './components/DbControlModal';
 
 // Pages
 import DashboardPage from './pages/DashboardPage';
@@ -77,7 +76,6 @@ export default function App() {
   const [activeFollowupToComplete, setActiveFollowupToComplete] = useState(null);
   const [isExportModalOpen, setIsExportModalOpen] = useState(false);
   const [isImportModalOpen, setIsImportModalOpen] = useState(false);
-  const [isDbModalOpen, setIsDbModalOpen] = useState(false);
 
   // Load all app data
   const loadData = useCallback(async () => {
@@ -351,8 +349,6 @@ export default function App() {
         stats={stats}
         unreadNotificationsCount={unreadCount}
         onOpenTodayModal={() => setIsTodayModalOpen(true)}
-        onOpenDbModal={() => setIsDbModalOpen(true)}
-        dbInfo={dbInfo}
         currentUser={currentUser}
       />
 
@@ -520,7 +516,6 @@ export default function App() {
           setActiveTab={setActiveTab}
           todayCount={stats?.today_followups_count || 0}
           leadsCount={stats?.total_leads || 0}
-          onOpenDbModal={() => setIsDbModalOpen(true)}
         />
       </div>
 
@@ -585,11 +580,6 @@ export default function App() {
         onImportSuccess={() => loadData()}
       />
 
-      <DbControlModal
-        isOpen={isDbModalOpen}
-        onClose={() => setIsDbModalOpen(false)}
-        dbInfo={dbInfo}
-      />
     </div>
   );
 }

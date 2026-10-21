@@ -7,7 +7,6 @@ import {
   FileSpreadsheet, 
   Target, 
   TrendingUp,
-  Database,
   ScrollText,
   Handshake
 } from 'lucide-react';
@@ -17,13 +16,9 @@ export default function Sidebar({
   setActiveTab, 
   stats, 
   onOpenTodayModal,
-  onOpenDbModal,
   onOpenLogin,
-  dbInfo,
   currentUser
 }) {
-
-  const isPostgres = dbInfo?.is_postgres || dbInfo?.engine === 'postgresql';
 
   const navItems = [
     { id: 'dashboard', label: 'Dashboard', icon: LayoutDashboard },
@@ -96,42 +91,9 @@ export default function Sidebar({
         })}
       </nav>
 
-      {/* Database Status Pill for pgAdmin Controls */}
-      <div 
-        onClick={onOpenDbModal}
-        style={{
-          marginTop: 'auto',
-          marginBottom: '0.65rem',
-          backgroundColor: 'var(--bg-subtle)',
-          border: '1px solid var(--border-subtle)',
-          borderRadius: 'var(--radius-md)',
-          padding: '0.65rem 0.75rem',
-          cursor: 'pointer',
-          transition: 'all 0.15s ease'
-        }}
-        title="Click to view database controls and pgAdmin connection info"
-      >
-        <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', marginBottom: '0.2rem' }}>
-          <div style={{ display: 'flex', alignItems: 'center', gap: '0.4rem' }}>
-            <Database size={13} color={isPostgres ? 'var(--lead-action)' : 'var(--primary)'} />
-            <span style={{ fontSize: '0.72rem', fontWeight: 600, color: 'var(--text-primary)' }}>
-              {isPostgres ? 'PostgreSQL Active' : 'pgAdmin Ready'}
-            </span>
-          </div>
-          <span style={{
-            width: '7px',
-            height: '7px',
-            borderRadius: '50%',
-            backgroundColor: isPostgres ? 'var(--lead-action)' : 'var(--warning-strong)'
-          }}></span>
-        </div>
-        <div style={{ fontSize: '0.68rem', color: 'var(--text-muted)' }}>
-          DB Controls & Schema Manager
-        </div>
-      </div>
-
       {/* User Status Card */}
       <div style={{
+        marginTop: 'auto',
         backgroundColor: 'var(--bg-subtle)',
         border: '1px solid var(--border-subtle)',
         borderRadius: 'var(--radius-md)',
