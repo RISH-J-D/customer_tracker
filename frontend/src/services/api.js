@@ -10,9 +10,6 @@ function getAuthHeaders(existingHeaders = {}) {
       const user = JSON.parse(userStr);
       if (user.name) headers['X-User-Name'] = user.name;
       if (user.username) headers['X-User-Username'] = user.username;
-    } else {
-      headers['X-User-Name'] = 'Admin';
-      headers['X-User-Username'] = 'admin';
     }
   } catch (e) {
     // quiet fallback

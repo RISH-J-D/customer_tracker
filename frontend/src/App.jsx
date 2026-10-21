@@ -28,12 +28,13 @@ import LoginPage from './pages/LoginPage';
 export default function App() {
   const [activeTab, setActiveTab] = useState('dashboard');
   const [theme, setTheme] = useState(() => localStorage.getItem('theme') || 'light');
+  // Signed-in user, remembered across reloads; null shows the login page
   const [currentUser, setCurrentUser] = useState(() => {
     try {
       const saved = localStorage.getItem('currentUser');
-      return saved ? JSON.parse(saved) : { username: 'admin', name: 'Admin', role: 'System Administrator' };
+      return saved ? JSON.parse(saved) : null;
     } catch {
-      return { username: 'admin', name: 'Admin', role: 'System Administrator' };
+      return null;
     }
   });
   const [clients, setClients] = useState([]);
@@ -120,8 +121,9 @@ export default function App() {
     }
   }, []);
 
-  // Initial mount & reminder checker
+  // Load data & check reminders only while someone is signed in
   useEffect(() => {
+    if (!currentUser) return;
     loadData();
 
     // Request notification permission once user interacts
@@ -144,7 +146,7 @@ export default function App() {
     }, 25000);
 
     return () => clearInterval(interval);
-  }, [loadData]);
+  }, [loadData, currentUser]);
 
   // Client actions
   const handleSaveClient = async (formData, clientId) => {
@@ -325,12 +327,11 @@ export default function App() {
     return (
       <LoginPage
         onLoginSuccess={(user) => {
-          if (user) {
-            setCurrentUser(user);
-            localStorage.setItem('currentUser', JSON.stringify(user));
-          }
+          if (!user) return;
+          localStorage.setItem('currentUser', JSON.stringify(user));
+          setActiveTab('dashboard');
           setShowLoginPage(false);
-          loadData();
+          setCurrentUser(user); // triggers the data load
         }}
         theme={theme}
         onToggleTheme={toggleTheme}
@@ -366,7 +367,13 @@ export default function App() {
           onToggleTheme={toggleTheme}
           currentUser={currentUser}
           onLogout={() => {
+            // Forget the user and anything cached from their session
             localStorage.removeItem('currentUser');
+            localStorage.removeItem('cached_stats');
+            setClients([]);
+            setFollowups([]);
+            setStats(null);
+            setNotifications([]);
             setCurrentUser(null);
             setShowLoginPage(true);
           }}
