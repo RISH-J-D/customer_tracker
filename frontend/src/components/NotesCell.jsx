@@ -26,8 +26,20 @@ const iconButtonStyle = {
   flexShrink: 0
 };
 
-function NoteEditor({ initialValue = '', placeholder, onSave, onCancel }) {
+const pad = (n) => String(n).padStart(2, '0');
+const toInputDate = (d) => `${d.getFullYear()}-${pad(d.getMonth() + 1)}-${pad(d.getDate())}`;
+
+// The picked day, keeping the time of day from `timeFrom` so notes stay in order within a day
+const onDay = (inputDate, timeFrom) => {
+  const [y, m, d] = inputDate.split('-').map(Number);
+  return new Date(y, m - 1, d, timeFrom.getHours(), timeFrom.getMinutes(), timeFrom.getSeconds());
+};
+
+// `initialDate` null hides the date picker (the legacy free-text note has no editable date).
+// onSave gets (content, isoDate) — isoDate is null when the date was left unchanged.
+function NoteEditor({ initialValue = '', initialDate = new Date(), placeholder, onSave, onCancel }) {
   const [draft, setDraft] = useState(initialValue);
+  const [day, setDay] = useState(initialDate ? toInputDate(initialDate) : '');
   const [isSaving, setIsSaving] = useState(false);
 
   const save = async () => {
@@ -35,7 +47,8 @@ function NoteEditor({ initialValue = '', placeholder, onSave, onCancel }) {
     if (!content) return;
     setIsSaving(true);
     try {
-      await onSave(content);
+      const changedDay = initialDate && day && day !== toInputDate(initialDate);
+      await onSave(content, changedDay ? onDay(day, initialDate).toISOString() : null);
     } catch (err) {
       console.error('Failed to save note:', err);
       setIsSaving(false);
@@ -67,6 +80,17 @@ function NoteEditor({ initialValue = '', placeholder, onSave, onCancel }) {
         }}
       />
       <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'flex-end', gap: '0.35rem' }}>
+        {initialDate && (
+          <input
+            type="date"
+            className="form-input"
+            title="Date of this note"
+            style={{ marginRight: 'auto', width: 'auto', height: '24px', fontSize: '0.7rem', padding: '0 0.3rem' }}
+            max={toInputDate(new Date())}
+            value={day}
+            onChange={(e) => setDay(e.target.value)}
+          />
+        )}
         <button type="button" className="btn btn-secondary btn-sm" style={{ fontSize: '0.68rem', padding: '0.15rem 0.4rem' }} onClick={onCancel} disabled={isSaving}>
           <X size={10} />
           <span>Cancel</span>
@@ -98,9 +122,9 @@ export default function NotesCell({ client, onAddNote, onEditNote, onDeleteNote,
   const visibleDays = showAll ? days : days.slice(0, VISIBLE_DAYS);
   const canAdd = Boolean(onAddNote);
 
-  const saveEdit = async (note, content) => {
+  const saveEdit = async (note, content, createdAt) => {
     if (note.isLegacy) await onUpdateNotes(client.id, content);
-    else await onEditNote(client.id, note.id, content);
+    else await onEditNote(client.id, note.id, content, createdAt);
     setEditingId(null);
   };
 
@@ -118,7 +142,8 @@ export default function NotesCell({ client, onAddNote, onEditNote, onDeleteNote,
         <NoteEditor
           key={note.id}
           initialValue={note.content}
-          onSave={(content) => saveEdit(note, content)}
+          initialDate={note.isLegacy ? null : note.date}
+          onSave={(content, createdAt) => saveEdit(note, content, createdAt)}
           onCancel={() => setEditingId(null)}
         />
       );
@@ -174,8 +199,8 @@ export default function NotesCell({ client, onAddNote, onEditNote, onDeleteNote,
   const addEditor = isAdding && (
     <NoteEditor
       placeholder="Type a note... (Ctrl+Enter to save)"
-      onSave={async (content) => {
-        await onAddNote(client.id, content);
+      onSave={async (content, createdAt) => {
+        await onAddNote(client.id, content, createdAt);
         setIsAdding(false);
       }}
       onCancel={() => setIsAdding(false)}

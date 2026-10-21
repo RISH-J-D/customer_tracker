@@ -120,25 +120,15 @@ export default function LeadsPage({
         </div>
       </div>
 
-      {/* Leads Summary KPI Card */}
-      <div className="kpi-grid" style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fit, minmax(210px, 1fr))', gap: '0.85rem', marginBottom: '1.25rem' }}>
-        <div className="card" style={{ padding: '0.85rem 1rem' }}>
-          <div style={{ fontSize: '0.78rem', color: 'var(--text-secondary)', fontWeight: 500 }}>
-            Active leads
-          </div>
-          <div className="stat-value" style={{ fontSize: '1.4rem', marginTop: '0.2rem' }}>
-            {leadList.length}
-          </div>
-          <div style={{ fontSize: '0.72rem', color: 'var(--text-muted)', marginTop: '0.15rem' }}>
-            Move a lead to Contacts once you start working it
-          </div>
-        </div>
-      </div>
-
       {/* Address Filters and Search Bar */}
-      <div className="card" style={{ padding: '0.65rem 0.85rem', marginBottom: '1.25rem' }}>
+      <div className="card" style={{ padding: '0.55rem 0.85rem', marginBottom: '0.85rem' }}>
         <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', flexWrap: 'wrap', gap: '0.75rem' }}>
-          <AddressFilters filter={address} />
+          <div style={{ display: 'flex', alignItems: 'center', gap: '0.75rem', flexWrap: 'wrap' }}>
+            <span style={{ fontSize: '0.8rem', color: 'var(--text-secondary)', whiteSpace: 'nowrap' }} title="Move a lead to Contacts once you start working it">
+              <strong style={{ color: 'var(--text-primary)' }}>{leadList.length.toLocaleString()}</strong> active leads
+            </span>
+            <AddressFilters filter={address} />
+          </div>
 
           <div className="search-box" style={{ position: 'relative', width: '100%', maxWidth: '280px' }}>
             <Search size={14} color="var(--text-muted)" style={{ position: 'absolute', left: '9px', top: '9px' }} />
@@ -187,7 +177,7 @@ export default function LeadsPage({
       ) : viewMode === 'table' ? (
         /* TABLE LIST VIEW */
         <div className="table-responsive table-mobile-cards">
-          <table className="custom-table">
+          <table className="custom-table table-dense">
             <thead>
               <tr>
                 <th style={{ width: '24%' }}>Lead & Company</th>
@@ -199,38 +189,17 @@ export default function LeadsPage({
             </thead>
             <tbody>
               {paginatedLeads.map((c) => {
-                const initials = c.name ? c.name.split(' ').map(n => n[0]).join('').slice(0, 2).toUpperCase() : 'LD';
                 return (
                   <tr key={c.id} className={rowMarkClass(c, 'row') || undefined}>
                     {/* Lead Name, Company & Address */}
                     <td className="td-name">
-                      <div style={{ display: 'flex', alignItems: 'flex-start', gap: '0.65rem' }}>
-                        <div style={{
-                          width: '32px',
-                          height: '32px',
-                          borderRadius: 'var(--radius-md)',
-                          backgroundColor: 'var(--lead-bg)',
-                          color: 'var(--lead-color)',
-                          border: '1px solid var(--lead-border)',
-                          display: 'flex',
-                          alignItems: 'center',
-                          justifyContent: 'center',
-                          fontWeight: 700,
-                          fontSize: '0.785rem',
-                          flexShrink: 0
-                        }}>
-                          {initials}
-                        </div>
-                        <div>
-                          <div style={{ fontWeight: 600, color: 'var(--text-primary)', fontSize: '0.85rem' }}>
-                            {c.name}
-                          </div>
-                          <div style={{ display: 'flex', alignItems: 'center', gap: '0.35rem', color: 'var(--text-muted)', fontSize: '0.75rem', marginTop: '0.1rem', flexWrap: 'wrap' }}>
-                            <span>{c.company || 'Fabricator / Contractor'}</span>
-                            {c.position && <span>• <strong style={{ fontWeight: 500, color: 'var(--text-secondary)' }}>{c.position}</strong></span>}
-                          </div>
-                          <AddressLine client={c} />
-                        </div>
+                      <div className="dense-line" style={{ fontWeight: 600, color: 'var(--text-primary)', fontSize: '0.83rem' }} title={c.name}>
+                        {c.name}
+                        {c.position && <span style={{ fontWeight: 400, color: 'var(--text-muted)', fontSize: '0.74rem' }}> · {c.position}</span>}
+                      </div>
+                      <div className="dense-line" style={{ color: 'var(--text-muted)', fontSize: '0.72rem' }}>
+                        {c.company || 'Fabricator / Contractor'}
+                        {formatAddress(c) && ` · ${formatAddress(c)}`}
                       </div>
                     </td>
 

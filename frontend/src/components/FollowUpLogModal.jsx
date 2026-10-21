@@ -151,7 +151,6 @@ export default function FollowUpLogModal({ client, onClose, onSave }) {
                 type="date"
                 className="form-input"
                 style={{ marginTop: '0.5rem', maxWidth: '200px' }}
-                min={toInputDate(new Date())}
                 value={customDate}
                 onChange={(e) => setCustomDate(e.target.value)}
               />

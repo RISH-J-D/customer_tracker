@@ -2022,3 +2022,57 @@ h1, h2, h3, h4 {
     box-shadow: inset 0 -1px 0 var(--border-subtle);
   }
 }
+
+/* ==========================================================================
+   Dense tables (Leads): two short lines per row so 10–15 rows fit on screen
+   ========================================================================== */
+@media (min-width: 769px) {
+  .custom-table.table-dense td {
+    padding: 0.4rem 0.85rem;
+    vertical-align: middle;
+  }
+
+  .custom-table.table-dense th { padding: 0.5rem 0.85rem; }
+
+  .table-dense .dense-line {
+    white-space: nowrap;
+    overflow: hidden;
+    text-overflow: ellipsis;
+    max-width: 320px;
+    line-height: 1.35;
+  }
+
+  .table-dense td.td-email,
+  .table-dense td.td-mobile { white-space: nowrap; }
+
+  .table-dense .note-cell {
+    flex-direction: row;
+    align-items: baseline;
+    gap: 0.5rem;
+    min-width: 0;
+    max-width: 380px;
+  }
+
+  /* The inline note editor needs the full cell width */
+  .table-dense .note-cell:has(textarea) { flex-direction: column; align-items: stretch; }
+
+  .table-dense .note-cell-meta { white-space: nowrap; }
+
+  .table-dense .note-cell-text {
+    flex: 1 1 auto;
+    min-width: 0;
+    display: block;
+    white-space: nowrap;
+    overflow: hidden;
+    text-overflow: ellipsis;
+  }
+
+  .table-dense .note-cell-links {
+    margin-top: 0;
+    gap: 0.6rem;
+    white-space: nowrap;
+  }
+
+  .table-dense .row-actions .row-action-btn { width: 26px; height: 26px; }
+  .table-dense .row-actions .row-action-wide { height: 26px; }
+}

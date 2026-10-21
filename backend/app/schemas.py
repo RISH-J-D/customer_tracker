@@ -40,6 +40,7 @@ class FollowUpResponse(FollowUpBase):
 # --- Client Note Schemas ---
 class ClientNoteCreate(BaseModel):
     content: str
+    created_at: Optional[datetime] = None  # backdate a note; omitted = now
 
 class ClientNoteResponse(BaseModel):
     id: int

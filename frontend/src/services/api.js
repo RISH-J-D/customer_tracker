@@ -113,21 +113,21 @@ export const api = {
     return res.json();
   },
 
-  async addClientNote(clientId, content) {
+  async addClientNote(clientId, content, createdAt = null) {
     const res = await fetch(`${API_BASE}/clients/${clientId}/notes`, {
       method: 'POST',
       headers: getAuthHeaders({ 'Content-Type': 'application/json' }),
-      body: JSON.stringify({ content })
+      body: JSON.stringify({ content, created_at: createdAt })
     });
     if (!res.ok) throw new Error('Failed to add note');
     return res.json();
   },
 
-  async updateClientNote(clientId, noteId, content) {
+  async updateClientNote(clientId, noteId, content, createdAt = null) {
     const res = await fetch(`${API_BASE}/clients/${clientId}/notes/${noteId}`, {
       method: 'PUT',
       headers: getAuthHeaders({ 'Content-Type': 'application/json' }),
-      body: JSON.stringify({ content })
+      body: JSON.stringify({ content, created_at: createdAt })
     });
     if (!res.ok) throw new Error('Failed to update note');
     return res.json();

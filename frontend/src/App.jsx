@@ -251,13 +251,13 @@ export default function App() {
     setClients(prev => prev.map(c => c.id === clientId ? { ...c, note_entries: updater(c.note_entries || []) } : c));
   };
 
-  const handleAddClientNote = async (clientId, content) => {
-    const note = await api.addClientNote(clientId, content);
+  const handleAddClientNote = async (clientId, content, createdAt) => {
+    const note = await api.addClientNote(clientId, content, createdAt);
     updateClientNoteEntries(clientId, entries => [note, ...entries]);
   };
 
-  const handleEditClientNote = async (clientId, noteId, content) => {
-    const note = await api.updateClientNote(clientId, noteId, content);
+  const handleEditClientNote = async (clientId, noteId, content, createdAt) => {
+    const note = await api.updateClientNote(clientId, noteId, content, createdAt);
     updateClientNoteEntries(clientId, entries => entries.map(n => n.id === noteId ? note : n));
   };
 

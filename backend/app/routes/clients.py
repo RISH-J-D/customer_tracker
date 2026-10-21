@@ -214,6 +214,11 @@ def delete_client(
 
     return {"message": "Client deleted successfully", "id": client_id}
 
+def _note_timestamp(value: Optional[datetime]) -> Optional[datetime]:
+    if value is not None and value.tzinfo is not None:
+        value = value.astimezone(timezone.utc).replace(tzinfo=None)  # stored as naive UTC
+    return value
+
 def _get_note_or_404(db: Session, client_id: int, note_id: int) -> ClientNote:
     note = db.query(ClientNote).filter(ClientNote.id == note_id, ClientNote.client_id == client_id).first()
     if not note:
@@ -236,6 +241,8 @@ def add_client_note(
         raise HTTPException(status_code=400, detail="Note cannot be empty")
 
     note = ClientNote(client_id=client_id, content=content, author=x_user_name)
+    if note_in.created_at is not None:
+        note.created_at = _note_timestamp(note_in.created_at)
     db.add(note)
     client.updated_at = datetime.utcnow()
     db.commit()
@@ -268,6 +275,8 @@ def update_client_note(
         raise HTTPException(status_code=400, detail="Note cannot be empty")
     old_content = note.content
     note.content = content
+    if note_in.created_at is not None:
+        note.created_at = _note_timestamp(note_in.created_at)
     db.commit()
     db.refresh(note)
 
