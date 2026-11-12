@@ -61,7 +61,7 @@ async def lifespan(app: FastAPI):
     db = SessionLocal()
     try:
         seed_users(db)
-        ensure_client_details_imported(db)
+        # ensure_client_details_imported(db) - disabled so database is never auto-wiped
     finally:
         db.close()
     yield
